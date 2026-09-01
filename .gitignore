@@ -1,0 +1,48 @@
+# ===== Secrets — NEVER commit =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ===== Claude Code / MCP config (may contain secrets, machine-specific) =====
+.claude/
+.mcp.json
+
+# ===== Backend (Python) =====
+backend/.venv/
+backend/build/
+backend/dist/
+backend/wheels/
+*.egg-info
+backend/app/uploads/
+
+# Python caches (anywhere)
+**/__pycache__/
+*.py[oc]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# ===== Frontend (Next.js) — frontend has its own .gitignore too =====
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+frontend/.vercel
+
+# ===== OS / IDE =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
