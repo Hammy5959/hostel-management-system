@@ -31,6 +31,7 @@ def list_residents(
     eligible_for_attendance: bool = False,
     eligible_for_billing: bool = False,
     eligible_for_payment: bool = False,
+    eligible_for_visitor: bool = False,
     _: dict = Depends(require_permission("residents.view")),
     db: Client = Depends(get_db),
 ) -> ResidentList:
@@ -38,7 +39,7 @@ def list_residents(
         db, page=page, per_page=per_page, search=search, status=status, institution=institution,
         eligible_for_admission=eligible_for_admission, eligible_for_allocation=eligible_for_allocation,
         eligible_for_attendance=eligible_for_attendance, eligible_for_billing=eligible_for_billing,
-        eligible_for_payment=eligible_for_payment,
+        eligible_for_payment=eligible_for_payment, eligible_for_visitor=eligible_for_visitor,
     )
 
 

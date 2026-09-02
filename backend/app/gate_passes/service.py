@@ -123,8 +123,12 @@ def mark_return(db: Client, user: dict, pass_id: str, data: GatePassAction) -> G
     return GatePassOut.model_validate(update(db, _TABLE, pass_id, payload))
 
 
-def cancel(db: Client, pass_id: str) -> GatePassOut:
+def cancel(db: Client, user: dict, pass_id: str) -> GatePassOut:
     row = _fetch(db, pass_id)
+    if not has_permission(db, user, "gate_passes.approve"):
+        own = get_resident_by_user(db, user["id"])
+        if own is None or str(own["id"]) != str(row["resident_id"]):
+            raise ForbiddenError("You can only cancel your own gate pass", code="not_your_pass")
     if row["status"] not in ("pending", "approved"):
         raise ConflictError(
             f"Cannot cancel a gate pass in '{row['status']}' state", code="invalid_transition"

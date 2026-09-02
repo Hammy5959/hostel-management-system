@@ -85,7 +85,7 @@ def mark_return(
 @router.post("/{pass_id}/cancel", response_model=GatePassOut, summary="Cancel a gate pass")
 def cancel(
     pass_id: str,
-    _: dict = Depends(require_any_permission("gate_passes.approve", "gate_passes.view_own")),
+    user: dict = Depends(require_any_permission("gate_passes.approve", "gate_passes.view_own")),
     db: Client = Depends(get_db),
 ) -> GatePassOut:
-    return service.cancel(db, pass_id)
+    return service.cancel(db, user, pass_id)

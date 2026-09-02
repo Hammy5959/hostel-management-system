@@ -144,6 +144,20 @@ export async function fetchPaymentEligibleResidentOptions(search: string): Promi
   }))
 }
 
+/** Residents who can currently receive a registered guest: excludes anyone
+ * checked out, mirroring the same "resident_not_active" rule
+ * app.visitors.service.create_visitor enforces server-side on create.
+ * on_leave residents stay eligible — leave is temporary, bed still
+ * allocated. Used by the Register Visitor dialog's resident picker. */
+export async function fetchVisitorEligibleResidentOptions(search: string): Promise<ComboOption[]> {
+  const res = await searchResidents({ search: search || undefined, per_page: 20, eligible_for_visitor: true })
+  return res.items.map((r) => ({
+    value: r.id,
+    label: [r.first_name, r.last_name].filter(Boolean).join(" "),
+    sublabel: r.student_id ?? undefined,
+  }))
+}
+
 /** Residents who can be allocated a bed: excludes anyone with an active
  * room allocation already, mirroring the same rule
  * allocations.create_allocation (hms_allocate_bed's

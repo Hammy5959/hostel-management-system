@@ -22,10 +22,38 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _resolve_visitor_ids_by_search(db: Client, search: str) -> list[str]:
+    """Resolve a visitor-name/phone/resident-name search term to matching
+    visitor ids. A log row only carries visitor_id, so a search spanning
+    visitor.* and resident.* has to be resolved here first, then applied as
+    a plain in-list filter on visitor_logs itself — mirrors
+    app.allocations.service._resolve_search_scope."""
+    needle = search.lower()
+    resident_res = db.table("residents").select("id, first_name, last_name").execute()
+    if getattr(resident_res, "error", None):
+        raise_for_error(resident_res, "search residents")
+    resident_ids = {
+        r["id"] for r in (resident_res.data or [])
+        if needle in f"{r['first_name']} {r.get('last_name') or ''}".strip().lower()
+    }
+
+    visitors_res = db.table("visitors").select("id, visitor_name, visitor_phone, resident_id").execute()
+    if getattr(visitors_res, "error", None):
+        raise_for_error(visitors_res, "search visitors")
+    return [
+        v["id"] for v in (visitors_res.data or [])
+        if needle in (v.get("visitor_name") or "").lower()
+        or needle in (v.get("visitor_phone") or "").lower()
+        or v.get("resident_id") in resident_ids
+    ]
+
+
 def check_in(db: Client, user: dict, data: VisitorLogCheckIn) -> VisitorLogOut:
     visitor = get_by_id(db, "visitors", str(data.visitor_id))
     if visitor is None:
         raise NotFoundError("Visitor not found", code="visitor_not_found")
+    if visitor.get("is_blacklisted"):
+        raise ConflictError("This visitor is blacklisted and cannot be checked in", code="visitor_blacklisted")
     if visitor["status"] == "checked_in":
         raise ConflictError("Visitor is already checked in", code="already_checked_in")
 
@@ -69,11 +97,18 @@ def list_logs(
     visitor_id: str | None,
     date_from: str | None,
     date_to: str | None,
+    search: str | None = None,
 ) -> VisitorLogList:
     eq = {"visitor_id": visitor_id} if visitor_id else None
+    in_ = None
+    if search and search.strip():
+        matched_ids = _resolve_visitor_ids_by_search(db, search.strip())
+        if not matched_ids:
+            return VisitorLogList(items=[], total=0, page=page, per_page=per_page)
+        in_ = {"visitor_id": matched_ids}
     items, total = list_page(
         db, _TABLE, page=page, per_page=per_page,
-        eq=eq,
+        eq=eq, in_=in_,
         gte={"check_in_at": date_from} if date_from else None,
         lte={"check_in_at": date_to} if date_to else None,
         order="check_in_at", desc=True,

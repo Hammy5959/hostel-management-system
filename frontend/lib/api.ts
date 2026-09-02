@@ -75,6 +75,14 @@ import type {
   StayList,
   TokenResponse,
   User,
+  Visitor,
+  VisitorCreateInput,
+  VisitorList,
+  VisitorLog,
+  VisitorLogCheckInInput,
+  VisitorLogCheckOutInput,
+  VisitorLogList,
+  VisitorUpdateInput,
 } from "@/lib/types"
 
 export const API_BASE_URL =
@@ -461,6 +469,57 @@ export function checkOutStay(id: string, payload: StayActionInput = {}): Promise
   return apiFetch<Stay>(`/resident-stays/${id}/check-out`, { method: "POST", body: payload })
 }
 
+/* ── Visitors ──────────────────────────────────────────────────── */
+
+export interface VisitorListParams {
+  page?: number
+  per_page?: number
+  resident_id?: string
+  status?: string
+  search?: string
+  date_from?: string
+  date_to?: string
+}
+
+export function getVisitors(params: VisitorListParams = {}): Promise<VisitorList> {
+  return apiFetch<VisitorList>(`/visitors${toQueryString({ ...params })}`)
+}
+
+export function createVisitor(payload: VisitorCreateInput): Promise<Visitor> {
+  return apiFetch<Visitor>("/visitors", { method: "POST", body: payload })
+}
+
+export function updateVisitor(id: string, payload: VisitorUpdateInput): Promise<Visitor> {
+  return apiFetch<Visitor>(`/visitors/${id}`, { method: "PATCH", body: payload })
+}
+
+export function cancelVisitor(id: string): Promise<Visitor> {
+  return apiFetch<Visitor>(`/visitors/${id}/cancel`, { method: "POST" })
+}
+
+/* ── Visitor logs (check-in / check-out) ──────────────────────── */
+
+export interface VisitorLogListParams {
+  page?: number
+  per_page?: number
+  visitor_id?: string
+  date_from?: string
+  date_to?: string
+  search?: string
+}
+
+export function getVisitorLogs(params: VisitorLogListParams = {}): Promise<VisitorLogList> {
+  return apiFetch<VisitorLogList>(`/visitor-logs${toQueryString({ ...params })}`)
+}
+
+export function checkInVisitor(payload: VisitorLogCheckInInput): Promise<VisitorLog> {
+  return apiFetch<VisitorLog>("/visitor-logs/check-in", { method: "POST", body: payload })
+}
+
+export function checkOutVisitor(logId: string, payload: VisitorLogCheckOutInput = {}): Promise<VisitorLog> {
+  return apiFetch<VisitorLog>(`/visitor-logs/${logId}/check-out`, { method: "POST", body: payload })
+}
+
 /* ── Residents ─────────────────────────────────────────────────── */
 
 export interface ResidentListParams {
@@ -568,6 +627,7 @@ export interface ResidentSearchParams {
   eligible_for_attendance?: boolean
   eligible_for_billing?: boolean
   eligible_for_payment?: boolean
+  eligible_for_visitor?: boolean
 }
 
 export function searchResidents(params: ResidentSearchParams = {}): Promise<ResidentRefList> {

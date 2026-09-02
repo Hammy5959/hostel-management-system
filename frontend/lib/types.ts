@@ -405,6 +405,85 @@ export interface StayActionInput {
   notes?: string | null
 }
 
+/* ── Visitors ──────────────────────────────────────────────────── */
+
+export type VisitorStatus = "expected" | "checked_in" | "checked_out" | "cancelled"
+
+export interface Visitor {
+  id: string
+  resident_id: string
+  visitor_name: string
+  visitor_phone: string | null
+  relationship: string | null
+  identification_type: string | null
+  identification_number: string | null
+  purpose: string | null
+  expected_at: string | null
+  status: VisitorStatus
+  is_blacklisted: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface VisitorList {
+  items: Visitor[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface VisitorCreateInput {
+  resident_id: string
+  visitor_name: string
+  visitor_phone?: string | null
+  relationship?: string | null
+  identification_type?: string | null
+  identification_number?: string | null
+  purpose?: string | null
+  expected_at?: string | null
+}
+
+export interface VisitorUpdateInput {
+  visitor_name?: string
+  visitor_phone?: string | null
+  relationship?: string | null
+  identification_type?: string | null
+  identification_number?: string | null
+  purpose?: string | null
+  expected_at?: string | null
+  is_blacklisted?: boolean
+}
+
+/* ── Visitor logs (check-in / check-out) ──────────────────────── */
+
+export interface VisitorLog {
+  id: string
+  visitor_id: string
+  check_in_at: string | null
+  check_out_at: string | null
+  checked_in_by: string | null
+  checked_out_by: string | null
+  remarks: string | null
+  created_at: string
+}
+
+export interface VisitorLogList {
+  items: VisitorLog[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface VisitorLogCheckInInput {
+  visitor_id: string
+  remarks?: string | null
+}
+
+export interface VisitorLogCheckOutInput {
+  remarks?: string | null
+}
+
 /* ── Residents ─────────────────────────────────────────────────── */
 
 export type ResidentStatus = "applicant" | "active" | "on_leave" | "checked_out" | "inactive"

@@ -27,6 +27,7 @@ class VisitorUpdate(BaseModel):
     identification_number: str | None = Field(default=None, max_length=100)
     purpose: str | None = None
     expected_at: datetime | None = None
+    is_blacklisted: bool | None = None
 
 
 class VisitorOut(BaseModel):
@@ -42,6 +43,7 @@ class VisitorOut(BaseModel):
     purpose: str | None = None
     expected_at: datetime | None = None
     status: str
+    is_blacklisted: bool = False
     created_by: UUID | None = None
     created_at: datetime
     updated_at: datetime

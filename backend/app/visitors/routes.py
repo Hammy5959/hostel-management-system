@@ -19,16 +19,22 @@ def list_visitors(
     per_page: int = Query(20, ge=1, le=100),
     resident_id: str | None = None,
     status: str | None = None,
+    search: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
     user: dict = Depends(require_any_permission("visitors.view", "visitors.view_own")),
     db: Client = Depends(get_db),
 ) -> VisitorList:
-    return service.list_visitors(db, user, page=page, per_page=per_page, resident_id=resident_id, status=status)
+    return service.list_visitors(
+        db, user, page=page, per_page=per_page, resident_id=resident_id, status=status,
+        search=search, date_from=date_from, date_to=date_to,
+    )
 
 
 @router.post("", response_model=VisitorOut, status_code=201, summary="Register a visitor")
 def create_visitor(
     payload: VisitorCreate,
-    user: dict = Depends(require_permission("visitors.create")),
+    user: dict = Depends(require_any_permission("visitors.create", "visitors.create_own")),
     db: Client = Depends(get_db),
 ) -> VisitorOut:
     return service.create_visitor(db, user, payload)
@@ -42,3 +48,12 @@ def update_visitor(
     db: Client = Depends(get_db),
 ) -> VisitorOut:
     return service.update_visitor(db, visitor_id, payload)
+
+
+@router.post("/{visitor_id}/cancel", response_model=VisitorOut, summary="Cancel a visitor")
+def cancel_visitor(
+    visitor_id: str,
+    _: dict = Depends(require_permission("visitors.create")),
+    db: Client = Depends(get_db),
+) -> VisitorOut:
+    return service.cancel_visitor(db, visitor_id)

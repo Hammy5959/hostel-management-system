@@ -20,10 +20,13 @@ def list_logs(
     visitor_id: str | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
+    search: str | None = None,
     _: dict = Depends(require_permission("visitor_logs.view")),
     db: Client = Depends(get_db),
 ) -> VisitorLogList:
-    return service.list_logs(db, page=page, per_page=per_page, visitor_id=visitor_id, date_from=date_from, date_to=date_to)
+    return service.list_logs(
+        db, page=page, per_page=per_page, visitor_id=visitor_id, date_from=date_from, date_to=date_to, search=search,
+    )
 
 
 @router.post("/check-in", response_model=VisitorLogOut, status_code=201, summary="Check a visitor in")

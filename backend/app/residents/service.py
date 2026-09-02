@@ -120,6 +120,7 @@ def list_residents(
     eligible_for_attendance: bool = False,
     eligible_for_billing: bool = False,
     eligible_for_payment: bool = False,
+    eligible_for_visitor: bool = False,
 ) -> ResidentList:
     summary = _fetch_residents_summary(db)
     eq: dict = {}
@@ -226,6 +227,12 @@ def list_residents(
         if not eligible_ids:
             return ResidentList(items=[], total=0, page=page, per_page=per_page, summary=summary)
         in_["id"] = list(eligible_ids)
+    if eligible_for_visitor:
+        # A resident can only receive a registered guest while they still
+        # actually live here — see app.visitors.service.create_visitor's
+        # "resident_not_active" guard for the same rule enforced server-side
+        # on create. on_leave stays eligible (temporary, bed still allocated).
+        not_in["status"] = ["checked_out"]
     # "first_name"/"last_name" are separate columns, so a plain per-column ILIKE
     # never matches a full "First Last" query. Split on whitespace and also
     # match first_name/last_name pairwise (either order) so full-name search works.

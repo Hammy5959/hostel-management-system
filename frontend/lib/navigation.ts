@@ -21,7 +21,6 @@ import {
   Megaphone,
   Package,
   Receipt,
-  ScrollText,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -108,7 +107,6 @@ export const navigation: NavEntry[] = [
       icon: ShieldCheck,
       items: [
         { label: "Visitors", href: "/visitors", icon: Users },
-        { label: "Visitor Logs", href: "/visitor-logs", icon: ScrollText },
         { label: "Gate Passes", href: "/gate-passes", icon: BadgeCheck },
       ],
     },
