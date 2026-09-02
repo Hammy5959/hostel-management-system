@@ -19,10 +19,13 @@ def list_passes(
     per_page: int = Query(20, ge=1, le=100),
     resident_id: str | None = None,
     status: str | None = None,
+    search: str | None = None,
     user: dict = Depends(require_any_permission("gate_passes.view", "gate_passes.view_own")),
     db: Client = Depends(get_db),
 ) -> GatePassList:
-    return service.list_passes(db, user, page=page, per_page=per_page, resident_id=resident_id, status=status)
+    return service.list_passes(
+        db, user, page=page, per_page=per_page, resident_id=resident_id, status=status, search=search
+    )
 
 
 @router.post("", response_model=GatePassOut, status_code=201, summary="Request a gate pass")

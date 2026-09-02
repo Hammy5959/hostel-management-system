@@ -484,6 +484,62 @@ export interface VisitorLogCheckOutInput {
   remarks?: string | null
 }
 
+/* ── Gate Passes ───────────────────────────────────────────────── */
+
+export type GatePassStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "issued"
+  | "exited"
+  | "returned"
+  | "cancelled"
+
+export interface GatePass {
+  id: string
+  resident_id: string
+  pass_number: string
+  reason: string
+  destination: string | null
+  /** Planned departure time set at creation; overwritten with the actual
+   * exit timestamp once the pass is marked exited. */
+  departure_at: string | null
+  expected_return_at: string | null
+  actual_return_at: string | null
+  status: GatePassStatus
+  requested_at: string
+  approved_by: string | null
+  approved_at: string | null
+  issued_by: string | null
+  issued_at: string | null
+  /** Set by both mark-exit and mark-return — the return action overwrites
+   * whoever verified the exit. */
+  verified_by: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GatePassList {
+  items: GatePass[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface GatePassCreateInput {
+  resident_id: string
+  reason: string
+  destination?: string | null
+  departure_at?: string | null
+  expected_return_at?: string | null
+  notes?: string | null
+}
+
+export interface GatePassActionInput {
+  notes?: string | null
+}
+
 /* ── Residents ─────────────────────────────────────────────────── */
 
 export type ResidentStatus = "applicant" | "active" | "on_leave" | "checked_out" | "inactive"

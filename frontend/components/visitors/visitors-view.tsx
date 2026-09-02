@@ -87,6 +87,17 @@ function todayRangeIso(): { from: string; to: string } {
   return { from: `${date}T00:00:00`, to: `${date}T23:59:59.999` }
 }
 
+/** Local YYYY-MM-DD for a datetime string, for calendar-day comparisons
+ * against todayLocalDate() — mirrors todayLocalDate()'s own local getters
+ * rather than slicing/toISOString(), which would read the UTC date. */
+function toLocalDateString(value: string): string {
+  const date = new Date(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 function formatDateTime(value: string | null): string {
   if (!value) return "—"
   return new Date(value).toLocaleString("en-US", {
@@ -455,7 +466,14 @@ export function VisitorsView() {
     for (const item of items) {
       if (!byId.has(item.id)) byId.set(item.id, item)
     }
-    return [...byId.values()]
+    // Expected visitors who never showed up pile up otherwise — hide ones
+    // whose expected_at day has already passed, but keep undated ones (may
+    // still arrive) and checked_in visitors (unaffected regardless of date).
+    const today = todayLocalDate()
+    return [...byId.values()].filter((item) => {
+      if (item.status !== "expected" || !item.expected_at) return true
+      return toLocalDateString(item.expected_at) >= today
+    })
   }, [checkedInQuery.data, expectedQuery.data, statusFilter])
 
   const activeLoading = checkedInQuery.isLoading || expectedQuery.isLoading

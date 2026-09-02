@@ -34,6 +34,10 @@ import type {
   FloorCreateInput,
   FloorList,
   FloorUpdateInput,
+  GatePass,
+  GatePassActionInput,
+  GatePassCreateInput,
+  GatePassList,
   LeaveReport,
   LeaveReviewInput,
   LeaveRequest,
@@ -518,6 +522,49 @@ export function checkInVisitor(payload: VisitorLogCheckInInput): Promise<Visitor
 
 export function checkOutVisitor(logId: string, payload: VisitorLogCheckOutInput = {}): Promise<VisitorLog> {
   return apiFetch<VisitorLog>(`/visitor-logs/${logId}/check-out`, { method: "POST", body: payload })
+}
+
+/* ── Gate Passes ───────────────────────────────────────────────── */
+
+export interface GatePassListParams {
+  page?: number
+  per_page?: number
+  resident_id?: string
+  status?: string
+  search?: string
+}
+
+export function getGatePasses(params: GatePassListParams = {}): Promise<GatePassList> {
+  return apiFetch<GatePassList>(`/gate-passes${toQueryString({ ...params })}`)
+}
+
+export function createGatePass(payload: GatePassCreateInput): Promise<GatePass> {
+  return apiFetch<GatePass>("/gate-passes", { method: "POST", body: payload })
+}
+
+/** No request body — POST /gate-passes/{id}/approve takes none server-side. */
+export function approveGatePass(id: string): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/approve`, { method: "POST" })
+}
+
+export function rejectGatePass(id: string, payload: GatePassActionInput = {}): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/reject`, { method: "POST", body: payload })
+}
+
+export function issueGatePass(id: string): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/issue`, { method: "POST" })
+}
+
+export function markGatePassExit(id: string, payload: GatePassActionInput = {}): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/exit`, { method: "POST", body: payload })
+}
+
+export function markGatePassReturn(id: string, payload: GatePassActionInput = {}): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/return`, { method: "POST", body: payload })
+}
+
+export function cancelGatePass(id: string): Promise<GatePass> {
+  return apiFetch<GatePass>(`/gate-passes/${id}/cancel`, { method: "POST" })
 }
 
 /* ── Residents ─────────────────────────────────────────────────── */

@@ -17,10 +17,26 @@ from app.common.authz import has_permission
 from app.common.numbers import generate_number
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
+from app.database.supabase import raise_for_error
 from app.gate_passes.schemas import GatePassAction, GatePassCreate, GatePassList, GatePassOut
 from app.residents.service import get_resident_by_user
 
 _TABLE = "gate_passes"
+
+
+def _resolve_resident_ids_by_name(db: Client, search: str) -> list[str]:
+    """Resolve a resident-name search term to resident ids — mirrors
+    app.allocations.service._resolve_search_scope's resident name matching
+    (full "first last" name, case-insensitive/partial), since a gate pass row
+    only carries resident_id, not the resident's name."""
+    needle = search.lower()
+    res = db.table("residents").select("id, first_name, last_name").execute()
+    if getattr(res, "error", None):
+        raise_for_error(res, "search residents")
+    return [
+        r["id"] for r in (res.data or [])
+        if needle in f"{r['first_name']} {r.get('last_name') or ''}".strip().lower()
+    ]
 
 
 def _now_iso() -> str:
@@ -63,6 +79,7 @@ def list_passes(
     per_page: int,
     resident_id: str | None,
     status: str | None,
+    search: str | None = None,
 ) -> GatePassList:
     if has_permission(db, user, "gate_passes.view"):
         scope = str(resident_id) if resident_id else None
@@ -77,9 +94,22 @@ def list_passes(
     eq = {"resident_id": scope} if scope else {}
     if status:
         eq["status"] = status
+
+    # A search spans pass_number (a plain column, handled by list_page's
+    # search_columns) and the resident's name (not a column on this table,
+    # so resolved to resident_id first — mirrors
+    # app.allocations.service._resolve_search_scope).
+    search_groups: list[str] = []
+    if search and search.strip():
+        resident_ids = _resolve_resident_ids_by_name(db, search.strip())
+        if resident_ids:
+            search_groups.append(f"resident_id.in.({','.join(resident_ids)})")
+
     items, total = list_page(
         db, _TABLE, page=page, per_page=per_page,
-        eq=eq or None, order="requested_at", desc=True,
+        eq=eq or None, search=search, search_columns=("pass_number",),
+        search_groups=search_groups,
+        order="requested_at", desc=True,
     )
     return GatePassList(items=[GatePassOut.model_validate(i) for i in items], total=total, page=page, per_page=per_page)
 
