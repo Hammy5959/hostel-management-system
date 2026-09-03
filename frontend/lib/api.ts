@@ -17,6 +17,14 @@ import type {
   AttendanceReport,
   AttendanceUpdateInput,
   AuditLogList,
+  Asset,
+  AssetAssignment,
+  AssetAssignmentCreateInput,
+  AssetAssignmentList,
+  AssetAssignmentReturnInput,
+  AssetCreateInput,
+  AssetList,
+  AssetUpdateInput,
   Bed,
   BedCreateInput,
   BedList,
@@ -25,6 +33,10 @@ import type {
   BuildingCreateInput,
   BuildingList,
   BuildingUpdateInput,
+  Complaint,
+  ComplaintCreateInput,
+  ComplaintList,
+  ComplaintUpdateInput,
   DashboardSummary,
   FeeStructure,
   FeeStructureCreateInput,
@@ -43,6 +55,10 @@ import type {
   LeaveRequest,
   LeaveRequestCreateInput,
   LeaveRequestList,
+  MaintenanceTicket,
+  MaintenanceTicketCreateInput,
+  MaintenanceTicketList,
+  MaintenanceTicketUpdateInput,
   NotificationItem,
   NotificationList,
   OccupancyReport,
@@ -54,6 +70,14 @@ import type {
   InvoiceCreateInput,
   InvoiceList,
   InvoiceUpdateInput,
+  InventoryCategory,
+  InventoryCategoryCreateInput,
+  InventoryCategoryList,
+  InventoryCategoryUpdateInput,
+  InventoryItem,
+  InventoryItemCreateInput,
+  InventoryItemList,
+  InventoryItemUpdateInput,
   Payment,
   PaymentCreateInput,
   PaymentList,
@@ -73,6 +97,9 @@ import type {
   RoomList,
   RoomUpdateInput,
   RoleWithPermissions,
+  Staff,
+  StaffList,
+  StockAdjustmentInput,
   Stay,
   StayActionInput,
   StayCreateInput,
@@ -857,4 +884,166 @@ export function rejectLeaveRequest(id: string, payload: LeaveReviewInput = {}): 
 
 export function cancelLeaveRequest(id: string): Promise<LeaveRequest> {
   return apiFetch<LeaveRequest>(`/leave-requests/${id}/cancel`, { method: "POST" })
+}
+
+/* ── Complaints ────────────────────────────────────────────────────── */
+
+export interface ComplaintListParams {
+  page?: number
+  per_page?: number
+  resident_id?: string
+  status?: string
+  room_id?: string
+}
+
+export function getComplaints(params: ComplaintListParams = {}): Promise<ComplaintList> {
+  return apiFetch<ComplaintList>(`/complaints${toQueryString({ ...params })}`)
+}
+
+export function createComplaint(payload: ComplaintCreateInput): Promise<Complaint> {
+  return apiFetch<Complaint>("/complaints", { method: "POST", body: payload })
+}
+
+export function updateComplaint(id: string, payload: ComplaintUpdateInput): Promise<Complaint> {
+  return apiFetch<Complaint>(`/complaints/${id}`, { method: "PATCH", body: payload })
+}
+
+/* ── Maintenance Tickets ───────────────────────────────────────────── */
+
+export interface MaintenanceTicketListParams {
+  page?: number
+  per_page?: number
+  status?: string
+  room_id?: string
+  assigned_to?: string
+  search?: string
+}
+
+export function getMaintenanceTickets(params: MaintenanceTicketListParams = {}): Promise<MaintenanceTicketList> {
+  return apiFetch<MaintenanceTicketList>(`/maintenance-tickets${toQueryString({ ...params })}`)
+}
+
+export function createMaintenanceTicket(payload: MaintenanceTicketCreateInput): Promise<MaintenanceTicket> {
+  return apiFetch<MaintenanceTicket>("/maintenance-tickets", { method: "POST", body: payload })
+}
+
+export function updateMaintenanceTicket(id: string, payload: MaintenanceTicketUpdateInput): Promise<MaintenanceTicket> {
+  return apiFetch<MaintenanceTicket>(`/maintenance-tickets/${id}`, { method: "PATCH", body: payload })
+}
+
+/* ── Staff (User Management) ──────────────────────────────────────── */
+
+export interface StaffListParams {
+  page?: number
+  per_page?: number
+  search?: string
+  department?: string
+}
+
+export function getStaffList(params: StaffListParams = {}): Promise<StaffList> {
+  return apiFetch<StaffList>(`/staff${toQueryString({ ...params })}`)
+}
+
+export function getStaff(id: string): Promise<Staff> {
+  return apiFetch<Staff>(`/staff/${id}`)
+}
+
+/* ── Inventory Categories ──────────────────────────────────────────── */
+
+export interface InventoryCategoryListParams {
+  page?: number
+  per_page?: number
+  search?: string
+}
+
+export function getInventoryCategories(params: InventoryCategoryListParams = {}): Promise<InventoryCategoryList> {
+  return apiFetch<InventoryCategoryList>(`/inventory-categories${toQueryString({ ...params })}`)
+}
+
+export function createInventoryCategory(payload: InventoryCategoryCreateInput): Promise<InventoryCategory> {
+  return apiFetch<InventoryCategory>("/inventory-categories", { method: "POST", body: payload })
+}
+
+export function updateInventoryCategory(id: string, payload: InventoryCategoryUpdateInput): Promise<InventoryCategory> {
+  return apiFetch<InventoryCategory>(`/inventory-categories/${id}`, { method: "PATCH", body: payload })
+}
+
+/* ── Inventory Items ───────────────────────────────────────────────── */
+
+export interface InventoryItemListParams {
+  page?: number
+  per_page?: number
+  category_id?: string
+  low_stock_only?: boolean
+  search?: string
+}
+
+export function getInventoryItems(params: InventoryItemListParams = {}): Promise<InventoryItemList> {
+  return apiFetch<InventoryItemList>(`/inventory-items${toQueryString({ ...params })}`)
+}
+
+export function createInventoryItem(payload: InventoryItemCreateInput): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>("/inventory-items", { method: "POST", body: payload })
+}
+
+export function updateInventoryItem(id: string, payload: InventoryItemUpdateInput): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>(`/inventory-items/${id}`, { method: "PATCH", body: payload })
+}
+
+export function adjustInventoryStock(id: string, payload: StockAdjustmentInput): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>(`/inventory-items/${id}/adjust`, { method: "POST", body: payload })
+}
+
+/** Single inventory item fetch — not needed by the Inventory page itself
+ * (which always operates on already-fetched rows), but needed here to
+ * resolve an asset's category via its inventory_item_id link. */
+export function getInventoryItem(id: string): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>(`/inventory-items/${id}`)
+}
+
+/* ── Assets ────────────────────────────────────────────────────────── */
+
+export interface AssetListParams {
+  page?: number
+  per_page?: number
+  status?: string
+  category_id?: string
+  search?: string
+}
+
+export function getAssets(params: AssetListParams = {}): Promise<AssetList> {
+  return apiFetch<AssetList>(`/assets${toQueryString({ ...params })}`)
+}
+
+export function getAsset(id: string): Promise<Asset> {
+  return apiFetch<Asset>(`/assets/${id}`)
+}
+
+export function createAsset(payload: AssetCreateInput): Promise<Asset> {
+  return apiFetch<Asset>("/assets", { method: "POST", body: payload })
+}
+
+export function updateAsset(id: string, payload: AssetUpdateInput): Promise<Asset> {
+  return apiFetch<Asset>(`/assets/${id}`, { method: "PATCH", body: payload })
+}
+
+/* ── Asset Assignments ─────────────────────────────────────────────── */
+
+export interface AssetAssignmentListParams {
+  page?: number
+  per_page?: number
+  asset_id?: string
+  returned?: boolean
+}
+
+export function getAssetAssignments(params: AssetAssignmentListParams = {}): Promise<AssetAssignmentList> {
+  return apiFetch<AssetAssignmentList>(`/asset-assignments${toQueryString({ ...params })}`)
+}
+
+export function createAssetAssignment(payload: AssetAssignmentCreateInput): Promise<AssetAssignment> {
+  return apiFetch<AssetAssignment>("/asset-assignments", { method: "POST", body: payload })
+}
+
+export function returnAssetAssignment(id: string, payload: AssetAssignmentReturnInput = {}): Promise<AssetAssignment> {
+  return apiFetch<AssetAssignment>(`/asset-assignments/${id}/return`, { method: "POST", body: payload })
 }

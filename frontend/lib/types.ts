@@ -1164,3 +1164,289 @@ export interface PaymentCreateInput {
   transaction_reference?: string | null
   notes?: string | null
 }
+
+/* ── Complaints & Maintenance Tickets ─────────────────────────────── */
+
+export type MaintenancePriority = "low" | "normal" | "high" | "urgent"
+
+export type ComplaintStatus = "open" | "assigned" | "in_progress" | "resolved" | "closed" | "cancelled"
+
+export interface Complaint {
+  id: string
+  resident_id: string
+  title: string
+  description: string
+  category: string | null
+  priority: MaintenancePriority
+  status: ComplaintStatus
+  room_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ComplaintList {
+  items: Complaint[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface ComplaintCreateInput {
+  resident_id: string
+  title: string
+  description: string
+  category?: string | null
+  priority?: MaintenancePriority
+  room_id?: string | null
+}
+
+export interface ComplaintUpdateInput {
+  title?: string
+  description?: string
+  category?: string | null
+  priority?: MaintenancePriority
+  room_id?: string | null
+  status?: ComplaintStatus
+}
+
+export type MaintenanceTicketStatus = ComplaintStatus
+
+export interface MaintenanceTicket {
+  id: string
+  complaint_id: string | null
+  title: string
+  description: string
+  category: string | null
+  priority: MaintenancePriority
+  room_id: string | null
+  assigned_to: string | null
+  status: MaintenanceTicketStatus
+  assigned_at: string | null
+  started_at: string | null
+  resolved_at: string | null
+  resolution_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MaintenanceTicketList {
+  items: MaintenanceTicket[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface MaintenanceTicketCreateInput {
+  complaint_id?: string | null
+  title: string
+  description: string
+  category?: string | null
+  priority?: MaintenancePriority
+  room_id?: string | null
+}
+
+export interface MaintenanceTicketUpdateInput {
+  title?: string
+  description?: string
+  category?: string | null
+  priority?: MaintenancePriority
+  room_id?: string | null
+  assigned_to?: string | null
+  resolution_notes?: string | null
+  status?: MaintenanceTicketStatus
+}
+
+/* ── Staff (User Management) ──────────────────────────────────────── */
+
+export interface StaffUserRef {
+  first_name: string
+  last_name: string | null
+  email: string
+  phone: string | null
+  role_id: string | null
+  status: string | null
+}
+
+export interface Staff {
+  id: string
+  user_id: string
+  employee_number: string | null
+  joining_date: string | null
+  designation: string | null
+  department: string | null
+  address: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
+  emergency_contact_relationship: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  user: StaffUserRef | null
+}
+
+export interface StaffList {
+  items: Staff[]
+  total: number
+  page: number
+  per_page: number
+}
+
+/* ── Inventory (Categories & Items) ───────────────────────────────── */
+
+export interface InventoryCategory {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InventoryCategoryList {
+  items: InventoryCategory[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface InventoryCategoryCreateInput {
+  name: string
+  description?: string | null
+}
+
+export interface InventoryCategoryUpdateInput {
+  name?: string
+  description?: string | null
+}
+
+export interface InventoryItem {
+  id: string
+  category_id: string | null
+  name: string
+  sku: string | null
+  description: string | null
+  quantity: number
+  minimum_quantity: number
+  unit: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InventoryItemList {
+  items: InventoryItem[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface InventoryItemCreateInput {
+  category_id?: string | null
+  name: string
+  sku?: string | null
+  description?: string | null
+  quantity?: number
+  minimum_quantity?: number
+  unit?: string | null
+}
+
+/** No `category_id` here — InventoryItemUpdate on the backend doesn't accept
+ * it, so an item's category is fixed at creation and shown read-only when
+ * editing. */
+export interface InventoryItemUpdateInput {
+  name?: string
+  sku?: string | null
+  description?: string | null
+  quantity?: number
+  minimum_quantity?: number
+  unit?: string | null
+}
+
+export interface StockAdjustmentInput {
+  delta: number
+  reason?: string | null
+}
+
+/* ── Assets & Asset Assignments ────────────────────────────────────── */
+
+export type AssetStatus = "available" | "assigned" | "damaged" | "lost" | "maintenance" | "retired"
+
+export interface Asset {
+  id: string
+  inventory_item_id: string | null
+  asset_number: string
+  name: string
+  serial_number: string | null
+  purchase_date: string | null
+  purchase_cost: number | string | null
+  status: AssetStatus
+  condition: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AssetList {
+  items: Asset[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface AssetCreateInput {
+  inventory_item_id?: string | null
+  asset_number?: string | null
+  name: string
+  serial_number?: string | null
+  purchase_date?: string | null
+  purchase_cost?: number | string | null
+  status?: AssetStatus
+  condition?: string | null
+  notes?: string | null
+}
+
+/** No `inventory_item_id`/`asset_number` here — AssetUpdate on the backend
+ * doesn't accept them, so both are fixed at creation and shown read-only
+ * when editing. */
+export interface AssetUpdateInput {
+  name?: string
+  serial_number?: string | null
+  purchase_date?: string | null
+  purchase_cost?: number | string | null
+  status?: AssetStatus
+  condition?: string | null
+  notes?: string | null
+}
+
+export interface AssetAssignment {
+  id: string
+  asset_id: string
+  resident_id: string | null
+  staff_id: string | null
+  room_id: string | null
+  assigned_at: string
+  returned_at: string | null
+  condition_on_assignment: string | null
+  condition_on_return: string | null
+  notes: string | null
+  assigned_by: string | null
+}
+
+export interface AssetAssignmentList {
+  items: AssetAssignment[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface AssetAssignmentCreateInput {
+  asset_id: string
+  resident_id?: string | null
+  staff_id?: string | null
+  room_id?: string | null
+  condition_on_assignment?: string | null
+  notes?: string | null
+}
+
+export interface AssetAssignmentReturnInput {
+  condition_on_return?: string | null
+  notes?: string | null
+}

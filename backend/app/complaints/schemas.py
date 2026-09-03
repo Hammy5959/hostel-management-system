@@ -16,7 +16,7 @@ class ComplaintCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1)
     category: str | None = Field(default=None, max_length=100)
-    priority: Literal["low", "normal", "high", "urgent"] = "medium"
+    priority: Literal["low", "normal", "high", "urgent"] = "normal"
     room_id: UUID | None = None
 
 

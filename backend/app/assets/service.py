@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.common.numbers import generate_number
 from app.core.exceptions import NotFoundError
-from app.database.crud import get_by_id, insert, list_page, update
+from app.database.crud import get_by_id, insert, list_page, update as crud_update
 from app.assets.schemas import AssetCreate, AssetList, AssetOut, AssetUpdate
 
 _TABLE = "assets"
@@ -58,4 +58,11 @@ def list_assets(
 def update(db: Client, asset_id: str, data: AssetUpdate) -> AssetOut:
     if get_by_id(db, _TABLE, asset_id) is None:
         raise NotFoundError("Asset not found", code="asset_not_found")
-    return AssetOut.model_validate(update(db, _TABLE, asset_id, data.model_dump(exclude_unset=True)))
+    return AssetOut.model_validate(
+    crud_update(
+        db,
+        _TABLE,
+        asset_id,
+        data.model_dump(mode="json", exclude_unset=True),
+    )
+)

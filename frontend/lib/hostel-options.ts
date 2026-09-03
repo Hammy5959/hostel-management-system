@@ -3,8 +3,10 @@ import {
   getBuildings,
   getFeeStructures,
   getFloors,
+  getInventoryItems,
   getInvoices,
   getRooms,
+  getStaffList,
   searchResidents,
 } from "@/lib/api"
 import type { ComboOption } from "@/components/hostel/entity-combobox"
@@ -200,4 +202,64 @@ export function fetchPayableInvoiceOptions(residentId: string | undefined) {
         sublabel: `Balance: ${formatCurrency(inv.balance)}`,
       }))
   }
+}
+
+/** Residents who can currently file a maintenance complaint: only those who
+ * are active or on_leave AND hold an active room allocation — deliberately
+ * reuses `eligible_for_attendance` rather than `eligible_for_visitor`. A
+ * complaint is filed *about a room*, so it needs the stricter "actually has
+ * an allocated bed" gate (residents/service.py's real allocation check),
+ * not Visitors' looser "hasn't checked out" gate — receiving a guest doesn't
+ * require a currently-tracked bed, but filing a room complaint does.
+ * `app.complaints.service` doesn't enforce this server-side today (any
+ * resident that exists can be targeted), so this is a client-side-only
+ * narrowing to keep the picker meaningful. Used by the New Complaint
+ * dialog's resident picker. */
+export async function fetchMaintenanceEligibleResidentOptions(search: string): Promise<ComboOption[]> {
+  const res = await searchResidents({ search: search || undefined, per_page: 20, eligible_for_attendance: true })
+  return res.items.map((r) => ({
+    value: r.id,
+    label: [r.first_name, r.last_name].filter(Boolean).join(" "),
+    sublabel: r.student_id ?? undefined,
+  }))
+}
+
+/** Rooms for the complaint/ticket room picker and filter — unlike
+ * fetchRoomOptions this isn't scoped to a selected floor, since a complaint
+ * can be filed against any room in the hostel. */
+export async function fetchMaintenanceRoomOptions(search: string): Promise<ComboOption[]> {
+  const res = await getRooms({ search: search || undefined, per_page: 20 })
+  return res.items.map((r) => ({
+    value: r.id,
+    label: r.room_number,
+    sublabel: r.building_name ?? undefined,
+  }))
+}
+
+/** Staff who can be assigned a maintenance ticket — always hits the live
+ * `GET /staff` endpoint, so a newly added or reactivated staff member shows
+ * up here automatically with no further wiring. Filters to `is_active`
+ * client-side since the list endpoint has no such query param. Used by the
+ * ticket Assign dialog's staff picker. */
+export async function fetchStaffAssigneeOptions(search: string): Promise<ComboOption[]> {
+  const res = await getStaffList({ search: search || undefined, per_page: 100 })
+  return res.items
+    .filter((s) => s.is_active)
+    .map((s) => ({
+      value: s.id,
+      label: s.user ? [s.user.first_name, s.user.last_name].filter(Boolean).join(" ") : "Unnamed Staff",
+      sublabel: s.designation ?? s.department ?? undefined,
+    }))
+}
+
+/** Inventory items for the New Asset form's optional "link to inventory
+ * item" picker — a plain unscoped search, since any item can back an
+ * asset. */
+export async function fetchInventoryItemOptions(search: string): Promise<ComboOption[]> {
+  const res = await getInventoryItems({ search: search || undefined, per_page: 20 })
+  return res.items.map((i) => ({
+    value: i.id,
+    label: i.name,
+    sublabel: i.sku ?? undefined,
+  }))
 }
