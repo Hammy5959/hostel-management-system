@@ -27,6 +27,10 @@ from app.users.crud import get_user_by_id
 _TABLE = "residents"
 _SELECT = "*, users(id, email, status)"
 
+# Resident statuses that mean "currently residing" — shared so modules that
+# gate on this (app.attendance.service, app.meals.service) can't drift apart.
+RESIDING_STATUSES = {"active", "on_leave"}
+
 
 def _fetch(db: Client, resident_id: str) -> dict:
     row = get_by_id(db, _TABLE, resident_id)

@@ -21,12 +21,9 @@ from app.audit.service import record_audit
 from app.common.authz import has_permission
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
-from app.residents.service import get_resident_by_user, has_active_allocation
+from app.residents.service import RESIDING_STATUSES, get_resident_by_user, has_active_allocation
 
 _TABLE = "attendance"
-
-# Attendance only makes sense for a resident currently residing in the hostel.
-_ATTENDANCE_ALLOWED_STATUSES = {"active", "on_leave"}
 
 
 def _existing_record(db: Client, resident_id: str, attendance_date: str) -> dict | None:
@@ -41,7 +38,7 @@ def mark(db: Client, user: dict, data: AttendanceMark) -> AttendanceOut:
     resident = get_by_id(db, "residents", str(data.resident_id))
     if resident is None:
         raise NotFoundError("Resident not found", code="resident_not_found")
-    if resident["status"] not in _ATTENDANCE_ALLOWED_STATUSES:
+    if resident["status"] not in RESIDING_STATUSES:
         raise ConflictError(
             f"Cannot mark attendance for resident with status '{resident['status']}'",
             code="resident_not_active",
@@ -66,7 +63,7 @@ def bulk_mark(db: Client, user: dict, data: AttendanceBulkMark) -> AttendanceBul
         resident = get_by_id(db, "residents", str(record.resident_id))
         if resident is None:
             raise NotFoundError(f"Resident {record.resident_id} not found", code="resident_not_found")
-        if resident["status"] not in _ATTENDANCE_ALLOWED_STATUSES:
+        if resident["status"] not in RESIDING_STATUSES:
             raise ConflictError(
                 f"Cannot mark attendance for resident {record.resident_id} with status '{resident['status']}'",
                 code="resident_not_active",

@@ -35,6 +35,19 @@ def update(db: Client, table: str, record_id: str, data: dict) -> dict:
     return res.data[0]
 
 
+def upsert(db: Client, table: str, data: dict | list[dict], *, on_conflict: str) -> list[dict]:
+    """Insert, or update on conflict, one row or a batch of rows in one call.
+
+    `on_conflict` is a comma-separated column list matching an existing UNIQUE
+    constraint (e.g. "resident_id,meal_date,meal_type"). Returns the full row
+    list so callers doing a single-row upsert take `[0]`.
+    """
+    res = db.table(table).upsert(data, on_conflict=on_conflict).execute()
+    if getattr(res, "error", None):
+        raise_for_error(res, f"upsert {table}")
+    return res.data
+
+
 def delete(db: Client, table: str, record_id: str) -> None:
     res = db.table(table).delete().eq("id", record_id).execute()
     if getattr(res, "error", None):
