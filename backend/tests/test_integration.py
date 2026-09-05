@@ -171,11 +171,11 @@ def test_no_password_hash_user_cannot_login(client, db, role_ids):
         _cleanup(db, [user_id], {})
 
 
-def test_api_created_user_hashed_and_can_login(client, db, role_ids):
+def test_api_created_user_hashed_and_can_login(client, db, role_ids, settings):
     """A user created via POST /users has its password Argon2id-hashed (never
     plaintext), the API response never leaks password fields, and the user can
     log in with the password they set."""
-    admin_token = _login(client, db, "hamid59@gmail.com", "***REMOVED***")
+    admin_token = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     email = f"api_user_{SUFFIX}@example.com"
     r = client.post("/api/v1/users", headers=_auth(client, admin_token), json={
         "email": email, "first_name": "Api", "last_name": "User",
@@ -200,11 +200,11 @@ def test_api_created_user_hashed_and_can_login(client, db, role_ids):
         _cleanup(db, [uid], {})
 
 
-def test_super_admin_password_login(client, db):
-    """The seeded super_admin must be able to log in with its initial password:
-    Email + ***REMOVED*** -> OTP -> Dashboard."""
-    email = "hamid59@gmail.com"
-    r = client.post("/api/v1/auth/request-otp", json={"email": email, "password": "***REMOVED***"})
+def test_super_admin_password_login(client, db, settings):
+    """The seeded super_admin must be able to log in with its initial (env-
+    configured) password: Email + password -> OTP -> Dashboard."""
+    email = settings.super_admin_email.strip().lower()
+    r = client.post("/api/v1/auth/request-otp", json={"email": email, "password": settings.super_admin_password})
     assert r.status_code == 200, r.text
     otp = get_otp_store()._records[email].otp
     r = client.post("/api/v1/auth/verify-otp", json={"email": email, "otp": otp})

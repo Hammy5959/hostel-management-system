@@ -37,8 +37,6 @@ from app.core.passwords import hash_password  # noqa: E402
 from app.database.supabase import get_supabase  # noqa: E402
 
 SUFFIX = uuid.uuid4().hex[:8]
-SUPER_ADMIN_EMAIL = "hamid59@gmail.com"  # seeded super admin (OTP dev value 123456)
-SUPER_ADMIN_PASSWORD = "***REMOVED***"  # initial password set by the seeder (Argon2id-hashed)
 TEST_PASSWORD = "Test#12345"  # meets the password policy (>=8 chars, number, special char)
 
 created_user_ids: list[str] = []
@@ -142,8 +140,8 @@ def _deleted_enum_available(db) -> bool:
 
 
 # ── Role lifecycle ────────────────────────────────────────────────────────────
-def test_role_create_and_duplicate(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_role_create_and_duplicate(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     name = f"role_{SUFFIX}"
     r = client.post("/api/v1/roles", headers=h, json={"name": name, "description": "created for test"})
@@ -166,8 +164,8 @@ def test_role_create_and_duplicate(client, db, role_ids):
     assert any(a["action"] == "role.create" for a in audit.data)
 
 
-def test_role_rename_and_permissions_survive(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_role_rename_and_permissions_survive(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     role = _create_role(db, f"rename_{SUFFIX}")
     created_role_ids.append(role["id"])
@@ -193,8 +191,8 @@ def test_role_rename_and_permissions_survive(client, db, role_ids):
     assert r.json()["detail"]["code"] == "role_name_exists"
 
 
-def test_system_role_rename_and_deactivate_locked(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_system_role_rename_and_deactivate_locked(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     warden_id = role_ids["warden"]
 
@@ -211,8 +209,8 @@ def test_system_role_rename_and_deactivate_locked(client, db, role_ids):
     assert r.status_code == 200, r.text
 
 
-def test_role_delete_custom_vs_system_vs_in_use(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_role_delete_custom_vs_system_vs_in_use(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
 
     # System role never deletable.
@@ -238,8 +236,8 @@ def test_role_delete_custom_vs_system_vs_in_use(client, db, role_ids):
     assert any(a["action"] == "role.delete" for a in audit.data)
 
 
-def test_role_permissions_validation_and_super_admin_lock(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_role_permissions_validation_and_super_admin_lock(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     role = _create_role(db, f"perms_{SUFFIX}")
     created_role_ids.append(role["id"])
@@ -266,10 +264,10 @@ def test_role_permissions_validation_and_super_admin_lock(client, db, role_ids):
     assert r.json()["permissions"] == []
 
 
-def test_role_deactivation_revokes_access_and_is_reversible(client, db, role_ids):
+def test_role_deactivation_revokes_access_and_is_reversible(client, db, role_ids, settings):
     """Deactivating a role is a reversible off-switch: holders keep their
     account but lose API access while it is off."""
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     role = _create_role(db, f"off_{SUFFIX}")
     created_role_ids.append(role["id"])
@@ -300,8 +298,8 @@ def test_role_deactivation_revokes_access_and_is_reversible(client, db, role_ids
 
 
 # ── User lifecycle ────────────────────────────────────────────────────────────
-def test_user_create_and_duplicate_email(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_user_create_and_duplicate_email(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     email = f"user_{SUFFIX}@example.com"
 
@@ -360,8 +358,8 @@ def test_self_profile_update_and_escalation_rejected(client, db, role_ids):
         assert r.status_code == 422, (attempt, r.text)
 
 
-def test_admin_role_change_and_escalation_guard(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_admin_role_change_and_escalation_guard(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
 
     target = _create_user(db, f"target_{SUFFIX}@example.com", role_ids["resident"])
@@ -384,10 +382,10 @@ def test_admin_role_change_and_escalation_guard(client, db, role_ids):
     assert r.json()["email_verified"] is False
 
 
-def test_non_super_admin_cannot_assign_super_admin(client, db, role_ids):
+def test_non_super_admin_cannot_assign_super_admin(client, db, role_ids, settings):
     """A user with users.update but not super_admin may not promote anyone to
     the super_admin role."""
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     escalator_role = _create_role(db, f"esc_{SUFFIX}")
     created_role_ids.append(escalator_role["id"])
@@ -425,8 +423,8 @@ def test_update_without_permission(client, db, role_ids):
     assert r.json()["detail"]["code"] == "missing_permission"
 
 
-def test_deactivate_user_blocks_login(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_deactivate_user_blocks_login(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     uid = _create_user(db, f"deact_{SUFFIX}@example.com", role_ids["resident"])
     created_user_ids.append(uid)
@@ -448,10 +446,10 @@ def test_deactivate_user_blocks_login(client, db, role_ids):
     assert r.json()["detail"]["code"] == "account_disabled"
 
 
-def test_super_admin_and_self_protections(client, db, role_ids):
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+def test_super_admin_and_self_protections(client, db, role_ids, settings):
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
-    sa_id = db.table("users").select("id").eq("email", SUPER_ADMIN_EMAIL).execute().data[0]["id"]
+    sa_id = db.table("users").select("id").eq("email", settings.super_admin_email.strip().lower()).execute().data[0]["id"]
 
     # The seeded super_admin cannot even deactivate/delete its own account
     # (self-* guard takes precedence over the super_admin lock).
@@ -489,7 +487,7 @@ def test_super_admin_and_self_protections(client, db, role_ids):
     assert r.json()["detail"]["code"] == "self_delete_denied"
 
 
-def test_user_soft_delete_archive(client, db, role_ids):
+def test_user_soft_delete_archive(client, db, role_ids, settings):
     """DELETE /users/{id} archives (soft-deletes): the row persists with
     status='deleted', authentication is permanently blocked, and linked
     records (resident link, audit history) are preserved."""
@@ -499,7 +497,7 @@ def test_user_soft_delete_archive(client, db, role_ids):
             "20260812000050_add_user_status_deleted.sql then re-run"
         )
 
-    admin = _login(client, db, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD)
+    admin = _login(client, db, settings.super_admin_email, settings.super_admin_password)
     h = _auth(client, admin)
     uid = _create_user(db, f"archive_{SUFFIX}@example.com", role_ids["resident"])
     created_user_ids.append(uid)

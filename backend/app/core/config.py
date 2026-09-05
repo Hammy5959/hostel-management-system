@@ -45,13 +45,15 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 5
 
     # --- Initial super admin (bootstrap, created by the seeder) ----------------
-    # The seeder stores ONLY the Argon2id hash of this password (never the
-    # plaintext) and only sets it when the account has no password yet — so
-    # re-running the seeder never overwrites a changed password.
-    super_admin_email: str = "hamid59@gmail.com"
+    # Required from the environment only (see .env.example) — no default here,
+    # matching supabase_url / jwt_secret above. The seeder stores ONLY the
+    # Argon2id hash of this password (never the plaintext) and only sets it
+    # when the account has no password yet — so re-running the seeder never
+    # overwrites a changed password.
+    super_admin_email: str
     super_admin_first_name: str = "Super"
     super_admin_last_name: str = "Admin"
-    super_admin_password: str = "***REMOVED***"
+    super_admin_password: str
 
     # --- CORS -----------------------------------------------------------------
     # Comma-separated list of allowed origins.
