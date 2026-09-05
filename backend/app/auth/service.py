@@ -11,7 +11,7 @@ from app.core.config import get_settings
 from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.passwords import verify_password
 from app.core.security import create_access_token
-from app.users.crud import AUTHENTICABLE_STATUSES, get_user_by_email, mark_user_authenticated
+from app.users.crud import AUTHENTICABLE_STATUSES, BLOCKED_STATUSES, get_user_by_email, mark_user_authenticated
 
 _store = get_otp_store()
 _sender = get_otp_sender()
@@ -66,6 +66,12 @@ def verify_otp(db: Client, email: str, otp: str) -> TokenResponse:
     ok, reason = _store.consume_attempt(normalized, otp, settings.otp_max_attempts)
     if not ok:
         raise BadRequestError(_otp_error_message(reason), code=f"otp_{reason}")
+
+    if user["status"] in BLOCKED_STATUSES:
+        raise ForbiddenError(
+            "This account has been blocked and cannot sign in",
+            code="account_blocked",
+        )
 
     updated = mark_user_authenticated(db, user["id"])
     token = create_access_token(subject=user["id"], role_id=user.get("role_id"))

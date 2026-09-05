@@ -23,6 +23,10 @@ def get_user_by_email(db: Client, email: str) -> dict | None:
     return res.data[0] if res.data else None
 
 
+def email_exists(db: Client, email: str) -> bool:
+    return get_user_by_email(db, email) is not None
+
+
 def get_user_by_id(db: Client, user_id: str) -> dict | None:
     res = db.table("users").select("*").eq("id", user_id).execute()
     if getattr(res, "error", None):
@@ -44,6 +48,13 @@ def update_user(db: Client, user_id: str, data: dict) -> dict:
     return res.data[0]
 
 
+def set_user_password(db: Client, user_id: str, password_hash: str) -> dict:
+    res = db.table("users").update({"password_hash": password_hash}).eq("id", user_id).execute()
+    if getattr(res, "error", None):
+        raise_for_error(res, "update user")
+    return res.data[0]
+
+
 def list_users(
     db: Client,
     *,
@@ -52,6 +63,7 @@ def list_users(
     search: str | None = None,
     role_id: str | None = None,
     status: str | None = None,
+    include_deleted: bool = False,
 ) -> tuple[list[dict], int]:
     query = db.table("users").select("*", count="exact")
     if search:
@@ -62,6 +74,8 @@ def list_users(
         query = query.eq("role_id", role_id)
     if status:
         query = query.eq("status", status)
+    elif not include_deleted:
+        query = query.neq("status", "deleted")
     query = query.order("created_at", desc=True).range((page - 1) * per_page, page * per_page - 1)
     res = query.execute()
     if getattr(res, "error", None):

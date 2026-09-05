@@ -8,7 +8,7 @@ from supabase import Client
 from app.api.deps import get_db
 from app.core.permissions import require_permission
 from app.users import service
-from app.users.schemas import UserCreate, UserList, UserOut, UserStatusUpdate, UserUpdate
+from app.users.schemas import UserCreate, UserList, UserOut, UserPasswordReset, UserStatusUpdate, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -62,6 +62,16 @@ def set_status(
     db: Client = Depends(get_db),
 ) -> UserOut:
     return service.set_user_status(db, user_id, payload, actor=user)
+
+
+@router.post("/{user_id}/reset-password", response_model=UserOut, summary="Reset a user's password")
+def reset_password(
+    user_id: str,
+    payload: UserPasswordReset,
+    user: dict = Depends(require_permission("users.update")),
+    db: Client = Depends(get_db),
+) -> UserOut:
+    return service.reset_user_password(db, user_id, payload, actor=user)
 
 
 @router.delete("/{user_id}", response_model=UserOut, summary="Soft-delete (archive) a user account")

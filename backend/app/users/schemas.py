@@ -34,6 +34,20 @@ class UserCreate(BaseModel):
         return value
 
 
+class UserPasswordReset(BaseModel):
+    password: str = Field(
+        min_length=1,
+        max_length=200,
+        description="New password. Stored only as an Argon2id hash — never plaintext.",
+    )
+
+    @field_validator("password")
+    @classmethod
+    def _check_password_policy(cls, value: str) -> str:
+        validate_password(value)
+        return value
+
+
 class UserUpdate(BaseModel):
     """Admin edits. Changing email requires the new address to be verified on
     the next OTP login (email_verified is reset to False)."""

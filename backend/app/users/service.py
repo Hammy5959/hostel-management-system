@@ -25,7 +25,15 @@ from app.core.passwords import hash_password
 from app.core.permissions import SUPER_ADMIN_ROLE, is_super_admin
 from app.roles import crud as roles_crud
 from app.users import crud
-from app.users.schemas import UserCreate, UserList, UserOut, UserSelfUpdate, UserStatusUpdate, UserUpdate
+from app.users.schemas import (
+    UserCreate,
+    UserList,
+    UserOut,
+    UserPasswordReset,
+    UserSelfUpdate,
+    UserStatusUpdate,
+    UserUpdate,
+)
 
 # Statuses that prevent an account from authenticating (see users.crud).
 BLOCKED_STATUSES = crud.BLOCKED_STATUSES
@@ -47,11 +55,13 @@ def _require_role(db: Client, role_id: str) -> dict:
 def create_user(db: Client, data: UserCreate, actor: dict | None = None) -> UserOut:
     _require_role(db, str(data.role_id))
     payload = data.model_dump(mode="json")
+    payload["email"] = _normalize_email(payload["email"])
+    if crud.email_exists(db, payload["email"]):
+        raise ConflictError("A user with this email already exists", code="email_exists")
     # The password never reaches the database in plaintext: pop it out of the
     # request payload and store only its Argon2id hash.
     password = payload.pop("password")
     payload["password_hash"] = hash_password(password)
-    payload["email"] = _normalize_email(payload["email"])
     user = crud.create_user(db, payload)
     record_audit(
         db,
@@ -188,6 +198,25 @@ def set_user_status(db: Client, user_id: str, data: UserStatusUpdate, actor: dic
         description=f"Changed status of {user['email']} to {data.status}",
         old_values={"status": user.get("status")},
         new_values={"status": data.status},
+    )
+    return UserOut.model_validate(updated)
+
+
+def reset_user_password(db: Client, user_id: str, data: UserPasswordReset, actor: dict | None = None) -> UserOut:
+    user = crud.get_user_by_id(db, user_id)
+    if user is None:
+        raise NotFoundError("User not found", code="user_not_found")
+
+    password_hash = hash_password(data.password)
+    updated = crud.set_user_password(db, user_id, password_hash)
+    record_audit(
+        db,
+        user_id=actor["id"] if actor else None,
+        action="user.password_reset",
+        module="users",
+        entity_type="user",
+        entity_id=user_id,
+        description=f"Reset password for {user['email']}",
     )
     return UserOut.model_validate(updated)
 
