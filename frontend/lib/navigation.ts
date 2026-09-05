@@ -3,7 +3,6 @@ import {
   BadgeCheck,
   Banknote,
   BarChart3,
-  Bell,
   Building2,
   CalendarCheck,
   CalendarClock,
@@ -22,7 +21,6 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
-  Soup,
   UserCog,
   UserRound,
   Users,
@@ -139,31 +137,9 @@ export const navigation: NavEntry[] = [
     },
   },
 
-  {
-    type: "group",
-    data: {
-      id: "mess",
-      label: "Mess",
-      icon: UtensilsCrossed,
-      items: [
-        { label: "Mess Menus", href: "/mess-menus", icon: UtensilsCrossed },
-        { label: "Meals", href: "/meals", icon: Soup },
-      ],
-    },
-  },
+  { type: "link", data: { label: "Mess Menus & Meals", href: "/mess-menus-meals", icon: UtensilsCrossed } },
 
-  {
-    type: "group",
-    data: {
-      id: "communication",
-      label: "Communication",
-      icon: Megaphone,
-      items: [
-        { label: "Notices", href: "/notices", icon: Megaphone },
-        { label: "Notifications", href: "/notifications", icon: Bell },
-      ],
-    },
-  },
+  { type: "link", data: { label: "Notices", href: "/notices", icon: Megaphone } },
 
   { type: "link", data: { label: "Reports", href: "/reports", icon: BarChart3 } },
   { type: "link", data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock } },

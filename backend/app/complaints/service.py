@@ -12,6 +12,7 @@ from supabase import Client
 from app.common.authz import has_permission
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
+from app.notifications.service import notify_resident
 from app.residents.service import get_resident_by_user
 from app.complaints.schemas import ComplaintCreate, ComplaintList, ComplaintOut, ComplaintUpdate
 
@@ -87,9 +88,20 @@ def update_complaint(db: Client, complaint_id: str, data: ComplaintUpdate) -> Co
     complaint = _fetch(db, complaint_id)
     payload = data.model_dump(exclude_unset=True)
     new_status = payload.get("status")
-    if new_status and new_status != complaint["status"]:
+    status_changed = bool(new_status) and new_status != complaint["status"]
+    if status_changed:
         if new_status not in _ALLOWED_TRANSITIONS.get(complaint["status"], set()):
             raise ConflictError(
                 f"Cannot move a complaint from '{complaint['status']}' to '{new_status}'", code="invalid_transition"
             )
-    return ComplaintOut.model_validate(update(db, _TABLE, complaint_id, payload))
+    updated = ComplaintOut.model_validate(update(db, _TABLE, complaint_id, payload))
+    if status_changed:
+        notify_resident(
+            db,
+            str(updated.resident_id),
+            title="Complaint updated",
+            message=f"Your complaint '{updated.title}' is now {updated.status}.",
+            reference_type="complaint",
+            reference_id=str(updated.id),
+        )
+    return updated

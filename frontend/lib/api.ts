@@ -59,6 +59,20 @@ import type {
   MaintenanceTicketCreateInput,
   MaintenanceTicketList,
   MaintenanceTicketUpdateInput,
+  MealBulkMarkInput,
+  MealBulkResult,
+  MealRegister,
+  MealType,
+  MenuCreateInput,
+  MenuList,
+  MenuListParams,
+  MenuOut,
+  MenuUpdateInput,
+  Notice,
+  NoticeCreateInput,
+  NoticeList,
+  NoticeListParams,
+  NoticeUpdateInput,
   NotificationItem,
   NotificationList,
   OccupancyReport,
@@ -262,6 +276,32 @@ export function getLeaveReport(): Promise<LeaveReport> {
 
 export function getAuditLogs(perPage = 6): Promise<AuditLogList> {
   return apiFetch<AuditLogList>(`/audit-logs?per_page=${perPage}`)
+}
+
+/* ── Notices ──────────────────────────────────────────────────── */
+
+export function getNotices(params: NoticeListParams = {}): Promise<NoticeList> {
+  return apiFetch<NoticeList>(`/notices${toQueryString({ ...params })}`)
+}
+
+export function createNotice(payload: NoticeCreateInput): Promise<Notice> {
+  return apiFetch<Notice>("/notices", { method: "POST", body: payload })
+}
+
+export function updateNotice(id: string, payload: NoticeUpdateInput): Promise<Notice> {
+  return apiFetch<Notice>(`/notices/${id}`, { method: "PATCH", body: payload })
+}
+
+export function publishNotice(id: string): Promise<Notice> {
+  return apiFetch<Notice>(`/notices/${id}/publish`, { method: "POST" })
+}
+
+export function unpublishNotice(id: string): Promise<Notice> {
+  return apiFetch<Notice>(`/notices/${id}/unpublish`, { method: "POST" })
+}
+
+export function deleteNotice(id: string): Promise<{ detail: string }> {
+  return apiFetch<{ detail: string }>(`/notices/${id}`, { method: "DELETE" })
 }
 
 /* ── Notifications ────────────────────────────────────────────── */
@@ -853,6 +893,34 @@ export function bulkMarkAttendance(payload: AttendanceBulkMarkInput): Promise<At
 
 export function updateAttendance(id: string, payload: AttendanceUpdateInput): Promise<AttendanceRecord> {
   return apiFetch<AttendanceRecord>(`/attendance/${id}`, { method: "PATCH", body: payload })
+}
+
+/* ── Mess Menus ────────────────────────────────────────────────────── */
+
+export function getMessMenus(params: MenuListParams = {}): Promise<MenuList> {
+  return apiFetch<MenuList>(`/mess-menus${toQueryString({ ...params })}`)
+}
+
+export function createMessMenu(payload: MenuCreateInput): Promise<MenuOut> {
+  return apiFetch<MenuOut>("/mess-menus", { method: "POST", body: payload })
+}
+
+export function updateMessMenu(id: string, payload: MenuUpdateInput): Promise<MenuOut> {
+  return apiFetch<MenuOut>(`/mess-menus/${id}`, { method: "PATCH", body: payload })
+}
+
+export function deleteMessMenu(id: string): Promise<{ detail: string }> {
+  return apiFetch<{ detail: string }>(`/mess-menus/${id}`, { method: "DELETE" })
+}
+
+/* ── Meals ─────────────────────────────────────────────────────────── */
+
+export function getMealsRegister(params: { meal_date: string; meal_type: MealType }): Promise<MealRegister> {
+  return apiFetch<MealRegister>(`/meals/register${toQueryString({ ...params })}`)
+}
+
+export function bulkMarkMeals(payload: MealBulkMarkInput): Promise<MealBulkResult> {
+  return apiFetch<MealBulkResult>("/meals/bulk", { method: "POST", body: payload })
 }
 
 /* ── Leave Requests ────────────────────────────────────────────────── */

@@ -19,6 +19,7 @@ from app.database.crud import get_by_id, list_page
 from app.database.supabase import raise_for_error
 from app.fee_structures import service as fee_structures_service
 from app.invoices.schemas import InvoiceCreate, InvoiceList, InvoiceOut, InvoiceSummaryOut, InvoiceUpdate
+from app.notifications.service import notify_resident
 from app.residents.service import get_resident_by_user, has_active_allocation
 
 _TABLE = "invoices"
@@ -344,7 +345,17 @@ def issue_invoice(db: Client, invoice_id: str) -> InvoiceOut:
     ).eq("id", invoice_id).execute()
     if getattr(res, "error", None):
         raise_for_error(res, "issue invoice")
-    return InvoiceOut.model_validate(_fetch(db, invoice_id))
+    issued = InvoiceOut.model_validate(_fetch(db, invoice_id))
+    due = f" due {issued.due_date}" if issued.due_date else ""
+    notify_resident(
+        db,
+        str(issued.resident_id),
+        title="Invoice issued",
+        message=f"Invoice {issued.invoice_number} for {issued.total_amount} is ready{due}.",
+        reference_type="invoice",
+        reference_id=str(issued.id),
+    )
+    return issued
 
 
 def cancel_invoice(db: Client, invoice_id: str) -> InvoiceOut:

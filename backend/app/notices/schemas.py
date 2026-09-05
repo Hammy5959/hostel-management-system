@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+AudienceType = Literal["all", "building", "floor"]
 
 
 class NoticeCreate(BaseModel):
@@ -13,6 +16,9 @@ class NoticeCreate(BaseModel):
     content: str = Field(min_length=1)
     category: str | None = Field(default=None, max_length=100)
     expires_at: datetime | None = None
+    audience_type: AudienceType = "all"
+    audience_building_id: UUID | None = None
+    audience_floor_id: UUID | None = None
 
 
 class NoticeUpdate(BaseModel):
@@ -20,6 +26,9 @@ class NoticeUpdate(BaseModel):
     content: str | None = None
     category: str | None = Field(default=None, max_length=100)
     expires_at: datetime | None = None
+    audience_type: AudienceType | None = None
+    audience_building_id: UUID | None = None
+    audience_floor_id: UUID | None = None
 
 
 class NoticeOut(BaseModel):
@@ -32,6 +41,9 @@ class NoticeOut(BaseModel):
     is_published: bool
     published_at: datetime | None = None
     expires_at: datetime | None = None
+    audience_type: AudienceType = "all"
+    audience_building_id: UUID | None = None
+    audience_floor_id: UUID | None = None
     created_by: UUID | None = None
     created_at: datetime
     updated_at: datetime

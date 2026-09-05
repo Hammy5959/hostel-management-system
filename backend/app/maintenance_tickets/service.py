@@ -13,6 +13,7 @@ from supabase import Client
 from app.core.exceptions import BadRequestError, ConflictError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
 from app.maintenance_tickets.schemas import TicketCreate, TicketList, TicketOut, TicketUpdate
+from app.notifications.service import notify_resident, notify_staff
 
 _TABLE = "maintenance_tickets"
 
@@ -101,8 +102,28 @@ def update_ticket(db: Client, ticket_id: str, data: TicketUpdate) -> TicketOut:
 
     updated = TicketOut.model_validate(update(db, _TABLE, ticket_id, payload))
 
+    if payload.get("assigned_to"):
+        notify_staff(
+            db,
+            payload["assigned_to"],
+            title="Ticket assigned",
+            message=f"You've been assigned ticket '{updated.title}'.",
+            reference_type="maintenance_ticket",
+            reference_id=str(updated.id),
+        )
+
     # Propagate terminal ticket state to the linked complaint, if any.
     if ticket.get("complaint_id") and new_status in ("resolved", "closed", "cancelled"):
         complaint_status = "resolved" if new_status in ("resolved", "closed") else "cancelled"
         db.table("complaints").update({"status": complaint_status, "updated_at": _now_iso()}).eq("id", ticket["complaint_id"]).execute()
+        complaint = get_by_id(db, "complaints", ticket["complaint_id"])
+        if complaint and complaint.get("resident_id"):
+            notify_resident(
+                db,
+                str(complaint["resident_id"]),
+                title="Complaint updated",
+                message=f"Your complaint is now {complaint_status}.",
+                reference_type="complaint",
+                reference_id=str(ticket["complaint_id"]),
+            )
     return updated

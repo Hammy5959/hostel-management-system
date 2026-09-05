@@ -1,6 +1,6 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -40,6 +40,7 @@ import {
   getNotifications,
   getUnreadNotificationCount,
   markAllNotificationsRead,
+  markNotificationRead,
 } from "@/lib/api"
 
 interface TopbarProps {
@@ -50,6 +51,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null)
+  const [notifOpen, setNotifOpen] = useState(false)
 
   const { data: countData } = useQuery({
     queryKey: ["notification-count"],
@@ -68,6 +70,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       queryClient.invalidateQueries({ queryKey: ["notification-count"] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       toast.success("All notifications marked as read.")
+    },
+  })
+
+  const markRead = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
   })
 
@@ -114,7 +124,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </div>
 
         {/* Notifications */}
-        <DropdownMenu>
+        <DropdownMenu
+          open={notifOpen}
+          onOpenChange={(open) => {
+            setNotifOpen(open)
+            if (open) queryClient.invalidateQueries({ queryKey: ["notifications"] })
+          }}
+        >
           <DropdownMenuTrigger
             render={
               <button
@@ -161,6 +177,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                       <li key={n.id}>
                         <button
                           type="button"
+                          onClick={() => !n.is_read && markRead.mutate(n.id)}
                           className="flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
                         >
                           <span
@@ -189,14 +206,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                   </ul>
                 )}
               </ScrollArea>
-              <div className="border-t border-border p-2">
-                <Link
-                  href="/notifications"
-                  className="block rounded-md px-3 py-2 text-center text-xs font-semibold text-primary transition-colors hover:bg-muted"
-                >
-                  View all notifications
-                </Link>
-              </div>
             </DropdownMenuContent>
           </DropdownMenuTrigger>
         </DropdownMenu>

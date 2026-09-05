@@ -38,10 +38,10 @@ def create(
 @router.get("/{notice_id}", response_model=NoticeOut, summary="Get a notice")
 def get(
     notice_id: str,
-    _: dict = Depends(require_permission("notices.view")),
+    user: dict = Depends(require_permission("notices.view")),
     db: Client = Depends(get_db),
 ) -> NoticeOut:
-    return service.get(db, notice_id)
+    return service.get(db, user, notice_id)
 
 
 @router.patch("/{notice_id}", response_model=NoticeOut, summary="Update a notice")

@@ -69,6 +69,7 @@ def list_page(
     search_columns: Iterable[str] = (),
     search_groups: Iterable[str] = (),
     search: str | None = None,
+    or_: Iterable[str] = (),
     order: str = "created_at",
     desc: bool = True,
 ) -> tuple[list[dict], int]:
@@ -78,6 +79,14 @@ def list_page(
     lets a caller OR in extra raw PostgREST filter fragments (e.g. an `and(...)`
     group matching two columns at once) alongside the per-column ILIKE matches
     built from `search_columns`.
+
+    `or_` is a second, independent OR-filter group (same raw-fragment syntax)
+    applied regardless of whether `search` is set — for callers that need an
+    OR condition with no text search involved (e.g. notices' audience
+    targeting). It's issued as its own `.or_()` call, so if a caller ever
+    supplies both `or_` and a `search`, PostgREST ANDs the two OR-groups
+    together rather than merging them into one (each is independently
+    correct on its own).
     """
     query = db.table(table).select(select, count="exact")
     for col, val in (eq or {}).items():
@@ -95,6 +104,8 @@ def list_page(
     for col, val in (not_in or {}).items():
         if val:
             query = query.not_.in_(col, val)
+    if or_:
+        query = query.or_(",".join(or_))
     search = search.strip() if search else search
     if search and (search_columns or search_groups):
         parts = [f"{c}.ilike.*{search}*" for c in search_columns]

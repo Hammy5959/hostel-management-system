@@ -322,3 +322,44 @@ def list_allocations(
         out_items.append(out)
 
     return AllocationList(items=out_items, total=total, page=page, per_page=per_page, summary=summary)
+
+
+def get_resident_location(db: Client, resident_id: str) -> tuple[str | None, str | None]:
+    """Returns (building_id, floor_id) of a resident's current active
+    allocation, or (None, None) if they have none.
+
+    Internal, permission-free — deliberately bypasses list_allocations()'s
+    allocations.view/view_own gating, since this resolves someone else's
+    location for a system purpose (notices' audience targeting), not the
+    caller's own allocations view.
+    """
+    res = (
+        db.table("room_allocations")
+        .select("room:rooms!inner(floors!inner(id, building_id))")
+        .eq("resident_id", resident_id)
+        .eq("status", "active")
+        .limit(1)
+        .execute()
+    )
+    if not res.data:
+        return None, None
+    floors = (res.data[0].get("room") or {}).get("floors") or {}
+    return floors.get("building_id"), floors.get("id")
+
+
+def list_resident_ids_by_location(db: Client, *, building_id: str | None = None, floor_id: str | None = None) -> list[str]:
+    """Active-allocation resident_ids in a building or floor.
+
+    Internal, permission-free — same rationale as get_resident_location.
+    """
+    query = (
+        db.table("room_allocations")
+        .select("resident_id, room:rooms!inner(floors!inner(id, building_id))")
+        .eq("status", "active")
+    )
+    if building_id:
+        query = query.eq("room.floors.building_id", building_id)
+    if floor_id:
+        query = query.eq("room.floors.id", floor_id)
+    res = query.execute()
+    return [row["resident_id"] for row in (res.data or [])]

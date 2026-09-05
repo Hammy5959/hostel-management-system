@@ -1450,3 +1450,144 @@ export interface AssetAssignmentReturnInput {
   condition_on_return?: string | null
   notes?: string | null
 }
+
+/* ── Mess Menus ────────────────────────────────────────────────── */
+
+export interface MenuOut {
+  id: string
+  menu_date: string
+  breakfast: string | null
+  lunch: string | null
+  dinner: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MenuCreateInput {
+  menu_date: string
+  breakfast?: string | null
+  lunch?: string | null
+  dinner?: string | null
+  notes?: string | null
+}
+
+/** No `menu_date` here — MenuUpdate on the backend doesn't accept it, so the
+ * date is fixed at creation and shown read-only when editing. */
+export interface MenuUpdateInput {
+  breakfast?: string | null
+  lunch?: string | null
+  dinner?: string | null
+  notes?: string | null
+}
+
+export interface MenuListParams {
+  page?: number
+  per_page?: number
+  date_from?: string
+  date_to?: string
+}
+
+export interface MenuList {
+  items: MenuOut[]
+  total: number
+  page: number
+  per_page: number
+}
+
+/* ── Meals ─────────────────────────────────────────────────────── */
+
+export type MealType = "breakfast" | "lunch" | "dinner"
+
+export interface MealBulkEntryInput {
+  resident_id: string
+  consumed: boolean
+}
+
+export interface MealBulkMarkInput {
+  meal_date: string
+  meal_type: MealType
+  entries: MealBulkEntryInput[]
+}
+
+export interface MealBulkFailure {
+  resident_id: string
+  code: string
+  message: string
+}
+
+export interface MealBulkResult {
+  marked_count: number
+  failed_count: number
+  failed: MealBulkFailure[]
+}
+
+export interface MealRegisterEntry {
+  resident_id: string
+  first_name: string
+  last_name: string | null
+  meal_id: string | null
+  consumed: boolean
+}
+
+export interface MealRegister {
+  meal_date: string
+  meal_type: MealType
+  items: MealRegisterEntry[]
+  total: number
+}
+
+/* ── Notices ───────────────────────────────────────────────────── */
+
+export type NoticeAudienceType = "all" | "building" | "floor"
+
+export interface Notice {
+  id: string
+  title: string
+  content: string
+  category: string | null
+  is_published: boolean
+  published_at: string | null
+  expires_at: string | null
+  audience_type: NoticeAudienceType
+  audience_building_id: string | null
+  audience_floor_id: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface NoticeCreateInput {
+  title: string
+  content: string
+  category?: string | null
+  expires_at?: string | null
+  audience_type: NoticeAudienceType
+  audience_building_id?: string | null
+  audience_floor_id?: string | null
+}
+
+export interface NoticeUpdateInput {
+  title?: string
+  content?: string
+  category?: string | null
+  expires_at?: string | null
+  audience_type?: NoticeAudienceType
+  audience_building_id?: string | null
+  audience_floor_id?: string | null
+}
+
+export interface NoticeListParams {
+  page?: number
+  per_page?: number
+  category?: string
+  published_only?: boolean
+}
+
+export interface NoticeList {
+  items: Notice[]
+  total: number
+  page: number
+  per_page: number
+}

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from supabase import Client
 
 from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.logging import get_logger
 from app.database.crud import get_by_id, list_page
 from app.database.supabase import raise_for_error
 from app.notifications.schemas import NotificationCreate, NotificationList, NotificationOut
@@ -32,18 +33,28 @@ def notify(
     priority: str = "normal",
     reference_type: str | None = None,
     reference_id: str | None = None,
-) -> NotificationOut:
-    """Create a notification for a user (used by other modules)."""
-    row = NotificationCreate(
-        user_id=user_id,
-        title=title,
-        message=message,
-        type=type,
-        priority=priority,
-        reference_type=reference_type,
-        reference_id=reference_id,
-    )
-    return NotificationOut.model_validate(insert(db, _TABLE, row.model_dump(mode="json")))
+) -> NotificationOut | None:
+    """Create a notification for a user (used by other modules).
+
+    Best-effort: a failure here (e.g. a transient DB error) is logged and
+    swallowed rather than raised, so it never breaks the caller's own action
+    (a leave approval, a payment, a notice publish, ...) that triggered it.
+    No current caller branches on the return value.
+    """
+    try:
+        row = NotificationCreate(
+            user_id=user_id,
+            title=title,
+            message=message,
+            type=type,
+            priority=priority,
+            reference_type=reference_type,
+            reference_id=reference_id,
+        )
+        return NotificationOut.model_validate(insert(db, _TABLE, row.model_dump(mode="json")))
+    except Exception:
+        get_logger(__name__).exception("Failed to create notification for user %s", user_id)
+        return None
 
 
 def insert(db: Client, table: str, data: dict) -> dict:
@@ -88,6 +99,31 @@ def notify_resident(
         notify(
             db,
             user_id=resident["user_id"],
+            title=title,
+            message=message,
+            reference_type=reference_type,
+            reference_id=reference_id,
+        )
+
+
+def notify_staff(
+    db: Client,
+    staff_id: str,
+    *,
+    title: str,
+    message: str,
+    reference_type: str | None = None,
+    reference_id: str | None = None,
+) -> None:
+    """Notify the user linked to a staff record, if any. Mirrors
+    `notify_resident` exactly, for the staff table."""
+    from app.database.crud import get_by_id
+
+    staff = get_by_id(db, "staff", staff_id)
+    if staff and staff.get("user_id"):
+        notify(
+            db,
+            user_id=staff["user_id"],
             title=title,
             message=message,
             reference_type=reference_type,
