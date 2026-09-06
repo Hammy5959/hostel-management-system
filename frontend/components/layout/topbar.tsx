@@ -1,17 +1,15 @@
 "use client"
 
-import { useState, useSyncExternalStore } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceToNow } from "date-fns"
 import {
   Bell,
-  CircleHelp,
   LogOut,
   Menu,
   Search,
-  Settings,
   UserRound,
   CheckCheck,
 } from "lucide-react"
@@ -23,21 +21,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import {
-  clearToken,
-  getInitials,
-  getStoredUser,
-  subscribeUser,
-} from "@/lib/auth"
+import { clearToken, getStoredUser, subscribeUser } from "@/lib/auth"
+import { initials } from "@/components/users/user-badges"
 import {
   getNotifications,
+  getRoles,
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
@@ -52,6 +44,44 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const queryClient = useQueryClient()
   const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountCloseTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
+
+  function openAccountMenu() {
+    if (accountCloseTimeout.current) {
+      clearTimeout(accountCloseTimeout.current)
+      accountCloseTimeout.current = null
+    }
+    setAccountOpen(true)
+  }
+
+  function scheduleCloseAccountMenu() {
+    accountCloseTimeout.current = setTimeout(() => setAccountOpen(false), 150)
+  }
+
+  // Closes the account menu on outside click/tap — needed since touch
+  // devices have no mouseleave to trigger scheduleCloseAccountMenu.
+  useEffect(() => {
+    if (!accountOpen) return
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutside)
+    document.addEventListener("touchstart", handleOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleOutside)
+      document.removeEventListener("touchstart", handleOutside)
+    }
+  }, [accountOpen])
+
+  const rolesQuery = useQuery({
+    queryKey: ["roles", { include_inactive: false }],
+    queryFn: () => getRoles({ include_inactive: false }),
+    enabled: !!user,
+  })
 
   const { data: countData } = useQuery({
     queryKey: ["notification-count"],
@@ -88,6 +118,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   }
 
   const unreadCount = countData?.unread_count ?? 0
+  const fullName = user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : ""
+  const roleName = rolesQuery.data?.find((role) => role.id === user?.role_id)?.name
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-white px-4 md:px-6">
@@ -108,9 +140,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       </div>
 
       {/* Right: search + actions */}
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-4 ">
         {/* Search */}
-        <div className="relative hidden md:block">
+        <div className="relative hidden md:-ml-2 md:block">
           <Search
             aria-hidden
             className="pointer-events-none absolute inset-y-0 left-3.5 my-auto size-4 text-on-surface-variant"
@@ -210,66 +242,80 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           </DropdownMenuTrigger>
         </DropdownMenu>
 
-        {/* Help */}
-        <button
-          type="button"
-          aria-label="Help center"
-          className="hidden rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low sm:block"
+        {/* Account */}
+        <div
+          ref={accountRef}
+          className="relative"
+          onMouseEnter={openAccountMenu}
+          onMouseLeave={scheduleCloseAccountMenu}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setAccountOpen(false)
+          }}
         >
-          <CircleHelp aria-hidden className="size-5" />
-        </button>
-
-        {/* Sign out */}
-        <button
-          type="button"
-          aria-label="Sign out"
-          onClick={handleSignOut}
-          className="rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-destructive"
-        >
-          <LogOut aria-hidden className="size-5" />
-        </button>
-
-        {/* Profile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                aria-label="Account menu"
-                className="rounded-full outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring/50 hover:opacity-90"
-              >
-                <Avatar size="sm" className="size-9">
-                  <AvatarImage src={user?.profile_picture_url ?? undefined} alt="" />
-                  <AvatarFallback className="bg-primary-fixed text-sm font-semibold text-on-primary-fixed">
-                    {getInitials(user)}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            }
+          <button
+            type="button"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={accountOpen}
+            onClick={openAccountMenu}
+            onFocus={openAccountMenu}
+            className="flex items-center gap-2 rounded-full outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring/50 hover:opacity-90"
           >
-            <DropdownMenuContent align="end" sideOffset={10} className="w-60">
-              <DropdownMenuLabel>
+            <Avatar size="lg" className="size-9">
+              <AvatarImage src={user?.profile_picture_url ?? undefined} alt="" />
+              <AvatarFallback className="bg-primary-fixed text-sm font-semibold text-on-primary-fixed">
+                {user ? initials(user.first_name, user.last_name) : "?"}
+              </AvatarFallback>
+            </Avatar>
+            <span className="hidden text-sm font-medium text-on-surface sm:inline">
+              {fullName || "…"}
+            </span>
+          </button>
+
+          {accountOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-50 mt-1 w-64 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+            >
+              <div className="px-1.5 py-1">
                 <div className="flex flex-col gap-0.5 px-1 py-1">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "…"}
-                  </p>
+                  <p className="truncate text-sm font-semibold text-foreground">{fullName || "…"}</p>
                   <p className="truncate text-xs font-normal text-muted-foreground">
                     {user?.email ?? "Loading…"}
                   </p>
+                  {roleName && (
+                    <p className="truncate text-xs font-normal text-muted-foreground">{roleName}</p>
+                  )}
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              </div>
+              <div className="-mx-1 my-1 h-px bg-border" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountOpen(false)
+                  if (user) router.push(`/users/${user.id}`)
+                }}
+                className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+              >
                 <UserRound aria-hidden />
-                My Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
-                <Settings aria-hidden />
-                Hostel Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenuTrigger>
-        </DropdownMenu>
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAccountOpen(false)
+                  handleSignOut()
+                }}
+                className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm text-destructive outline-hidden select-none hover:bg-destructive/10 focus:bg-destructive/10 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-destructive"
+              >
+                <LogOut aria-hidden />
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

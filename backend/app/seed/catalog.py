@@ -163,8 +163,9 @@ PERMISSIONS: list[dict] = [
 # super_admin is not listed here; it receives every permission automatically.
 ROLE_PERMISSIONS: dict[str, list[str]] = {
     "hostel_admin": [
-        "users.view",
-        "staff.view",
+        "users.view", "users.create", "users.update",
+        "staff.view", "staff.create", "staff.update",
+        "roles.view",
         "buildings.view", "buildings.create", "buildings.update",
         "floors.view", "floors.create", "floors.update",
         "rooms.view", "rooms.create", "rooms.update",
@@ -189,7 +190,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "notices.view", "notices.create",
         "notifications.manage",
         "invoices.view", "payments.view", "expenses.view",
-        "reports.view",
+        "audit_logs.view", "reports.view",
     ],
     "warden": [
         "residents.view", "residents.create", "residents.update", "residents.checkout", "residents.mark_returned",
@@ -205,6 +206,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "maintenance_tickets.view",
     ],
     "accountant": [
+        "residents.view",
         "fee_structures.view", "fee_structures.manage",
         "resident_charges.view", "resident_charges.create", "resident_charges.update",
         "invoices.view", "invoices.create", "invoices.update",

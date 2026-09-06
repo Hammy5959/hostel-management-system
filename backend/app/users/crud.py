@@ -64,6 +64,7 @@ def list_users(
     role_id: str | None = None,
     status: str | None = None,
     include_deleted: bool = False,
+    exclude_role_id: str | None = None,
 ) -> tuple[list[dict], int]:
     query = db.table("users").select("*", count="exact")
     if search:
@@ -72,6 +73,8 @@ def list_users(
         )
     if role_id:
         query = query.eq("role_id", role_id)
+    if exclude_role_id:
+        query = query.neq("role_id", exclude_role_id)
     if status:
         query = query.eq("status", status)
     elif not include_deleted:

@@ -110,6 +110,7 @@ import type {
   RoomDetail,
   RoomList,
   RoomUpdateInput,
+  Role,
   RoleWithPermissions,
   Staff,
   StaffList,
@@ -120,6 +121,12 @@ import type {
   StayList,
   TokenResponse,
   User,
+  UserCreateInput,
+  UserList,
+  UserPasswordResetInput,
+  UserSelfUpdateInput,
+  UserStatusUpdateInput,
+  UserUpdateInput,
   Visitor,
   VisitorCreateInput,
   VisitorList,
@@ -249,6 +256,10 @@ export function getMe(): Promise<User> {
   return apiFetch<User>("/auth/me")
 }
 
+export function updateMe(payload: UserSelfUpdateInput): Promise<User> {
+  return apiFetch<User>("/auth/me", { method: "PATCH", body: payload })
+}
+
 /* ── Dashboard / reports ──────────────────────────────────────── */
 
 export function getDashboardSummary(): Promise<DashboardSummary> {
@@ -353,16 +364,52 @@ export async function uploadProfilePhoto(file: File): Promise<{ url: string }> {
   return (await response.json()) as { url: string }
 }
 
-/* ── Roles (permission resolution only) ───────────────────────── */
+/* ── Roles ─────────────────────────────────────────────────────── */
 
 export function getRole(roleId: string): Promise<RoleWithPermissions> {
   return apiFetch<RoleWithPermissions>(`/roles/${roleId}`)
 }
 
-/* ── Users (name resolution only, e.g. "marked by" — requires users.view) ── */
+export function getRoles(params: { include_inactive?: boolean } = {}): Promise<Role[]> {
+  return apiFetch<Role[]>(`/roles${toQueryString({ ...params })}`)
+}
+
+/* ── Users ─────────────────────────────────────────────────────── */
+
+export interface UserListParams {
+  page?: number
+  per_page?: number
+  search?: string
+  role_id?: string
+  status?: string
+}
+
+export function getUsers(params: UserListParams = {}): Promise<UserList> {
+  return apiFetch<UserList>(`/users${toQueryString({ ...params })}`)
+}
 
 export function getUser(id: string): Promise<User> {
   return apiFetch<User>(`/users/${id}`)
+}
+
+export function createUser(payload: UserCreateInput): Promise<User> {
+  return apiFetch<User>("/users", { method: "POST", body: payload })
+}
+
+export function updateUser(id: string, payload: UserUpdateInput): Promise<User> {
+  return apiFetch<User>(`/users/${id}`, { method: "PATCH", body: payload })
+}
+
+export function setUserStatus(id: string, payload: UserStatusUpdateInput): Promise<User> {
+  return apiFetch<User>(`/users/${id}/status`, { method: "PATCH", body: payload })
+}
+
+export function resetUserPassword(id: string, payload: UserPasswordResetInput): Promise<User> {
+  return apiFetch<User>(`/users/${id}/reset-password`, { method: "POST", body: payload })
+}
+
+export function deleteUser(id: string): Promise<User> {
+  return apiFetch<User>(`/users/${id}`, { method: "DELETE" })
 }
 
 /* ── Query string helper ──────────────────────────────────────── */

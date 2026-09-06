@@ -13,6 +13,46 @@ export interface User {
   updated_at: string
 }
 
+export interface UserList {
+  items: User[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface UserCreateInput {
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  role_id: string
+  password: string
+}
+
+export interface UserStatusUpdateInput {
+  status: "active" | "inactive" | "suspended"
+}
+
+export interface UserUpdateInput {
+  first_name?: string
+  last_name?: string | null
+  email?: string
+  phone?: string | null
+  role_id?: string
+  profile_picture_url?: string | null
+}
+
+export interface UserSelfUpdateInput {
+  first_name?: string
+  last_name?: string | null
+  phone?: string | null
+  profile_picture_url?: string | null
+}
+
+export interface UserPasswordResetInput {
+  password: string
+}
+
 export interface TokenResponse {
   access_token: string
   token_type: "bearer"
@@ -118,6 +158,14 @@ export interface RoleWithPermissions {
   is_system_role: boolean
   is_active: boolean
   permissions: string[]
+}
+
+export interface Role {
+  id: string
+  name: string
+  description: string | null
+  is_system_role: boolean
+  is_active: boolean
 }
 
 /* ── Hostel structure: Buildings → Floors → Rooms → Beds ─────────── */

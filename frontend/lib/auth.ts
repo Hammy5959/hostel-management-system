@@ -65,10 +65,3 @@ export function setStoredUser(user: User): void {
   window.localStorage.setItem(USER_KEY, JSON.stringify(user))
   emit()
 }
-
-export function getInitials(user: User | null): string {
-  if (!user) return "?"
-  const first = user.first_name?.[0] ?? ""
-  const last = user.last_name?.[0] ?? ""
-  return (first + last).toUpperCase() || user.email[0].toUpperCase()
-}

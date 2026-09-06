@@ -16,10 +16,10 @@ router = APIRouter(prefix="/roles", tags=["roles"])
 @router.get("", response_model=list[RoleOut], summary="List roles")
 def list_roles(
     include_inactive: bool = False,
-    _: dict = Depends(require_any_permission("roles.view", "users.create")),
+    user: dict = Depends(require_any_permission("roles.view", "users.create")),
     db: Client = Depends(get_db),
 ) -> list[RoleOut]:
-    return service.list_roles(db, include_inactive=include_inactive)
+    return service.list_roles(db, include_inactive=include_inactive, actor=user)
 
 
 @router.post("", response_model=RoleOut, status_code=201, summary="Create a role")
@@ -34,10 +34,10 @@ def create_role(
 @router.get("/{role_id}", response_model=RoleWithPermissions, summary="Get a role with its permissions")
 def get_role(
     role_id: str,
-    _: dict = Depends(require_permission("roles.view")),
+    user: dict = Depends(require_permission("roles.view")),
     db: Client = Depends(get_db),
 ) -> RoleWithPermissions:
-    return service.get_role(db, role_id)
+    return service.get_role(db, role_id, actor=user)
 
 
 @router.patch("/{role_id}", response_model=RoleOut, summary="Update a role")

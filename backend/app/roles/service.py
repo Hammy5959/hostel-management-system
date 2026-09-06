@@ -18,19 +18,26 @@ from supabase import Client
 
 from app.audit.service import record_audit
 from app.core.exceptions import ConflictError, NotFoundError, UnprocessableError
-from app.core.permissions import SUPER_ADMIN_ROLE
+from app.core.permissions import SUPER_ADMIN_ROLE, is_super_admin
 from app.roles import crud
 from app.roles.schemas import RoleCreate, RoleOut, RolePermissionsUpdate, RoleUpdate, RoleWithPermissions
 
 
-def list_roles(db: Client, *, include_inactive: bool = False) -> list[RoleOut]:
+def list_roles(db: Client, *, include_inactive: bool = False, actor: dict | None = None) -> list[RoleOut]:
     roles = crud.list_roles(db, active_only=not include_inactive)
+    # super_admin is invisible to everyone except a super_admin viewer.
+    if not (actor and is_super_admin(db, actor)):
+        roles = [r for r in roles if r["name"] != SUPER_ADMIN_ROLE]
     return [RoleOut.model_validate(r) for r in roles]
 
 
-def get_role(db: Client, role_id: str) -> RoleWithPermissions:
+def get_role(db: Client, role_id: str, actor: dict | None = None) -> RoleWithPermissions:
     role = crud.get_role(db, role_id)
     if role is None:
+        raise NotFoundError("Role not found", code="role_not_found")
+    # A non-super-admin requesting the super_admin role directly gets the same
+    # 404 as a genuinely missing role — indistinguishable from "doesn't exist".
+    if role["name"] == SUPER_ADMIN_ROLE and not (actor and is_super_admin(db, actor)):
         raise NotFoundError("Role not found", code="role_not_found")
     permissions = crud.get_role_permission_names(db, role_id)
     return RoleWithPermissions(**role, permissions=permissions)

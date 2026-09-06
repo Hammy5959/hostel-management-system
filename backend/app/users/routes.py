@@ -20,10 +20,10 @@ def list_users(
     search: str | None = None,
     role_id: str | None = None,
     status: str | None = None,
-    _: dict = Depends(require_permission("users.view")),
+    user: dict = Depends(require_permission("users.view")),
     db: Client = Depends(get_db),
 ) -> UserList:
-    return service.list_users(db, page=page, per_page=per_page, search=search, role_id=role_id, status=status)
+    return service.list_users(db, page=page, per_page=per_page, search=search, role_id=role_id, status=status, actor=user)
 
 
 @router.post("", response_model=UserOut, status_code=201, summary="Create a user account")
@@ -38,10 +38,10 @@ def create_user(
 @router.get("/{user_id}", response_model=UserOut, summary="Get a user")
 def get_user(
     user_id: str,
-    _: dict = Depends(require_permission("users.view")),
+    user: dict = Depends(require_permission("users.view")),
     db: Client = Depends(get_db),
 ) -> UserOut:
-    return service.get_user(db, user_id)
+    return service.get_user(db, user_id, actor=user)
 
 
 @router.patch("/{user_id}", response_model=UserOut, summary="Update a user")

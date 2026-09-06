@@ -52,8 +52,18 @@ def _require_role(db: Client, role_id: str) -> dict:
     return role
 
 
+def _super_admin_role_id(db: Client) -> str | None:
+    role = roles_crud.get_role_by_name(db, SUPER_ADMIN_ROLE)
+    return str(role["id"]) if role else None
+
+
 def create_user(db: Client, data: UserCreate, actor: dict | None = None) -> UserOut:
-    _require_role(db, str(data.role_id))
+    target_role = _require_role(db, str(data.role_id))
+    if target_role["name"] == SUPER_ADMIN_ROLE and not (actor and is_super_admin(db, actor)):
+        raise ForbiddenError(
+            "Only a super_admin can assign the super_admin role",
+            code="super_admin_assignment_denied",
+        )
     payload = data.model_dump(mode="json")
     payload["email"] = _normalize_email(payload["email"])
     if crud.email_exists(db, payload["email"]):
@@ -76,14 +86,30 @@ def create_user(db: Client, data: UserCreate, actor: dict | None = None) -> User
     return UserOut.model_validate(user)
 
 
-def get_user(db: Client, user_id: str) -> UserOut:
+def get_user(db: Client, user_id: str, actor: dict | None = None) -> UserOut:
     user = crud.get_user_by_id(db, user_id)
     if user is None:
+        raise NotFoundError("User not found", code="user_not_found")
+    # A non-super-admin requesting a super_admin user directly gets the same
+    # 404 as a genuinely missing user — indistinguishable from "doesn't exist".
+    if is_super_admin(db, user) and not (actor and is_super_admin(db, actor)):
         raise NotFoundError("User not found", code="user_not_found")
     return UserOut.model_validate(user)
 
 
-def list_users(db: Client, *, page: int, per_page: int, search: str | None, role_id: str | None, status: str | None) -> UserList:
+def list_users(
+    db: Client,
+    *,
+    page: int,
+    per_page: int,
+    search: str | None,
+    role_id: str | None,
+    status: str | None,
+    actor: dict | None = None,
+) -> UserList:
+    # super_admin users are invisible to everyone except a super_admin viewer,
+    # filtered at the query level so total/pagination stay correct.
+    exclude_role_id = None if (actor and is_super_admin(db, actor)) else _super_admin_role_id(db)
     items, total = crud.list_users(
         db,
         page=page,
@@ -91,6 +117,7 @@ def list_users(db: Client, *, page: int, per_page: int, search: str | None, role
         search=search,
         role_id=role_id,
         status=status,
+        exclude_role_id=exclude_role_id,
     )
     return UserList(items=[UserOut.model_validate(u) for u in items], total=total, page=page, per_page=per_page)
 

@@ -7,6 +7,7 @@ import {
   Activity,
   BedDouble,
   DoorOpen,
+  LayoutDashboard,
   LogIn,
   ShieldCheck,
   TrendingUp,
@@ -17,7 +18,10 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/hostel/empty-state"
+import { ErrorState } from "@/components/hostel/error-state"
 import { cn, formatCurrency } from "@/lib/utils"
+import { usePermissions } from "@/lib/permissions"
 import {
   getAuditLogs,
   getDashboardSummary,
@@ -236,45 +240,26 @@ function LogsPanel({ logs }: { logs: AuditLogItem[] }) {
 /* ── main view ────────────────────────────────────────────────── */
 
 export function DashboardView() {
+  const { has } = usePermissions()
+  const canViewReports = has("reports.view")
+  const canViewAuditLogs = has("audit_logs.view")
+  const hasAnyWidget = canViewReports || canViewAuditLogs
+
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: getDashboardSummary,
+    enabled: canViewReports,
   })
   const occupancyQuery = useQuery({
     queryKey: ["dashboard-occupancy"],
     queryFn: getOccupancyReport,
+    enabled: canViewReports,
   })
   const logsQuery = useQuery({
     queryKey: ["dashboard-logs"],
     queryFn: () => getAuditLogs(6),
+    enabled: canViewAuditLogs,
   })
-
-  const failed = [summaryQuery, occupancyQuery, logsQuery].find((q) => q.isError)
-
-  if (failed) {
-    return (
-      <div className="mx-auto max-w-md rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest p-10 text-center">
-        <Wrench aria-hidden className="mx-auto mb-3 size-8 text-outline" />
-        <h2 className="mb-1 text-xl font-semibold text-on-surface">
-          Couldn&apos;t load the dashboard
-        </h2>
-        <p className="mb-4 text-sm text-on-surface-variant">
-          Make sure the backend server is running, then try again.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            summaryQuery.refetch()
-            occupancyQuery.refetch()
-            logsQuery.refetch()
-          }}
-          className="rounded-lg bg-primary-container px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-container/90"
-        >
-          Try again
-        </button>
-      </div>
-    )
-  }
 
   const summary = summaryQuery.data
   const occupancy = occupancyQuery.data
@@ -292,98 +277,134 @@ export function DashboardView() {
         </p>
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {summary ? (
-          <>
-            <MetricCard
-              icon={DoorOpen}
-              iconClass="bg-primary-fixed text-on-primary-fixed"
-              label="Total Occupancy"
-              value={`${Math.round(summary.occupancy_rate)}%`}
-              badge={
-                <span className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-xs font-semibold text-success">
-                  <TrendingUp aria-hidden className="size-3.5" />
-                  Live
-                </span>
-              }
-            />
-            <MetricCard
-              icon={BedDouble}
-              iconClass="bg-secondary-fixed text-on-secondary-fixed"
-              label="Room Availability"
-              value={
+      {!hasAnyWidget ? (
+        <EmptyState
+          icon={LayoutDashboard}
+          title="No dashboard widgets are available for your role yet."
+          description="Ask an administrator if you believe you should have access to dashboard reports."
+        />
+      ) : (
+        <>
+          {/* Metric cards */}
+          {canViewReports && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {summaryQuery.isError ? (
+                <div className="md:col-span-2 lg:col-span-4">
+                  <ErrorState
+                    message={(summaryQuery.error as Error).message}
+                    onRetry={() => summaryQuery.refetch()}
+                  />
+                </div>
+              ) : summary ? (
                 <>
-                  {summary.available_beds}{" "}
-                  <span className="text-xl font-semibold text-on-surface-variant">Beds</span>
+                  <MetricCard
+                    icon={DoorOpen}
+                    iconClass="bg-primary-fixed text-on-primary-fixed"
+                    label="Total Occupancy"
+                    value={`${Math.round(summary.occupancy_rate)}%`}
+                    badge={
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-1 text-xs font-semibold text-success">
+                        <TrendingUp aria-hidden className="size-3.5" />
+                        Live
+                      </span>
+                    }
+                  />
+                  <MetricCard
+                    icon={BedDouble}
+                    iconClass="bg-secondary-fixed text-on-secondary-fixed"
+                    label="Room Availability"
+                    value={
+                      <>
+                        {summary.available_beds}{" "}
+                        <span className="text-xl font-semibold text-on-surface-variant">Beds</span>
+                      </>
+                    }
+                  />
+                  <MetricCard
+                    icon={Wrench}
+                    iconClass="bg-error-container text-on-error-container"
+                    label="Open Maintenance"
+                    value={
+                      <>
+                        {summary.open_tickets}{" "}
+                        <span className="text-xl font-semibold text-on-surface-variant">Tickets</span>
+                      </>
+                    }
+                    badge={
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold",
+                          summary.open_tickets > 0
+                            ? "bg-error-container text-error"
+                            : "bg-surface-container-low text-on-surface-variant",
+                        )}
+                      >
+                        {summary.open_tickets > 0 ? "Urgent" : "None"}
+                      </span>
+                    }
+                  />
+                  <MetricCard
+                    icon={Wallet}
+                    iconClass="bg-surface-variant text-on-surface-variant"
+                    label="Pending Dues"
+                    value={formatCurrency(summary.outstanding_balance)}
+                  />
                 </>
-              }
-            />
-            <MetricCard
-              icon={Wrench}
-              iconClass="bg-error-container text-on-error-container"
-              label="Open Maintenance"
-              value={
-                <>
-                  {summary.open_tickets}{" "}
-                  <span className="text-xl font-semibold text-on-surface-variant">Tickets</span>
-                </>
-              }
-              badge={
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold",
-                    summary.open_tickets > 0
-                      ? "bg-error-container text-error"
-                      : "bg-surface-container-low text-on-surface-variant",
-                  )}
-                >
-                  {summary.open_tickets > 0 ? "Urgent" : "None"}
-                </span>
-              }
-            />
-            <MetricCard
-              icon={Wallet}
-              iconClass="bg-surface-variant text-on-surface-variant"
-              label="Pending Dues"
-              value={formatCurrency(summary.outstanding_balance)}
-            />
-          </>
-        ) : (
-          Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
-        )}
-      </div>
+              ) : (
+                Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
+              )}
+            </div>
+          )}
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {occupancy ? (
-          <OccupancyChart report={occupancy} />
-        ) : (
-          <div className="lg:col-span-2 rounded-xl border border-outline-variant bg-surface-container-lowest p-6">
-            <Skeleton className="mb-6 h-6 w-40" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        )}
-
-        {logsQuery.isLoading || logsQuery.isPending ? (
-          <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6">
-            <Skeleton className="mb-4 h-6 w-32" />
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-start gap-3 p-2">
-                  <Skeleton className="size-8 rounded-full" />
-                  <div className="flex-1 space-y-1.5 pt-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
+          {/* Main grid */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {canViewReports &&
+              (occupancyQuery.isError ? (
+                <div className="lg:col-span-2">
+                  <ErrorState
+                    message={(occupancyQuery.error as Error).message}
+                    onRetry={() => occupancyQuery.refetch()}
+                  />
+                </div>
+              ) : occupancy ? (
+                <OccupancyChart report={occupancy} />
+              ) : (
+                <div className="lg:col-span-2 rounded-xl border border-outline-variant bg-surface-container-lowest p-6">
+                  <Skeleton className="mb-6 h-6 w-40" />
+                  <Skeleton className="h-64 w-full" />
                 </div>
               ))}
-            </div>
+
+            {canViewAuditLogs && (
+              <div className={cn(!canViewReports && "lg:col-span-3")}>
+                {logsQuery.isError ? (
+                  <ErrorState
+                    message={(logsQuery.error as Error).message}
+                    onRetry={() => logsQuery.refetch()}
+                  />
+                ) : logsQuery.isLoading || logsQuery.isPending ? (
+                  <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6">
+                    <Skeleton className="mb-4 h-6 w-32" />
+                    <div className="space-y-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex items-start gap-3 p-2">
+                          <Skeleton className="size-8 rounded-full" />
+                          <div className="flex-1 space-y-1.5 pt-1">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/2" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <LogsPanel logs={logs} />
+                )}
+              </div>
+            )}
           </div>
-        ) : (
-          <LogsPanel logs={logs} />
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
