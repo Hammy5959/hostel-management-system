@@ -12,10 +12,12 @@ from app.database.supabase import raise_for_error
 # level, and by the service-level `role_in_use` guard before that.
 
 
-def list_roles(db: Client, *, active_only: bool = False) -> list[dict]:
+def list_roles(db: Client, *, active_only: bool = False, search: str | None = None) -> list[dict]:
     query = db.table("roles").select("*").order("name")
     if active_only:
         query = query.eq("is_active", True)
+    if search:
+        query = query.or_(f"name.ilike.*{search}*,description.ilike.*{search}*")
     res = query.execute()
     if getattr(res, "error", None):
         raise_for_error(res, "list roles")

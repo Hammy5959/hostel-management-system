@@ -41,6 +41,17 @@ function roleBadgeClass(role: Role): string {
   return ROLE_BADGE_PALETTE[hashString(role.id) % ROLE_BADGE_PALETTE.length]
 }
 
+/** Pretty, human-readable display of a stored role name — "hostel_cleaner" ->
+ * "Hostel Cleaner". Display only: never use this for the value sent to or
+ * compared against the backend (role.id / role.name stay as stored). */
+export function formatRoleName(name: string): string {
+  return name
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
 export function RoleBadge({ role, fallbackLabel }: { role: Role | undefined; fallbackLabel: string }) {
   return (
     <span
@@ -49,7 +60,7 @@ export function RoleBadge({ role, fallbackLabel }: { role: Role | undefined; fal
         role ? roleBadgeClass(role) : "bg-surface-container-high text-on-surface-variant",
       )}
     >
-      {role?.name ?? fallbackLabel}
+      {role ? formatRoleName(role.name) : fallbackLabel}
     </span>
   )
 }

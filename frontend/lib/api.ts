@@ -95,6 +95,7 @@ import type {
   Payment,
   PaymentCreateInput,
   PaymentList,
+  Permission,
   ResidentCharge,
   ResidentChargeCreateInput,
   ResidentChargeList,
@@ -111,6 +112,9 @@ import type {
   RoomList,
   RoomUpdateInput,
   Role,
+  RoleCreateInput,
+  RolePermissionsUpdateInput,
+  RoleUpdateInput,
   RoleWithPermissions,
   Staff,
   StaffList,
@@ -370,8 +374,35 @@ export function getRole(roleId: string): Promise<RoleWithPermissions> {
   return apiFetch<RoleWithPermissions>(`/roles/${roleId}`)
 }
 
-export function getRoles(params: { include_inactive?: boolean } = {}): Promise<Role[]> {
+export interface RoleListParams {
+  include_inactive?: boolean
+  search?: string
+}
+
+export function getRoles(params: RoleListParams = {}): Promise<Role[]> {
   return apiFetch<Role[]>(`/roles${toQueryString({ ...params })}`)
+}
+
+export function createRole(payload: RoleCreateInput): Promise<Role> {
+  return apiFetch<Role>("/roles", { method: "POST", body: payload })
+}
+
+export function updateRole(id: string, payload: RoleUpdateInput): Promise<Role> {
+  return apiFetch<Role>(`/roles/${id}`, { method: "PATCH", body: payload })
+}
+
+export function deleteRole(id: string): Promise<void> {
+  return apiFetch<void>(`/roles/${id}`, { method: "DELETE" })
+}
+
+export function updateRolePermissions(id: string, payload: RolePermissionsUpdateInput): Promise<RoleWithPermissions> {
+  return apiFetch<RoleWithPermissions>(`/roles/${id}/permissions`, { method: "PUT", body: payload })
+}
+
+/* ── Permissions catalog ───────────────────────────────────────── */
+
+export function getPermissions(params: { module?: string } = {}): Promise<Permission[]> {
+  return apiFetch<Permission[]>(`/permissions${toQueryString({ ...params })}`)
 }
 
 /* ── Users ─────────────────────────────────────────────────────── */

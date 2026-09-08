@@ -3,7 +3,8 @@
 Lifecycle rules
 ---------------
 - **System roles** (``is_system_role=true``, seeded, e.g. super_admin) can be
-  viewed but never renamed, deactivated or deleted.
+  viewed but never renamed or deleted. Their ``is_active`` status can be
+  toggled — except super_admin, which stays fully locked (name and status).
 - **Custom roles** can be created, renamed, activated/deactivated and deleted.
 - A custom role **assigned to users** cannot be hard-deleted (``role_in_use``);
   deactivate it instead.
@@ -23,8 +24,10 @@ from app.roles import crud
 from app.roles.schemas import RoleCreate, RoleOut, RolePermissionsUpdate, RoleUpdate, RoleWithPermissions
 
 
-def list_roles(db: Client, *, include_inactive: bool = False, actor: dict | None = None) -> list[RoleOut]:
-    roles = crud.list_roles(db, active_only=not include_inactive)
+def list_roles(
+    db: Client, *, include_inactive: bool = False, search: str | None = None, actor: dict | None = None
+) -> list[RoleOut]:
+    roles = crud.list_roles(db, active_only=not include_inactive, search=search)
     # super_admin is invisible to everyone except a super_admin viewer.
     if not (actor and is_super_admin(db, actor)):
         roles = [r for r in roles if r["name"] != SUPER_ADMIN_ROLE]
@@ -87,9 +90,8 @@ def update_role(db: Client, role_id: str, data: RoleUpdate, actor: dict | None =
         if existing is not None and existing["id"] != role_id:
             raise ConflictError("A role with this name already exists", code="role_name_exists")
 
-    if "is_active" in payload and payload["is_active"] is False:
-        if is_system:
-            raise ConflictError("System roles cannot be deactivated", code="system_role_locked")
+    if "is_active" in payload and role["name"] == SUPER_ADMIN_ROLE:
+        raise ConflictError("The Super Admin role cannot be deactivated", code="system_role_locked")
 
     updated = crud.update_role(db, role_id, payload)
     _audit_role_changes(db, role, payload, actor)

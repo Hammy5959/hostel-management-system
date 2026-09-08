@@ -29,6 +29,7 @@ import {
 
 import { markPermissionDenied } from "@/lib/permissions"
 import { ApiError, createUser, getRoles } from "@/lib/api"
+import { formatRoleName } from "@/components/users/user-badges"
 
 const userSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -170,13 +171,16 @@ export function UserFormDialog({
                   <Select value={field.value} onValueChange={(value) => value && field.onChange(value)}>
                     <SelectTrigger id="user-role" className="w-full" aria-invalid={!!errors.role_id}>
                       <SelectValue placeholder="Select a role">
-                        {(value: string) => rolesQuery.data?.find((role) => role.id === value)?.name ?? "Select a role"}
+                        {(value: string) => {
+                          const name = rolesQuery.data?.find((role) => role.id === value)?.name
+                          return name ? formatRoleName(name) : "Select a role"
+                        }}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {rolesQuery.data?.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
-                          {role.name}
+                          {formatRoleName(role.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -26,7 +26,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { clearToken, getStoredUser, subscribeUser } from "@/lib/auth"
-import { initials } from "@/components/users/user-badges"
+import { formatRoleName, initials } from "@/components/users/user-badges"
 import {
   getNotifications,
   getRoles,
@@ -284,7 +284,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                     {user?.email ?? "Loading…"}
                   </p>
                   {roleName && (
-                    <p className="truncate text-xs font-normal text-muted-foreground">{roleName}</p>
+                    <p className="truncate text-xs font-normal text-muted-foreground">
+                      {formatRoleName(roleName)}
+                    </p>
                   )}
                 </div>
               </div>

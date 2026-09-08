@@ -41,7 +41,7 @@ import { ApiError, deleteUser, getRoles, getUsers, setUserStatus } from "@/lib/a
 import type { User, UserList } from "@/lib/types"
 
 import { UserFormDialog } from "@/components/users/user-form-dialog"
-import { RoleBadge, USER_STATUS_TONE, formatLastLogin, initials } from "@/components/users/user-badges"
+import { RoleBadge, USER_STATUS_TONE, formatLastLogin, formatRoleName, initials } from "@/components/users/user-badges"
 
 function StatCard({
   icon: Icon,
@@ -249,104 +249,103 @@ export function UsersView() {
         </div>
       )}
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
-        <Tabs value={tab} onValueChange={changeTab}>
-          <div className="border-b border-outline-variant px-4">
-            <TabsList variant="line" className="h-auto justify-start gap-8 bg-transparent p-0">
-              <TabsTrigger
-                value="all"
-                className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
-              >
-                All Users
-              </TabsTrigger>
-              <TabsTrigger
-                value="archived"
-                className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
-              >
-                Archived
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value={tab} className="m-0">
-            {/* Toolbar */}
-            <form
-              onSubmit={submitSearch}
-              className="flex flex-col items-center justify-between gap-4 border-b border-outline-variant bg-background/60 p-4 sm:flex-row"
+      <Tabs value={tab} onValueChange={changeTab}>
+        <div className="border-b border-outline-variant">
+          <TabsList variant="line" className="h-auto justify-start gap-8 bg-transparent p-0">
+            <TabsTrigger
+              value="all"
+              className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
             >
-              <div className="flex w-full flex-1 items-center gap-2 sm:max-w-sm">
-                <div className="relative w-full">
-                  <Search
-                    aria-hidden
-                    className="pointer-events-none absolute inset-y-0 left-3 my-auto size-4 text-on-surface-variant"
-                  />
-                  <Input
-                    value={searchInput}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setSearchInput(value)
-                      if (value.trim() === "") {
-                        setPage(1)
-                        setSearch("")
-                      }
-                    }}
-                    placeholder="Search by name or email"
-                    aria-label="Search by name or email"
-                    className="h-10 rounded-lg pl-10 text-sm"
-                  />
-                </div>
-                <Button type="submit" variant="outline" className="h-10 shrink-0 rounded-lg">
-                  Search
-                </Button>
+              All Users
+            </TabsTrigger>
+            <TabsTrigger
+              value="archived"
+              className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
+            >
+              Archived
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value={tab} className="space-y-6 pt-6">
+          <div className="flex flex-col gap-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 lg:flex-row lg:items-center">
+            <form onSubmit={submitSearch} className="flex flex-1 items-center gap-2">
+              <div className="relative w-full max-w-sm">
+                <Search
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 left-3 my-auto size-4 text-on-surface-variant"
+                />
+                <Input
+                  value={searchInput}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setSearchInput(value)
+                    if (value.trim() === "") {
+                      setPage(1)
+                      setSearch("")
+                    }
+                  }}
+                  placeholder="Search by name or email"
+                  aria-label="Search by name or email"
+                  className="h-10 rounded-lg pl-10 text-sm"
+                />
               </div>
-              <div className="flex w-full items-center gap-3 sm:w-auto">
+              <Button type="submit" variant="outline" className="h-10 shrink-0 rounded-lg">
+                Search
+              </Button>
+            </form>
+
+            <div className="flex items-center gap-3">
+              <Select
+                value={roleFilter}
+                onValueChange={(value) => {
+                  if (!value) return
+                  setRoleFilter(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="h-10 w-full rounded-lg sm:w-40" aria-label="Filter by role">
+                  <SelectValue>
+                    {(value: string) =>
+                      value === "all"
+                        ? "All Roles"
+                        : (formatRoleName(rolesQuery.data?.find((role) => role.id === value)?.name ?? "") || "All Roles")
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  {rolesQuery.data?.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {formatRoleName(role.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {tab === "all" && (
                 <Select
-                  value={roleFilter}
+                  value={statusFilter}
                   onValueChange={(value) => {
                     if (!value) return
-                    setRoleFilter(value)
+                    setStatusFilter(value as "all" | "active" | "inactive" | "suspended")
                     setPage(1)
                   }}
                 >
-                  <SelectTrigger className="h-10 w-full rounded-lg sm:w-40" aria-label="Filter by role">
-                    <SelectValue>
-                      {(value: string) =>
-                        value === "all" ? "All Roles" : (rolesQuery.data?.find((role) => role.id === value)?.name ?? "All Roles")
-                      }
-                    </SelectValue>
+                  <SelectTrigger className="h-10 w-full rounded-lg sm:w-40" aria-label="Filter by status">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    {rolesQuery.data?.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
                   </SelectContent>
                 </Select>
-                {tab === "all" && (
-                  <Select
-                    value={statusFilter}
-                    onValueChange={(value) => {
-                      if (!value) return
-                      setStatusFilter(value as "all" | "active" | "inactive" | "suspended")
-                      setPage(1)
-                    }}
-                  >
-                    <SelectTrigger className="h-10 w-full rounded-lg sm:w-40" aria-label="Filter by status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </form>
+              )}
+            </div>
+          </div>
 
+          <div className="flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
             {forbidden ? (
               <div className="p-4">
                 <EmptyState
@@ -497,9 +496,9 @@ export function UsersView() {
                 </>
               )
             )}
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <UserFormDialog open={addOpen} onOpenChange={setAddOpen} />
 

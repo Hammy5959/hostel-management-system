@@ -28,7 +28,7 @@ import { EmptyState } from "@/components/hostel/empty-state"
 import { ErrorState } from "@/components/hostel/error-state"
 import { StatusBadge } from "@/components/hostel/status-badge"
 import { PhotoPicker } from "@/components/residents/photo-picker"
-import { RoleBadge, USER_STATUS_TONE, formatLastLogin, initials } from "@/components/users/user-badges"
+import { RoleBadge, USER_STATUS_TONE, formatLastLogin, formatRoleName, initials } from "@/components/users/user-badges"
 import { ResetPasswordDialog } from "@/components/users/reset-password-dialog"
 
 import { usePermissions, markPermissionDenied } from "@/lib/permissions"
@@ -373,13 +373,16 @@ export function UserDetailView({ userId }: { userId: string }) {
                     <Select value={field.value} onValueChange={(value) => value && field.onChange(value)}>
                       <SelectTrigger id="detail-role" className="w-full" aria-invalid={!!errors.role_id}>
                         <SelectValue>
-                          {(value: string) => rolesQuery.data?.find((role) => role.id === value)?.name ?? "Select a role"}
+                          {(value: string) => {
+                            const name = rolesQuery.data?.find((role) => role.id === value)?.name
+                            return name ? formatRoleName(name) : "Select a role"
+                          }}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {rolesQuery.data?.map((role) => (
                           <SelectItem key={role.id} value={role.id}>
-                            {role.name}
+                            {formatRoleName(role.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>

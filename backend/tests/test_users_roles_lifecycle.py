@@ -200,7 +200,18 @@ def test_system_role_rename_and_deactivate_locked(client, db, role_ids, settings
     assert r.status_code == 409
     assert r.json()["detail"]["code"] == "system_role_locked"
 
+    # Non-super_admin system roles CAN be deactivated/reactivated.
     r = client.patch(f"/api/v1/roles/{warden_id}", headers=h, json={"is_active": False})
+    assert r.status_code == 200, r.text
+    assert r.json()["is_active"] is False
+
+    r = client.patch(f"/api/v1/roles/{warden_id}", headers=h, json={"is_active": True})
+    assert r.status_code == 200, r.text
+    assert r.json()["is_active"] is True
+
+    # super_admin stays fully locked: name and status.
+    super_admin_id = role_ids["super_admin"]
+    r = client.patch(f"/api/v1/roles/{super_admin_id}", headers=h, json={"is_active": False})
     assert r.status_code == 409
     assert r.json()["detail"]["code"] == "system_role_locked"
 

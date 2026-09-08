@@ -168,6 +168,29 @@ export interface Role {
   is_active: boolean
 }
 
+export interface RoleCreateInput {
+  name: string
+  description?: string | null
+  is_active?: boolean
+}
+
+export interface RoleUpdateInput {
+  name?: string
+  description?: string | null
+  is_active?: boolean
+}
+
+export interface Permission {
+  id: string
+  name: string
+  module: string
+  description: string | null
+}
+
+export interface RolePermissionsUpdateInput {
+  permission_ids: string[]
+}
+
 /* ── Hostel structure: Buildings → Floors → Rooms → Beds ─────────── */
 
 export type BuildingType = "boys" | "girls" | "mixed"
