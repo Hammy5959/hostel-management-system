@@ -27,8 +27,12 @@ def get_staff(db: Client, staff_id: str) -> StaffOut:
     return StaffOut.model_validate(record)
 
 
-def list_staff(db: Client, *, page: int, per_page: int, search: str | None, department: str | None) -> StaffList:
-    items, total = crud.list_staff(db, page=page, per_page=per_page, search=search, department=department)
+def list_staff(
+    db: Client, *, page: int, per_page: int, search: str | None, department: str | None, is_active: bool | None
+) -> StaffList:
+    items, total = crud.list_staff(
+        db, page=page, per_page=per_page, search=search, department=department, is_active=is_active
+    )
     return StaffList(items=[StaffOut.model_validate(r) for r in items], total=total, page=page, per_page=per_page)
 
 
@@ -36,5 +40,5 @@ def update_staff(db: Client, staff_id: str, data: StaffUpdate) -> StaffOut:
     record = crud.get_staff(db, staff_id)
     if record is None:
         raise NotFoundError("Staff record not found", code="staff_not_found")
-    updated = crud.update_staff(db, staff_id, data.model_dump(exclude_unset=True))
+    updated = crud.update_staff(db, staff_id, data.model_dump(mode="json",exclude_unset=True))
     return StaffOut.model_validate(updated)

@@ -1336,6 +1336,7 @@ export interface StaffUserRef {
   phone: string | null
   role_id: string | null
   status: string | null
+  profile_picture_url?: string | null
 }
 
 export interface Staff {
@@ -1360,6 +1361,31 @@ export interface StaffList {
   total: number
   page: number
   per_page: number
+}
+
+export interface StaffCreateInput {
+  user_id: string
+  employee_number?: string | null
+  joining_date?: string | null
+  designation?: string | null
+  department?: string | null
+  address?: string | null
+  emergency_contact_name?: string | null
+  emergency_contact_phone?: string | null
+  emergency_contact_relationship?: string | null
+  is_active?: boolean
+}
+
+export interface StaffUpdateInput {
+  employee_number?: string | null
+  joining_date?: string | null
+  designation?: string | null
+  department?: string | null
+  address?: string | null
+  emergency_contact_name?: string | null
+  emergency_contact_phone?: string | null
+  emergency_contact_relationship?: string | null
+  is_active?: boolean
 }
 
 /* ── Inventory (Categories & Items) ───────────────────────────────── */

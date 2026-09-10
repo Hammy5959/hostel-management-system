@@ -6,7 +6,7 @@ from supabase import Client
 
 from app.database.supabase import raise_for_error
 
-_SELECT = "*, users(first_name, last_name, email, phone, role_id, status)"
+_SELECT = "*, user:users(first_name, last_name, email, phone, role_id, status, profile_picture_url)"
 
 
 def list_staff(
@@ -16,12 +16,16 @@ def list_staff(
     per_page: int = 20,
     search: str | None = None,
     department: str | None = None,
+    is_active: bool | None = None,
 ) -> tuple[list[dict], int]:
     query = db.table("staff").select(_SELECT, count="exact")
+    query = query.neq("user.status", "deleted")
     if search:
         query = query.or_(f"employee_number.ilike.*{search}*,designation.ilike.*{search}*")
     if department:
         query = query.eq("department", department)
+    if is_active is not None:
+        query = query.eq("is_active", is_active)
     query = query.order("created_at", desc=True).range((page - 1) * per_page, page * per_page - 1)
     res = query.execute()
     if getattr(res, "error", None):

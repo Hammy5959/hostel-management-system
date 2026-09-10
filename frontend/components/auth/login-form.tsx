@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
-import { getToken } from "@/lib/auth"
 import { ApiError, requestOtp } from "@/lib/api"
 
 const loginSchema = z.object({
@@ -51,14 +50,8 @@ export function LoginForm() {
     },
   })
 
-  // Already authenticated? Skip straight to the dashboard.
-  useEffect(() => {
-    if (getToken()) {
-      router.replace("/dashboard")
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Redirecting an already-authenticated user away from /login is now
+  // handled server-side by proxy.ts, before this component ever renders.
 
   async function onSubmit(values: LoginValues) {
     setSubmitting(true)

@@ -1,25 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 
 import { Topbar } from "@/components/layout/topbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth";
 
+// Auth is guarded server-side by proxy.ts before this ever renders — no
+// client-side redirect needed here (and none would be flash-free anyway).
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (!getToken()) {
-      router.replace("/login");
-    }
-  }, [router]);
 
   function toggleCollapsed() {
     setCollapsed((prev) => !prev);

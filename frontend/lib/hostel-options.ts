@@ -7,6 +7,7 @@ import {
   getInvoices,
   getRooms,
   getStaffList,
+  getUsers,
   searchResidents,
 } from "@/lib/api"
 import type { ComboOption } from "@/components/hostel/entity-combobox"
@@ -249,6 +250,28 @@ export async function fetchStaffAssigneeOptions(search: string): Promise<ComboOp
       value: s.id,
       label: s.user ? [s.user.first_name, s.user.last_name].filter(Boolean).join(" ") : "Unnamed Staff",
       sublabel: s.designation ?? s.department ?? undefined,
+    }))
+}
+
+/** Users eligible to become a new staff record: excludes anyone who already
+ * has one, mirroring the "staff_exists" rule app.staff.service.create_staff
+ * enforces server-side. GET /users has no such filter, so this fetches a
+ * capped page of staff (per_page: 100, the backend max) to build the
+ * excluded-id set client-side — same shape as fetchStaffAssigneeOptions
+ * above. Not exhaustive past 100 existing staff records; the Add Staff
+ * dialog's staff_exists error handling is the real backstop. */
+export async function fetchStaffEligibleUserOptions(search: string): Promise<ComboOption[]> {
+  const [usersRes, staffRes] = await Promise.all([
+    getUsers({ search: search || undefined, per_page: 20 }),
+    getStaffList({ per_page: 100 }),
+  ])
+  const staffed = new Set(staffRes.items.map((s) => s.user_id))
+  return usersRes.items
+    .filter((u) => !staffed.has(u.id))
+    .map((u) => ({
+      value: u.id,
+      label: [u.first_name, u.last_name].filter(Boolean).join(" "),
+      sublabel: u.email,
     }))
 }
 

@@ -42,6 +42,7 @@ class StaffUserRef(BaseModel):
     phone: str | None = None
     role_id: UUID | None = None
     status: str | None = None
+    profile_picture_url: str | None = None
 
 
 class StaffOut(BaseModel):

@@ -117,7 +117,9 @@ import type {
   RoleUpdateInput,
   RoleWithPermissions,
   Staff,
+  StaffCreateInput,
   StaffList,
+  StaffUpdateInput,
   StockAdjustmentInput,
   Stay,
   StayActionInput,
@@ -1084,6 +1086,7 @@ export interface StaffListParams {
   per_page?: number
   search?: string
   department?: string
+  is_active?: boolean
 }
 
 export function getStaffList(params: StaffListParams = {}): Promise<StaffList> {
@@ -1092,6 +1095,14 @@ export function getStaffList(params: StaffListParams = {}): Promise<StaffList> {
 
 export function getStaff(id: string): Promise<Staff> {
   return apiFetch<Staff>(`/staff/${id}`)
+}
+
+export function createStaff(payload: StaffCreateInput): Promise<Staff> {
+  return apiFetch<Staff>("/staff", { method: "POST", body: payload })
+}
+
+export function updateStaff(id: string, payload: StaffUpdateInput): Promise<Staff> {
+  return apiFetch<Staff>(`/staff/${id}`, { method: "PATCH", body: payload })
 }
 
 /* ── Inventory Categories ──────────────────────────────────────────── */

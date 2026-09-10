@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
 import {
   BadgeCheck,
   Banknote,
@@ -26,33 +26,36 @@ import {
   Users,
   UtensilsCrossed,
   Wrench,
-} from "lucide-react"
+} from "lucide-react";
 
 export interface NavItem {
-  label: string
-  href: string
-  icon: LucideIcon
+  label: string;
+  href: string;
+  icon: LucideIcon;
 }
 
 export interface NavGroup {
-  id: string
-  label: string
-  icon: LucideIcon
-  items: NavItem[]
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  items: NavItem[];
 }
 
 export interface NavLink {
-  label: string
-  href: string
-  icon: LucideIcon
+  label: string;
+  href: string;
+  icon: LucideIcon;
 }
 
 export type NavEntry =
   | { type: "link"; data: NavLink }
-  | { type: "group"; data: NavGroup }
+  | { type: "group"; data: NavGroup };
 
 export const navigation: NavEntry[] = [
-  { type: "link", data: { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard } },
+  {
+    type: "link",
+    data: { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  },
 
   {
     type: "group",
@@ -90,7 +93,11 @@ export const navigation: NavEntry[] = [
       icon: CalendarClock,
       items: [
         { label: "Daily Attendance", href: "/attendance", icon: CalendarCheck },
-        { label: "Leave Requests", href: "/leave-requests", icon: CalendarDays },
+        {
+          label: "Leave Requests",
+          href: "/leave-requests",
+          icon: CalendarDays,
+        },
       ],
     },
   },
@@ -137,12 +144,28 @@ export const navigation: NavEntry[] = [
     },
   },
 
-  { type: "link", data: { label: "Mess Menus & Meals", href: "/mess-menus-meals", icon: UtensilsCrossed } },
+  {
+    type: "link",
+    data: {
+      label: "Mess Menus & Meals",
+      href: "/mess-menus-meals",
+      icon: UtensilsCrossed,
+    },
+  },
 
-  { type: "link", data: { label: "Notices", href: "/notices", icon: Megaphone } },
+  {
+    type: "link",
+    data: { label: "Notices", href: "/notices", icon: Megaphone },
+  },
 
-  { type: "link", data: { label: "Reports", href: "/reports", icon: BarChart3 } },
-  { type: "link", data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock } },
+  {
+    type: "link",
+    data: { label: "Reports", href: "/reports", icon: BarChart3 },
+  },
+  {
+    type: "link",
+    data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock },
+  },
 
   {
     type: "group",
@@ -166,8 +189,12 @@ export const navigation: NavEntry[] = [
       label: "Settings",
       icon: Settings,
       items: [
-        { label: "Hostel Settings", href: "/settings", icon: SlidersHorizontal },
+        {
+          label: "Hostel Settings",
+          href: "/settings",
+          icon: SlidersHorizontal,
+        },
       ],
     },
   },
-]
+];

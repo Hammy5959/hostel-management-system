@@ -19,10 +19,13 @@ def list_staff(
     per_page: int = Query(20, ge=1, le=100),
     search: str | None = None,
     department: str | None = None,
+    is_active: bool | None = None,
     _: dict = Depends(require_permission("staff.view")),
     db: Client = Depends(get_db),
 ) -> StaffList:
-    return service.list_staff(db, page=page, per_page=per_page, search=search, department=department)
+    return service.list_staff(
+        db, page=page, per_page=per_page, search=search, department=department, is_active=is_active
+    )
 
 
 @router.post("", response_model=StaffOut, status_code=201, summary="Create a staff record")

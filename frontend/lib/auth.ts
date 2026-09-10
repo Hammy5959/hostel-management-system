@@ -3,6 +3,23 @@ import type { User } from "@/lib/types"
 const TOKEN_KEY = "shms.access_token"
 const USER_KEY = "shms.user"
 
+/** Presence-only cookie mirroring whether a token is stored — the real
+ * token stays in localStorage only. proxy.ts (server-side) can't read
+ * localStorage, so this cookie is a UX/routing signal for it to redirect
+ * without a flash. It is NOT a security boundary: every actual request is
+ * still authorized by the backend's own 401/403 checks. Keep this name in
+ * sync with AUTH_COOKIE in proxy.ts if it ever changes. */
+const AUTH_COOKIE = "shms.auth"
+
+function setAuthCookie(): void {
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  document.cookie = `${AUTH_COOKIE}=1; path=/; SameSite=Lax${secure}`
+}
+
+function clearAuthCookie(): void {
+  document.cookie = `${AUTH_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null
   return window.localStorage.getItem(TOKEN_KEY)
@@ -10,6 +27,7 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   window.localStorage.setItem(TOKEN_KEY, token)
+  setAuthCookie()
 }
 
 export function clearToken(): void {
@@ -19,6 +37,7 @@ export function clearToken(): void {
   window.sessionStorage.removeItem("shms.otp_email")
   _cachedUser = null
   emit()
+  clearAuthCookie()
 }
 
 /* ── User store (for useSyncExternalStore) ────────────────────── */
