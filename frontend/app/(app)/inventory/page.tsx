@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { InventoryView } from "@/components/inventory/inventory-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Inventory",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function InventoryPage() {
   return (
-    <Suspense>
-      <InventoryView />
-    </Suspense>
+    <PageAccessGuard permission="inventory_items.view">
+      <Suspense>
+        <InventoryView />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

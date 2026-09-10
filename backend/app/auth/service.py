@@ -10,6 +10,7 @@ from app.auth.schemas import TokenResponse, UserOut
 from app.core.config import get_settings
 from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.passwords import verify_password
+from app.core.permissions import get_role_name, get_user_permissions
 from app.core.security import create_access_token
 from app.users.crud import AUTHENTICABLE_STATUSES, BLOCKED_STATUSES, get_user_by_email, mark_user_authenticated
 
@@ -90,6 +91,8 @@ def verify_otp(db: Client, email: str, otp: str) -> TokenResponse:
         access_token=token,
         expires_in=settings.jwt_expiration_seconds,
         user=UserOut.model_validate(updated),
+        permissions=sorted(get_user_permissions(db, updated)),
+        role_name=get_role_name(db, updated.get("role_id")),
     )
 
 

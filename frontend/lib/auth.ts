@@ -20,6 +20,9 @@ function clearAuthCookie(): void {
   document.cookie = `${AUTH_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`
 }
 
+const PERMISSIONS_KEY = "shms.permissions"
+const ROLE_NAME_KEY = "shms.role_name"
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null
   return window.localStorage.getItem(TOKEN_KEY)
@@ -33,9 +36,15 @@ export function setToken(token: string): void {
 export function clearToken(): void {
   window.localStorage.removeItem(TOKEN_KEY)
   window.localStorage.removeItem(USER_KEY)
+  window.localStorage.removeItem(PERMISSIONS_KEY)
+  window.localStorage.removeItem(ROLE_NAME_KEY)
   // Drop any leftover OTP-flow session data so nothing stale survives logout.
   window.sessionStorage.removeItem("shms.otp_email")
   _cachedUser = null
+  _cachedPermissions = null
+  _permissionsLoaded = false
+  _cachedRoleName = null
+  _roleNameLoaded = false
   emit()
   clearAuthCookie()
 }
@@ -82,5 +91,68 @@ export function getStoredUser(): User | null {
 export function setStoredUser(user: User): void {
   _cachedUser = user
   window.localStorage.setItem(USER_KEY, JSON.stringify(user))
+  emit()
+}
+
+/* ── Permissions store (synchronous, set once at login alongside `user`) ─ */
+
+let _cachedPermissions: string[] | null = null
+let _permissionsLoaded = false
+
+function loadCachedPermissions(): string[] | null {
+  if (_permissionsLoaded) return _cachedPermissions
+  _permissionsLoaded = true
+  if (typeof window === "undefined") {
+    _cachedPermissions = null
+  } else {
+    const raw = window.localStorage.getItem(PERMISSIONS_KEY)
+    if (raw) {
+      try {
+        _cachedPermissions = JSON.parse(raw) as string[]
+      } catch {
+        _cachedPermissions = null
+      }
+    }
+  }
+  return _cachedPermissions
+}
+
+export function getStoredPermissions(): string[] | null {
+  return loadCachedPermissions()
+}
+
+export function setStoredPermissions(permissions: string[]): void {
+  _cachedPermissions = permissions
+  window.localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(permissions))
+  emit()
+}
+
+/* ── Role name store (synchronous, set once at login alongside `user`) ─── */
+
+let _cachedRoleName: string | null = null
+let _roleNameLoaded = false
+
+function loadCachedRoleName(): string | null {
+  if (_roleNameLoaded) return _cachedRoleName
+  _roleNameLoaded = true
+  if (typeof window === "undefined") {
+    _cachedRoleName = null
+  } else {
+    _cachedRoleName = window.localStorage.getItem(ROLE_NAME_KEY)
+  }
+  return _cachedRoleName
+}
+
+export function getStoredRoleName(): string | null {
+  return loadCachedRoleName()
+}
+
+export function setStoredRoleName(roleName: string | null): void {
+  _cachedRoleName = roleName
+  if (roleName) {
+    window.localStorage.setItem(ROLE_NAME_KEY, roleName)
+  } else {
+    window.localStorage.removeItem(ROLE_NAME_KEY)
+  }
   emit()
 }

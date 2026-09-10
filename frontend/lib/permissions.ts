@@ -1,10 +1,8 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
-import { useQuery } from "@tanstack/react-query"
 
-import { getRole } from "@/lib/api"
-import { getStoredUser } from "@/lib/auth"
+import { getStoredPermissions, subscribeUser } from "@/lib/auth"
 
 /**
  * Session-scoped set of permission names the backend has already told us we
@@ -30,26 +28,18 @@ function subscribeDenied(listener: () => void): () => void {
 /**
  * Resolves the current user's effective permission set for gating UI.
  *
- * If the session can read roles (`roles.view`/`roles.manage`), permissions
- * resolve from the live `GET /roles/{role_id}`. Otherwise (typical for
- * residents/limited staff), gated actions render optimistically and the
- * backend's 403 `missing_permission` is the real authority — see
- * `markPermissionDenied`.
+ * The permission list is delivered once at login (alongside `user`) and
+ * cached in localStorage — read synchronously here via `useSyncExternalStore`,
+ * the same flash-free pattern `getStoredUser()` already uses. This is
+ * ground truth for every role (not just roles that can read `GET /roles`),
+ * so `has()` no longer needs to guess before the real answer is known.
  */
 export function usePermissions() {
-  const user = getStoredUser()
+  const permissions = useSyncExternalStore(subscribeUser, getStoredPermissions, () => null)
   // Re-render when a new permission gets denied this session.
   useSyncExternalStore(subscribeDenied, () => denied.size, () => 0)
 
-  const roleQuery = useQuery({
-    queryKey: ["role-permissions", user?.role_id],
-    queryFn: () => getRole(user!.role_id),
-    enabled: !!user?.role_id,
-    retry: false,
-    staleTime: 5 * 60_000,
-  })
-
-  const known = roleQuery.data ? new Set(roleQuery.data.permissions) : null
+  const known = permissions ? new Set(permissions) : null
 
   function has(permission: string): boolean {
     if (denied.has(permission)) return false
@@ -66,7 +56,7 @@ export function usePermissions() {
   }
 
   return {
-    isLoading: roleQuery.isLoading,
+    isLoading: known === null,
     has,
     hasAny,
     hasAll,

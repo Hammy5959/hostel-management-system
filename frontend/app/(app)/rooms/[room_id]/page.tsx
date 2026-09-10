@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { RoomDetailView } from "@/components/rooms/room-detail-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Room Bed Management",
@@ -15,8 +16,10 @@ export default async function RoomDetailPage({
   const { room_id } = await params
 
   return (
-    <Suspense>
-      <RoomDetailView roomId={room_id} />
-    </Suspense>
+    <PageAccessGuard permission="rooms.view">
+      <Suspense>
+        <RoomDetailView roomId={room_id} />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

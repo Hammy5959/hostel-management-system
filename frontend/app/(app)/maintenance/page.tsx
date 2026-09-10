@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { MaintenanceView } from "@/components/maintenance/maintenance-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Maintenance",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function MaintenancePage() {
   return (
-    <Suspense>
-      <MaintenanceView />
-    </Suspense>
+    <PageAccessGuard permission="maintenance_tickets.view">
+      <Suspense>
+        <MaintenanceView />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

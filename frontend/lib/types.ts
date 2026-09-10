@@ -58,6 +58,8 @@ export interface TokenResponse {
   token_type: "bearer"
   expires_in: number
   user: User
+  permissions: string[]
+  role_name: string | null
 }
 
 export interface OTPRequestResponse {

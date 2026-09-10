@@ -41,6 +41,8 @@ class TokenResponse(BaseModel):
     token_type: Literal["bearer"] = "bearer"
     expires_in: int
     user: UserOut
+    permissions: list[str]
+    role_name: str | None = None
 
 
 class OTPRequestResponse(BaseModel):

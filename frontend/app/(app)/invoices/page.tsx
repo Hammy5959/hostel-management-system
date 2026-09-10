@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { InvoicesView } from "@/components/invoices/invoices-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Invoices",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function InvoicesPage() {
   return (
-    <Suspense>
-      <InvoicesView />
-    </Suspense>
+    <PageAccessGuard permission={["invoices.view", "invoices.view_own"]}>
+      <Suspense>
+        <InvoicesView />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

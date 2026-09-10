@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { AssetsView } from "@/components/assets/assets-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Assets",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function AssetsPage() {
   return (
-    <Suspense>
-      <AssetsView />
-    </Suspense>
+    <PageAccessGuard permission="assets.view">
+      <Suspense>
+        <AssetsView />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

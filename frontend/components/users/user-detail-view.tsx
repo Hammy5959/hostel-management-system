@@ -32,8 +32,8 @@ import { RoleBadge, USER_STATUS_TONE, formatLastLogin, formatRoleName, initials 
 import { ResetPasswordDialog } from "@/components/users/reset-password-dialog"
 
 import { usePermissions, markPermissionDenied } from "@/lib/permissions"
-import { getStoredUser, setStoredUser } from "@/lib/auth"
-import { ApiError, getRoles, getUser, setUserStatus, updateMe, updateUser } from "@/lib/api"
+import { getStoredRoleName, getStoredUser, setStoredUser } from "@/lib/auth"
+import { ApiError, getMe, getRoles, getUser, setUserStatus, updateMe, updateUser } from "@/lib/api"
 import type { User, UserSelfUpdateInput, UserUpdateInput } from "@/lib/types"
 
 function InfoRow({
@@ -93,13 +93,18 @@ export function UserDetailView({ userId }: { userId: string }) {
   const queryClient = useQueryClient()
   const { has } = usePermissions()
   const me = getStoredUser()
+  // Reachability, not just display: GET /users/{id} needs users.view, which
+  // most roles lack. GET /auth/me needs no permission at all and returns the
+  // identical shape — use it whenever the route param is the caller's own
+  // id, so self-view/self-edit works for every role.
+  const isSelf = !!me && me.id === userId
 
   const [editing, setEditing] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
 
   const query = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => getUser(userId),
+    queryKey: isSelf ? ["user", "me"] : ["user", userId],
+    queryFn: () => (isSelf ? getMe() : getUser(userId)),
   })
 
   const rolesQuery = useQuery({
@@ -108,7 +113,6 @@ export function UserDetailView({ userId }: { userId: string }) {
   })
 
   const user = query.data
-  const isSelf = !!me && !!user && user.id === me.id
   const canUpdate = has("users.update")
   const canEditProfile = isSelf || canUpdate
   const canEditRoleStatus = canUpdate && !isSelf
@@ -173,7 +177,7 @@ export function UserDetailView({ userId }: { userId: string }) {
       }
 
       toast.success("Profile updated.")
-      queryClient.setQueryData(["user", userId], updated)
+      queryClient.setQueryData(isSelf ? ["user", "me"] : ["user", userId], updated)
       queryClient.invalidateQueries({ queryKey: ["users"] })
       queryClient.invalidateQueries({ queryKey: ["users-stat"] })
       setEditing(false)
@@ -229,7 +233,16 @@ export function UserDetailView({ userId }: { userId: string }) {
   }
 
   const name = `${user.first_name} ${user.last_name ?? ""}`.trim()
-  const currentRole = rolesQuery.data?.find((role) => role.id === user.role_id)
+  // rolesQuery needs roles.view/users.create, which most roles lack. When
+  // viewing self, the login-time cache already has the caller's own role
+  // name (no extra permission needed) — fall back to a synthesized Role so
+  // the (read-only) badge still renders instead of "—".
+  const storedRoleName = getStoredRoleName()
+  const currentRole =
+    rolesQuery.data?.find((role) => role.id === user.role_id) ??
+    (isSelf && storedRoleName
+      ? { id: user.role_id, name: storedRoleName, description: null, is_system_role: false, is_active: true }
+      : undefined)
   const avatarUrl = watch("profile_picture_url")
 
   return (

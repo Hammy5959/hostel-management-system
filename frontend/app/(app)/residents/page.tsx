@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { ResidentsView } from "@/components/residents/residents-view"
+import { PageAccessGuard } from "@/components/hostel/page-access-guard"
 
 export const metadata: Metadata = {
   title: "Residents",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function ResidentsPage() {
   return (
-    <Suspense>
-      <ResidentsView />
-    </Suspense>
+    <PageAccessGuard permission="residents.view">
+      <Suspense>
+        <ResidentsView />
+      </Suspense>
+    </PageAccessGuard>
   )
 }

@@ -25,11 +25,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { clearToken, getStoredUser, subscribeUser } from "@/lib/auth"
+import { clearToken, getStoredRoleName, getStoredUser, subscribeUser } from "@/lib/auth"
 import { formatRoleName, initials } from "@/components/users/user-badges"
 import {
   getNotifications,
-  getRoles,
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
@@ -77,11 +76,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     }
   }, [accountOpen])
 
-  const rolesQuery = useQuery({
-    queryKey: ["roles", { include_inactive: false }],
-    queryFn: () => getRoles({ include_inactive: false }),
-    enabled: !!user,
-  })
+  const roleName = useSyncExternalStore(subscribeUser, getStoredRoleName, () => null)
 
   const { data: countData } = useQuery({
     queryKey: ["notification-count"],
@@ -119,7 +114,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
   const unreadCount = countData?.unread_count ?? 0
   const fullName = user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : ""
-  const roleName = rolesQuery.data?.find((role) => role.id === user?.role_id)?.name
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-white px-4 md:px-6">
