@@ -56,10 +56,17 @@ def update_visitor(db: Client, visitor_id: str, data: VisitorUpdate) -> VisitorO
     return VisitorOut.model_validate(update(db, _TABLE, visitor_id, data.model_dump(exclude_unset=True)))
 
 
-def cancel_visitor(db: Client, visitor_id: str) -> VisitorOut:
+def cancel_visitor(db: Client, user: dict, visitor_id: str) -> VisitorOut:
     visitor = get_by_id(db, _TABLE, visitor_id)
     if visitor is None:
         raise NotFoundError("Visitor not found", code="visitor_not_found")
+    # Staff with visitors.create may cancel any registration; a resident may
+    # only cancel a visitor registered against their own resident record —
+    # mirrors app.gate_passes.service.cancel's ownership check.
+    if not has_permission(db, user, "visitors.create"):
+        own = get_resident_by_user(db, user["id"])
+        if own is None or str(own["id"]) != str(visitor["resident_id"]):
+            raise ForbiddenError("You can only cancel your own visitor registration", code="not_your_visitor")
     if visitor["status"] != "expected":
         raise ConflictError(
             f"Only an expected visitor can be cancelled; this visitor has already been "

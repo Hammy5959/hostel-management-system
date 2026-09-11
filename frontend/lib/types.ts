@@ -643,6 +643,19 @@ export interface Resident {
   status: ResidentStatus
   created_at: string
   updated_at: string
+  /** The linked login account, if any (see user_id) — not to be confused
+   * with the resident's own `email`/`phone` fields above. */
+  user?: { id: string; email: string; status: string } | null
+}
+
+export interface ResidentPortalUserCreateInput {
+  email: string
+  first_name: string
+  last_name?: string | null
+  phone?: string | null
+  profile_picture_url?: string | null
+  status?: "invited" | "active"
+  password: string
 }
 
 export interface ResidentSummary {

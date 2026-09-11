@@ -43,10 +43,10 @@ def create_invoice(
 @router.get("/{invoice_id}", response_model=InvoiceOut, summary="Get an invoice")
 def get_invoice(
     invoice_id: str,
-    _: dict = Depends(require_any_permission("invoices.view", "invoices.view_own")),
+    user: dict = Depends(require_any_permission("invoices.view", "invoices.view_own")),
     db: Client = Depends(get_db),
 ) -> InvoiceOut:
-    return service.get_invoice(db, invoice_id)
+    return service.get_invoice(db, user, invoice_id)
 
 
 @router.patch("/{invoice_id}", response_model=InvoiceOut, summary="Update a draft invoice")

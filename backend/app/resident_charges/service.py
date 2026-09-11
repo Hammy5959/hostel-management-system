@@ -6,12 +6,13 @@ from decimal import Decimal
 
 from supabase import Client
 
-from app.core.exceptions import BadRequestError, ConflictError, NotFoundError
+from app.common.authz import has_permission
+from app.core.exceptions import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page
 from app.database.crud import update as crud_update
 from app.database.supabase import raise_for_error
 from app.fee_structures import service as fee_structures_service
-from app.residents.service import has_active_allocation
+from app.residents.service import get_resident_by_user, has_active_allocation
 from app.resident_charges.schemas import (
     ResidentChargeCreate,
     ResidentChargeList,
@@ -64,10 +65,12 @@ def _with_extras(row: dict, room_by_resident: dict[str, str]) -> dict:
     }
 
 
-def _count_charges(db: Client, status: str | None = None) -> int:
+def _count_charges(db: Client, status: str | None = None, *, resident_id: str | None = None) -> int:
     query = db.table(_TABLE).select("id", count="exact")
     if status is not None:
         query = query.eq("status", status)
+    if resident_id is not None:
+        query = query.eq("resident_id", resident_id)
     res = query.execute()
     if getattr(res, "error", None):
         raise_for_error(res, "count resident charges")
@@ -120,6 +123,7 @@ def get(db: Client, charge_id: str) -> ResidentChargeOut:
 
 def list_charges(
     db: Client,
+    user: dict,
     *,
     page: int,
     per_page: int,
@@ -127,9 +131,25 @@ def list_charges(
     status: str | None,
     search: str | None,
 ) -> ResidentChargeList:
+    # `own_scope` (as opposed to `scope`) is only set for a .view_own-only
+    # caller — it forces both the list filter and the summary counts to that
+    # resident. A full .view caller's optional resident_id filter narrows the
+    # list but, like ResidentList.summary (see app.residents.service), the
+    # summary stays global regardless of that filter.
+    own_scope: str | None = None
+    if has_permission(db, user, "resident_charges.view"):
+        scope = str(resident_id) if resident_id else None
+    elif has_permission(db, user, "resident_charges.view_own"):
+        own = get_resident_by_user(db, user["id"])
+        if own is None:
+            raise ForbiddenError("No resident profile linked to this account", code="resident_not_linked")
+        scope = own_scope = str(own["id"])
+    else:
+        raise ForbiddenError("You cannot view resident charges", code="missing_permission")
+
     eq: dict = {}
-    if resident_id:
-        eq["resident_id"] = resident_id
+    if scope:
+        eq["resident_id"] = scope
     if status:
         eq["status"] = status
 
@@ -150,10 +170,10 @@ def list_charges(
     room_by_resident = _fetch_current_room_by_resident(db, resident_ids_on_page)
 
     summary = ResidentChargeSummaryOut(
-        total=_count_charges(db),
-        pending=_count_charges(db, "pending"),
-        invoiced=_count_charges(db, "invoiced"),
-        paid=_count_charges(db, "paid"),
+        total=_count_charges(db, resident_id=own_scope),
+        pending=_count_charges(db, "pending", resident_id=own_scope),
+        invoiced=_count_charges(db, "invoiced", resident_id=own_scope),
+        paid=_count_charges(db, "paid", resident_id=own_scope),
     )
 
     return ResidentChargeList(

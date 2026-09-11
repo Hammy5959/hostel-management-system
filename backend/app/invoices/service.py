@@ -259,8 +259,13 @@ def create_invoice(db: Client, user: dict, data: InvoiceCreate) -> InvoiceOut:
     return InvoiceOut.model_validate(_fetch(db, created["id"]))
 
 
-def get_invoice(db: Client, invoice_id: str) -> InvoiceOut:
-    return InvoiceOut.model_validate(_fetch(db, invoice_id))
+def get_invoice(db: Client, user: dict, invoice_id: str) -> InvoiceOut:
+    invoice = _fetch(db, invoice_id)
+    if not has_permission(db, user, "invoices.view"):
+        own = get_resident_by_user(db, user["id"])
+        if own is None or str(own["id"]) != str(invoice["resident_id"]):
+            raise ForbiddenError("You can only view your own invoices", code="not_your_invoice")
+    return InvoiceOut.model_validate(invoice)
 
 
 def list_invoices(

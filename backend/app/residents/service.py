@@ -10,7 +10,8 @@ from __future__ import annotations
 from supabase import Client
 
 from app.audit.service import record_audit
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from app.core.passwords import hash_password
 from app.database.crud import get_by_id, insert, list_page, update
 from app.database.rpc import rpc_call
 from app.notifications.service import notify_resident
@@ -19,10 +20,14 @@ from app.residents.schemas import (
     ResidentCreate,
     ResidentList,
     ResidentOut,
+    ResidentPortalUserCreate,
     ResidentSummaryOut,
     ResidentUpdate,
 )
+from app.users import crud as users_crud
 from app.users.crud import get_user_by_id
+from app.users.schemas import UserStatusUpdate
+from app.users.service import set_user_status
 
 _TABLE = "residents"
 _SELECT = "*, users(id, email, status)"
@@ -326,6 +331,11 @@ def checkout_resident(db: Client, user: dict, resident_id: str, data: ResidentCh
         "p_reason": data.reason,
     }, _CHECKOUT_ERR_MAP)
     resident = ResidentOut.model_validate(rows[0])
+    if resident.user_id:
+        # Deactivate the resident's linked portal account on checkout — no-op
+        # (set_user_status is idempotent) if it's already inactive, and
+        # skipped entirely above for residents with no linked account at all.
+        set_user_status(db, str(resident.user_id), UserStatusUpdate(status="inactive"), actor=user)
     record_audit(
         db,
         user_id=user["id"],
@@ -383,5 +393,53 @@ def mark_returned(db: Client, user: dict, resident_id: str) -> ResidentOut:
         message="You have been marked as returned from leave.",
         reference_type="resident",
         reference_id=resident_id,
+    )
+    return resident
+
+
+_PORTAL_USER_ERR_MAP = {
+    "resident_not_found": (404, "resident_not_found", "Resident not found"),
+    "resident_already_linked": (
+        409, "resident_already_linked", "This resident already has a linked portal account",
+    ),
+    "resident_role_not_found": (
+        500, "resident_role_not_found", "The resident role is missing from the permission catalog",
+    ),
+    "email_exists": (409, "email_exists", "A user with this email already exists"),
+}
+
+
+def create_portal_user(db: Client, user: dict, resident_id: str, data: ResidentPortalUserCreate) -> ResidentOut:
+    """Enable Portal Access — atomically creates a resident-role user account
+    and links it to this resident via hms_create_resident_portal_user (all
+    inside one transaction, mirroring hms_checkout_resident's shape).
+
+    email_exists is checked here first (same as app.users.service.create_user)
+    for a clean common-case error; the RPC's own unique_violation catch is
+    only a backstop for the rare concurrent-request race, since users.email
+    is DB-uniquely constrained."""
+    email = data.email.strip().lower()
+    if users_crud.email_exists(db, email):
+        raise ConflictError("A user with this email already exists", code="email_exists")
+    password_hash = hash_password(data.password)
+    rows = rpc_call(db, "hms_create_resident_portal_user", {
+        "p_resident_id": resident_id,
+        "p_email": email,
+        "p_first_name": data.first_name,
+        "p_password_hash": password_hash,
+        "p_last_name": data.last_name,
+        "p_phone": data.phone,
+        "p_profile_picture_url": data.profile_picture_url,
+        "p_status": data.status,
+    }, _PORTAL_USER_ERR_MAP)
+    resident = ResidentOut.model_validate(rows[0])
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="resident.portal_access_enabled",
+        module="residents",
+        entity_type="resident",
+        entity_id=resident_id,
+        description=f"Enabled portal access for resident {resident_id} ({email})",
     )
     return resident

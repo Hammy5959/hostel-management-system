@@ -109,6 +109,7 @@ PERMISSIONS: list[dict] = [
     {"name": "fee_structures.view", "module": "fee_structures", "description": "View fee structures"},
     {"name": "fee_structures.manage", "module": "fee_structures", "description": "Manage fee structures"},
     {"name": "resident_charges.view", "module": "resident_charges", "description": "View resident charges"},
+    {"name": "resident_charges.view_own", "module": "resident_charges", "description": "View own resident charges"},
     {"name": "resident_charges.create", "module": "resident_charges", "description": "Create resident charges"},
     {"name": "resident_charges.update", "module": "resident_charges", "description": "Update resident charges"},
     {"name": "invoices.view", "module": "invoices", "description": "View all invoices"},
@@ -256,8 +257,10 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "visitors.view_own", "visitors.create_own",
         "gate_passes.create", "gate_passes.view_own",
         "invoices.view_own", "payments.view_own",
+        "resident_charges.view_own",
         "complaints.create", "complaints.view_own",
         "notices.view",
+        "mess_menus.view",
         "notifications.view",
     ],
 }

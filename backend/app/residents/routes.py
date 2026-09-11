@@ -13,6 +13,7 @@ from app.residents.schemas import (
     ResidentCreate,
     ResidentList,
     ResidentOut,
+    ResidentPortalUserCreate,
     ResidentUpdate,
 )
 
@@ -113,3 +114,18 @@ def mark_returned(
     db: Client = Depends(get_db),
 ) -> ResidentOut:
     return service.mark_returned(db, user, resident_id)
+
+
+@router.post(
+    "/{resident_id}/portal-access",
+    response_model=ResidentOut,
+    status_code=201,
+    summary="Enable portal access for a resident",
+)
+def create_portal_access(
+    resident_id: str,
+    payload: ResidentPortalUserCreate,
+    user: dict = Depends(require_permission("users.create")),
+    db: Client = Depends(get_db),
+) -> ResidentOut:
+    return service.create_portal_user(db, user, resident_id, payload)

@@ -36,9 +36,21 @@ import {
 
 interface TopbarProps {
   onMenuClick: () => void
+  /** Brand logo/link target. Default reproduces today's staff behavior. */
+  homeHref?: string
+  /** Brand text next to the logo. Default reproduces today's staff behavior. */
+  brandLabel?: string
+  /** "Edit Profile" target. Default reproduces today's staff behavior
+   * (computed from the logged-in user's own id at click time). */
+  profileHref?: string
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+export function Topbar({
+  onMenuClick,
+  homeHref = "/dashboard",
+  brandLabel = "SHMS Admin",
+  profileHref,
+}: TopbarProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null)
@@ -128,8 +140,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         >
           <Menu aria-hidden className="size-5" />
         </Button>
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <span className="text-xl font-bold text-primary">SHMS Admin</span>
+        <Link href={homeHref} className="flex items-center gap-3">
+          <span className="text-xl font-bold text-primary">{brandLabel}</span>
         </Link>
       </div>
 
@@ -290,7 +302,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
                 role="menuitem"
                 onClick={() => {
                   setAccountOpen(false)
-                  if (user) router.push(`/users/${user.id}`)
+                  if (user) router.push(profileHref ?? `/users/${user.id}`)
                 }}
                 className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
               >

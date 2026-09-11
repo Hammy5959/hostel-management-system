@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
 from app.api.deps import get_db
-from app.core.permissions import require_permission
+from app.core.permissions import require_any_permission, require_permission
 from app.resident_charges import service
 from app.resident_charges.schemas import ResidentChargeCreate, ResidentChargeList, ResidentChargeOut, ResidentChargeUpdate
 
@@ -20,11 +20,11 @@ def list_charges(
     resident_id: str | None = None,
     status: str | None = None,
     search: str | None = None,
-    _: dict = Depends(require_permission("resident_charges.view")),
+    user: dict = Depends(require_any_permission("resident_charges.view", "resident_charges.view_own")),
     db: Client = Depends(get_db),
 ) -> ResidentChargeList:
     return service.list_charges(
-        db, page=page, per_page=per_page, resident_id=resident_id, status=status, search=search
+        db, user, page=page, per_page=per_page, resident_id=resident_id, status=status, search=search
     )
 
 

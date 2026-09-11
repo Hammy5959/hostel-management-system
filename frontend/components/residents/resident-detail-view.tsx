@@ -12,8 +12,12 @@ import {
   DoorOpen,
   GraduationCap,
   HeartPulse,
+  KeyRound,
   LogOut,
   Pencil,
+  Power,
+  PowerOff,
+  ShieldCheck,
   ShieldOff,
   User,
   UserCheck,
@@ -47,10 +51,13 @@ import {
   getAllocations,
   getResident,
   markResidentReturned,
+  setUserStatus,
 } from "@/lib/api";
 import type { AdmissionFullStatus, Allocation, AllocationStatus, Resident, ResidentStatus } from "@/lib/types";
 import { ResidentFormDialog } from "@/components/residents/resident-form-dialog";
 import { CheckoutResidentDialog } from "@/components/residents/checkout-resident-dialog";
+import { EnablePortalAccessDialog } from "@/components/residents/enable-portal-access-dialog";
+import { ResetPasswordDialog } from "@/components/users/reset-password-dialog";
 
 const RESIDENT_STATUS_TONE: Record<ResidentStatus, Tone> = {
   applicant: "info",
@@ -446,6 +453,12 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [markReturnedOpen, setMarkReturnedOpen] = useState(false);
   const [markReturnedLoading, setMarkReturnedLoading] = useState(false);
+  const [portalAccessOpen, setPortalAccessOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deactivateLoading, setDeactivateLoading] = useState(false);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [reactivateLoading, setReactivateLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>(() => {
     const tab = searchParams.get("tab");
     return isDetailTab(tab) ? tab : "profile";
@@ -454,6 +467,10 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
   const canEdit = has("residents.update");
   const canCheckout = has("residents.checkout");
   const canMarkReturned = has("residents.mark_returned");
+  // Gates match POST /residents/{id}/portal-access, PATCH /users/{id}/status,
+  // and POST /users/{id}/reset-password's own permission requirements.
+  const canManagePortal = has("users.create");
+  const canTogglePortalStatus = has("users.update");
 
   const query = useQuery({
     queryKey: ["resident", residentId],
@@ -508,6 +525,48 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
       }
     } finally {
       setMarkReturnedLoading(false);
+    }
+  }
+
+  async function handleDeactivatePortalConfirm() {
+    const linkedUserId = query.data?.user?.id;
+    if (!linkedUserId) return;
+    setDeactivateLoading(true);
+    try {
+      await setUserStatus(linkedUserId, { status: "inactive" });
+      toast.success("Portal access deactivated.");
+      queryClient.invalidateQueries({ queryKey: ["resident", residentId] });
+      setDeactivateOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.code === "missing_permission") markPermissionDenied("users.update");
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setDeactivateLoading(false);
+    }
+  }
+
+  async function handleReactivatePortalConfirm() {
+    const linkedUserId = query.data?.user?.id;
+    if (!linkedUserId) return;
+    setReactivateLoading(true);
+    try {
+      await setUserStatus(linkedUserId, { status: "active" });
+      toast.success("Portal access reactivated.");
+      queryClient.invalidateQueries({ queryKey: ["resident", residentId] });
+      setReactivateOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.code === "missing_permission") markPermissionDenied("users.update");
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setReactivateLoading(false);
     }
   }
 
@@ -642,6 +701,54 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
               Edit
             </Button>
           )}
+          {!resident.user_id && canManagePortal && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPortalAccessOpen(true)}
+              className="h-10 gap-2 rounded-lg px-4 text-sm font-medium"
+            >
+              <ShieldCheck aria-hidden className="size-4" />
+              Enable Portal Access
+            </Button>
+          )}
+          {resident.user_id && resident.user?.status === "active" && (
+            <>
+              {canTogglePortalStatus && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setResetPasswordOpen(true)}
+                  className="h-10 gap-2 rounded-lg px-4 text-sm font-medium"
+                >
+                  <KeyRound aria-hidden className="size-4" />
+                  Reset Password
+                </Button>
+              )}
+              {canTogglePortalStatus && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDeactivateOpen(true)}
+                  className="h-10 gap-2 rounded-lg px-4 text-sm font-medium text-destructive hover:bg-destructive/5"
+                >
+                  <PowerOff aria-hidden className="size-4" />
+                  Deactivate Portal Access
+                </Button>
+              )}
+            </>
+          )}
+          {resident.user_id && resident.user?.status !== "active" && canTogglePortalStatus && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReactivateOpen(true)}
+              className="h-10 gap-2 rounded-lg px-4 text-sm font-medium"
+            >
+              <Power aria-hidden className="size-4" />
+              Reactivate Portal Access
+            </Button>
+          )}
         </div>
       </div>
 
@@ -702,6 +809,41 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
         confirmLabel="Mark Returned"
         loading={markReturnedLoading}
         onConfirm={handleMarkReturnedConfirm}
+      />
+
+      <EnablePortalAccessDialog
+        open={portalAccessOpen}
+        onOpenChange={setPortalAccessOpen}
+        resident={resident}
+      />
+
+      {resident.user && (
+        <ResetPasswordDialog
+          open={resetPasswordOpen}
+          onOpenChange={setResetPasswordOpen}
+          userId={resident.user.id}
+          userName={name}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deactivateOpen}
+        onOpenChange={setDeactivateOpen}
+        title="Deactivate portal access"
+        description={`Deactivate ${name}'s portal login? They won't be able to sign in until it's reactivated.`}
+        confirmLabel="Deactivate"
+        loading={deactivateLoading}
+        onConfirm={handleDeactivatePortalConfirm}
+      />
+
+      <ConfirmDialog
+        open={reactivateOpen}
+        onOpenChange={setReactivateOpen}
+        title="Reactivate portal access"
+        description={`Reactivate ${name}'s portal login? They'll be able to sign in again.`}
+        confirmLabel="Reactivate"
+        loading={reactivateLoading}
+        onConfirm={handleReactivatePortalConfirm}
       />
     </div>
   );

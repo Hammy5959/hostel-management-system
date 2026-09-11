@@ -6,7 +6,9 @@ from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.core.passwords import validate_password
 
 ResidentStatus = Literal["applicant", "active", "on_leave", "checked_out", "inactive"]
 
@@ -116,3 +118,27 @@ class ResidentList(BaseModel):
     page: int
     per_page: int
     summary: ResidentSummaryOut
+
+
+class ResidentPortalUserCreate(BaseModel):
+    """Enable Portal Access — mirrors app.users.schemas.UserCreate minus
+    role_id, which is fixed to the `resident` role inside
+    hms_create_resident_portal_user rather than trusted from the caller."""
+
+    email: EmailStr
+    first_name: str = Field(min_length=1, max_length=200)
+    last_name: str | None = Field(default=None, max_length=200)
+    phone: str | None = None
+    profile_picture_url: str | None = None
+    status: Literal["invited", "active"] = "invited"
+    password: str = Field(
+        min_length=1,
+        max_length=200,
+        description="Initial password. Stored only as an Argon2id hash — never plaintext.",
+    )
+
+    @field_validator("password")
+    @classmethod
+    def _check_password_policy(cls, value: str) -> str:
+        validate_password(value)
+        return value

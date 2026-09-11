@@ -20,6 +20,22 @@ function clearAuthCookie(): void {
   document.cookie = `${AUTH_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`
 }
 
+/** Presence-only, mirrors AUTH_COOKIE above — set only for the `resident`
+ * role (see setStoredRoleName below). Read server-side by proxy.ts to
+ * route residents into the Resident Portal and keep them out of staff
+ * routes. A UX/routing signal only, not a security boundary — same as
+ * AUTH_COOKIE. Keep this name in sync with proxy.ts by hand. */
+const PORTAL_COOKIE = "shms.portal"
+
+function setPortalCookie(): void {
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  document.cookie = `${PORTAL_COOKIE}=1; path=/; SameSite=Lax${secure}`
+}
+
+function clearPortalCookie(): void {
+  document.cookie = `${PORTAL_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`
+}
+
 const PERMISSIONS_KEY = "shms.permissions"
 const ROLE_NAME_KEY = "shms.role_name"
 
@@ -47,6 +63,7 @@ export function clearToken(): void {
   _roleNameLoaded = false
   emit()
   clearAuthCookie()
+  clearPortalCookie()
 }
 
 /* ── User store (for useSyncExternalStore) ────────────────────── */
@@ -153,6 +170,12 @@ export function setStoredRoleName(roleName: string | null): void {
     window.localStorage.setItem(ROLE_NAME_KEY, roleName)
   } else {
     window.localStorage.removeItem(ROLE_NAME_KEY)
+  }
+  // Drives proxy.ts's flash-free Resident Portal routing — see PORTAL_COOKIE above.
+  if (roleName === "resident") {
+    setPortalCookie()
+  } else {
+    clearPortalCookie()
   }
   emit()
 }

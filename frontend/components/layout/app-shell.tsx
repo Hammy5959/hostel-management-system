@@ -7,10 +7,25 @@ import { Topbar } from "@/components/layout/topbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { navigation as staffNavigation, type NavEntry } from "@/lib/navigation";
+
+interface AppShellProps {
+  children: React.ReactNode;
+  /** Defaults to the staff nav so app/(app)/layout.tsx needs no change —
+   * app/(portal)/layout.tsx passes residentNavigation instead. */
+  navigation?: NavEntry[];
+  /** Forwarded to Topbar; undefined (the default) is a no-op spread, so
+   * staff usage renders Topbar's own hardcoded defaults unchanged. */
+  topbarProps?: {
+    homeHref?: string;
+    brandLabel?: string;
+    profileHref?: string;
+  };
+}
 
 // Auth is guarded server-side by proxy.ts before this ever renders — no
 // client-side redirect needed here (and none would be flash-free anyway).
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, navigation = staffNavigation, topbarProps }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -20,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-background">
-      <Topbar onMenuClick={() => setMobileOpen(true)} />
+      <Topbar onMenuClick={() => setMobileOpen(true)} {...topbarProps} />
 
       {/* Desktop sidebar */}
       <aside
@@ -29,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           collapsed ? "w-[72px]" : "w-[280px]",
         )}
       >
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+        <Sidebar navigation={navigation} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
 
         {/* Collapse / expand toggle, centered on the sidebar's right edge */}
         <button
@@ -53,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           showCloseButton={false}
           className="w-[280px] bg-surface-container-low p-0 sm:max-w-[280px]"
         >
-          <Sidebar onNavigate={() => setMobileOpen(false)} />
+          <Sidebar navigation={navigation} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 

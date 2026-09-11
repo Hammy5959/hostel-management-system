@@ -8,16 +8,18 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Building2, ChevronRight, LogOut } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { navigation } from "@/lib/navigation"
+import type { NavEntry } from "@/lib/navigation"
 import { clearToken } from "@/lib/auth"
 
 interface SidebarProps {
+  navigation: NavEntry[]
   onNavigate?: () => void
   collapsed?: boolean
   onToggleCollapsed?: () => void
 }
 
 export function Sidebar({
+  navigation,
   onNavigate,
   collapsed = false,
   onToggleCollapsed,

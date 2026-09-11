@@ -53,7 +53,7 @@ def update_visitor(
 @router.post("/{visitor_id}/cancel", response_model=VisitorOut, summary="Cancel a visitor")
 def cancel_visitor(
     visitor_id: str,
-    _: dict = Depends(require_permission("visitors.create")),
+    user: dict = Depends(require_any_permission("visitors.create", "visitors.view_own")),
     db: Client = Depends(get_db),
 ) -> VisitorOut:
-    return service.cancel_visitor(db, visitor_id)
+    return service.cancel_visitor(db, user, visitor_id)

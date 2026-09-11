@@ -80,6 +80,7 @@ import type {
   Resident,
   ResidentCheckoutInput,
   ResidentCreateInput,
+  ResidentPortalUserCreateInput,
   Invoice,
   InvoiceCreateInput,
   InvoiceList,
@@ -732,6 +733,13 @@ export function getResident(id: string): Promise<Resident> {
   return apiFetch<Resident>(`/residents/${id}`)
 }
 
+/** The caller's own resident record (Resident Portal) — not to be confused
+ * with getMe()/updateMe() above, which operate on the logged-in user's
+ * `users` account row, not their linked `residents` row. */
+export function getMyResident(): Promise<Resident> {
+  return apiFetch<Resident>("/residents/me")
+}
+
 export function createResident(payload: ResidentCreateInput): Promise<Resident> {
   return apiFetch<Resident>("/residents", { method: "POST", body: payload })
 }
@@ -750,6 +758,18 @@ export function checkoutResident(id: string, payload: ResidentCheckoutInput = {}
 
 export function markResidentReturned(id: string): Promise<Resident> {
   return apiFetch<Resident>(`/residents/${id}/mark-returned`, { method: "POST" })
+}
+
+/** Enable Portal Access — atomically creates a resident-role user account
+ * and links it to this resident (see backend hms_create_resident_portal_user).
+ * Returns the resident row with `user_id` set but not yet embedding `user`
+ * (RPC responses don't carry PostgREST embeds) — refetch getResident/
+ * invalidate the ["resident", id] query for the fully-populated view. */
+export function createResidentPortalUser(
+  residentId: string,
+  payload: ResidentPortalUserCreateInput,
+): Promise<Resident> {
+  return apiFetch<Resident>(`/residents/${residentId}/portal-access`, { method: "POST", body: payload })
 }
 
 /* ── Resident documents ────────────────────────────────────────── */

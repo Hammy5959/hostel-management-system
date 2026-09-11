@@ -118,21 +118,60 @@ def test_create_visitor_allows_on_leave_resident(mock_get_by_id, mock_has_perm, 
 
 
 @patch("app.visitors.service.update")
+@patch("app.visitors.service.has_permission", return_value=True)
 @patch(
     "app.visitors.service.get_by_id",
     return_value={**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "expected"},
 )
-def test_cancel_visitor_succeeds_when_expected(mock_get_by_id, mock_update):
+def test_cancel_visitor_succeeds_when_expected(mock_get_by_id, mock_has_perm, mock_update):
     mock_update.return_value = {**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "cancelled"}
-    result = cancel_visitor(None, str(VISITOR_ID))
+    result = cancel_visitor(None, USER, str(VISITOR_ID))
     assert result.status == "cancelled"
 
 
+@patch("app.visitors.service.has_permission", return_value=True)
 @patch(
     "app.visitors.service.get_by_id",
     return_value={**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "checked_in"},
 )
-def test_cancel_visitor_blocks_when_not_expected(mock_get_by_id):
+def test_cancel_visitor_blocks_when_not_expected(mock_get_by_id, mock_has_perm):
     with pytest.raises(ConflictError) as exc:
-        cancel_visitor(None, str(VISITOR_ID))
+        cancel_visitor(None, USER, str(VISITOR_ID))
     assert exc.value.code == "cannot_cancel"
+
+
+@patch("app.visitors.service.update")
+@patch("app.visitors.service.get_resident_by_user", return_value={"id": str(RESIDENT_ID)})
+@patch("app.visitors.service.has_permission", return_value=False)
+@patch(
+    "app.visitors.service.get_by_id",
+    return_value={**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "expected"},
+)
+def test_cancel_visitor_allows_own_resident(mock_get_by_id, mock_has_perm, mock_own, mock_update):
+    mock_update.return_value = {**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "cancelled"}
+    result = cancel_visitor(None, USER, str(VISITOR_ID))
+    assert result.status == "cancelled"
+
+
+@patch("app.visitors.service.get_resident_by_user", return_value={"id": str(OTHER_RESIDENT_ID)})
+@patch("app.visitors.service.has_permission", return_value=False)
+@patch(
+    "app.visitors.service.get_by_id",
+    return_value={**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "expected"},
+)
+def test_cancel_visitor_blocks_when_resident_id_mismatch(mock_get_by_id, mock_has_perm, mock_own):
+    with pytest.raises(ForbiddenError) as exc:
+        cancel_visitor(None, USER, str(VISITOR_ID))
+    assert exc.value.code == "not_your_visitor"
+
+
+@patch("app.visitors.service.get_resident_by_user", return_value=None)
+@patch("app.visitors.service.has_permission", return_value=False)
+@patch(
+    "app.visitors.service.get_by_id",
+    return_value={**_inserted_row(RESIDENT_ID), "id": str(VISITOR_ID), "status": "expected"},
+)
+def test_cancel_visitor_blocks_when_no_own_resident_profile(mock_get_by_id, mock_has_perm, mock_own):
+    with pytest.raises(ForbiddenError) as exc:
+        cancel_visitor(None, USER, str(VISITOR_ID))
+    assert exc.value.code == "not_your_visitor"

@@ -11,6 +11,7 @@ import {
   CreditCard,
   DoorOpen,
   FileClock,
+  Inbox,
   KeyRound,
   Landmark,
   LayoutDashboard,
@@ -196,5 +197,32 @@ export const navigation: NavEntry[] = [
         },
       ],
     },
+  },
+];
+
+/** Resident Portal nav — separate from `navigation` (staff), threaded into
+ * AppShell via its `navigation` prop by app/(portal)/layout.tsx. Flat
+ * top-level links only (no groups), all real routes so Sidebar's existing
+ * `pathname === href` active-highlighting works with no extra handling. */
+export const residentNavigation: NavEntry[] = [
+  {
+    type: "link",
+    data: { label: "Home", href: "/portal", icon: LayoutDashboard },
+  },
+  {
+    type: "link",
+    data: { label: "My Finances", href: "/portal/finances", icon: Banknote },
+  },
+  {
+    type: "link",
+    data: { label: "My Requests", href: "/portal/requests", icon: Inbox },
+  },
+  {
+    type: "link",
+    data: { label: "My Room & Attendance", href: "/portal/room", icon: DoorOpen },
+  },
+  {
+    type: "link",
+    data: { label: "Profile", href: "/portal/profile", icon: UserRound },
   },
 ];
