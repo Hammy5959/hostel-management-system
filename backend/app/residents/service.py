@@ -12,7 +12,7 @@ from supabase import Client
 from app.audit.service import record_audit
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.core.passwords import hash_password
-from app.database.crud import get_by_id, insert, list_page, update
+from app.database.crud import insert, list_page, update
 from app.database.rpc import rpc_call
 from app.notifications.service import notify_resident
 from app.residents.schemas import (
@@ -30,15 +30,19 @@ from app.users.schemas import UserStatusUpdate
 from app.users.service import set_user_status
 
 _TABLE = "residents"
-_SELECT = "*, users(id, email, status)"
+_SELECT = "*, user:users(id, email, status)"
 
 # Resident statuses that mean "currently residing" — shared so modules that
 # gate on this (app.attendance.service, app.meals.service) can't drift apart.
 RESIDING_STATUSES = {"active", "on_leave"}
 
 
-def _fetch(db: Client, resident_id: str) -> dict:
-    row = get_by_id(db, _TABLE, resident_id)
+def _fetch(db: Client, resident_id: str, select: str = "*") -> dict:
+    res = db.table(_TABLE).select(select).eq("id", resident_id).execute()
+    if getattr(res, "error", None):
+        from app.database.supabase import raise_for_error
+        raise_for_error(res, f"get {_TABLE}")
+    row = res.data[0] if res.data else None
     if row is None:
         raise NotFoundError("Resident not found", code="resident_not_found")
     return row
@@ -53,7 +57,7 @@ def create_resident(db: Client, data: ResidentCreate) -> ResidentOut:
 
 
 def get_resident(db: Client, resident_id: str) -> ResidentOut:
-    return ResidentOut.model_validate(_fetch(db, resident_id))
+    return ResidentOut.model_validate(_fetch(db, resident_id, select=_SELECT))
 
 
 def get_resident_by_user(db: Client, user_id: str) -> dict | None:

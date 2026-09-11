@@ -617,6 +617,10 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
   }
 
   const resident = query.data;
+  // Portal controls only make sense for a current resident (active or
+  // temporarily on_leave) — hidden for applicant (not admitted yet),
+  // checked_out, and inactive.
+  const canShowPortalControls = resident.status === "active" || resident.status === "on_leave";
   const name = [resident.first_name, resident.last_name].filter(Boolean).join(" ");
   const subline = [
     resident.student_id ? `ID: ${resident.student_id}` : null,
@@ -701,7 +705,7 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
               Edit
             </Button>
           )}
-          {!resident.user_id && canManagePortal && (
+          {canShowPortalControls && !resident.user_id && canManagePortal && (
             <Button
               type="button"
               variant="outline"
@@ -712,7 +716,7 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
               Enable Portal Access
             </Button>
           )}
-          {resident.user_id && resident.user?.status === "active" && (
+          {canShowPortalControls && resident.user_id && resident.user?.status === "active" && (
             <>
               {canTogglePortalStatus && (
                 <Button
@@ -738,7 +742,7 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
               )}
             </>
           )}
-          {resident.user_id && resident.user?.status !== "active" && canTogglePortalStatus && (
+          {canShowPortalControls && resident.user_id && resident.user?.status !== "active" && canTogglePortalStatus && (
             <Button
               type="button"
               variant="outline"

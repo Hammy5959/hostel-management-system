@@ -77,6 +77,7 @@ export function EnablePortalAccessDialog({
         last_name: values.last_name || null,
         phone: values.phone || null,
         password: values.password,
+        status: "active",
       })
       toast.success("Portal access enabled.")
       queryClient.invalidateQueries({ queryKey: ["resident", resident.id] })
