@@ -7,7 +7,7 @@ import {
   Activity,
   BedDouble,
   DoorOpen,
-  LayoutDashboard,
+  Home,
   LogIn,
   ShieldCheck,
   TrendingUp,
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/hostel/empty-state"
 import { ErrorState } from "@/components/hostel/error-state"
 import { cn, formatCurrency } from "@/lib/utils"
+import { getStoredUser } from "@/lib/auth"
 import { usePermissions } from "@/lib/permissions"
 import {
   getAuditLogs,
@@ -244,6 +245,7 @@ export function DashboardView() {
   const canViewReports = has("reports.view")
   const canViewAuditLogs = has("audit_logs.view")
   const hasAnyWidget = canViewReports || canViewAuditLogs
+  const me = getStoredUser()
 
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary"],
@@ -279,9 +281,9 @@ export function DashboardView() {
 
       {!hasAnyWidget ? (
         <EmptyState
-          icon={LayoutDashboard}
-          title="No dashboard widgets are available for your role yet."
-          description="Ask an administrator if you believe you should have access to dashboard reports."
+          icon={Home}
+          title={me ? `Welcome, ${me.first_name}!` : "Welcome!"}
+          description="Your dashboard will show reports and activity here once your role has access to them."
         />
       ) : (
         <>

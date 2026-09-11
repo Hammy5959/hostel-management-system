@@ -8,8 +8,9 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Building2, ChevronRight, LogOut } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import type { NavEntry } from "@/lib/navigation"
+import { filterNavigation, type NavEntry } from "@/lib/navigation"
 import { clearToken } from "@/lib/auth"
+import { usePermissions } from "@/lib/permissions"
 
 interface SidebarProps {
   navigation: NavEntry[]
@@ -27,6 +28,8 @@ export function Sidebar({
   const router = useRouter()
   const queryClient = useQueryClient()
   const pathname = usePathname()
+  const { has, hasAny } = usePermissions()
+  const visibleNavigation = filterNavigation(navigation, has, hasAny)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
 
   function toggleGroup(id: string) {
@@ -98,7 +101,7 @@ export function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-        {navigation.map((entry) => {
+        {visibleNavigation.map((entry) => {
           if (entry.type === "link") {
             const { label, href, icon: Icon } = entry.data
             const active = pathname === href

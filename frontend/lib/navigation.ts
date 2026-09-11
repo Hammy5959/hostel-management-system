@@ -33,6 +33,19 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Gates visibility in the staff sidebar. Sourced 1:1 from the
+   * permission(s) each page's PageAccessGuard checks. Omit to always show
+   * (matches a page guarded with permission={null}, or entries with no
+   * guard, like Dashboard). Never set this on residentNavigation entries —
+   * filtering treats "no permission declared" as "always show", which is
+   * what keeps the resident portal sidebar untouched by this filter. */
+  permission?: string | string[];
+  /** Staff-only. True for a nav entry whose page doesn't exist yet (no
+   * route, so no PageAccessGuard to source a permission from) — hidden for
+   * every role unconditionally. Deliberately separate from `permission` so
+   * an unbuilt page is never confused with a permission the user lacks.
+   * Drop this flag once the page ships. */
+  unbuilt?: true;
 }
 
 export interface NavGroup {
@@ -46,6 +59,10 @@ export interface NavLink {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** See NavItem.permission — same contract for a top-level link. */
+  permission?: string | string[];
+  /** See NavItem.unbuilt — same contract for a top-level link. */
+  unbuilt?: true;
 }
 
 export type NavEntry =
@@ -65,10 +82,15 @@ export const navigation: NavEntry[] = [
       label: "Hostel Management",
       icon: Building2,
       items: [
-        { label: "Buildings", href: "/buildings", icon: Building2 },
-        { label: "Floors", href: "/floors", icon: Layers },
-        { label: "Rooms", href: "/rooms", icon: DoorOpen },
-        { label: "Allocations", href: "/allocations", icon: Users },
+        { label: "Buildings", href: "/buildings", icon: Building2, permission: "buildings.view" },
+        { label: "Floors", href: "/floors", icon: Layers, permission: "floors.view" },
+        { label: "Rooms", href: "/rooms", icon: DoorOpen, permission: "rooms.view" },
+        {
+          label: "Allocations",
+          href: "/allocations",
+          icon: Users,
+          permission: ["allocations.view", "allocations.view_own"],
+        },
       ],
     },
   },
@@ -80,8 +102,13 @@ export const navigation: NavEntry[] = [
       label: "Residents & Admissions",
       icon: UserRound,
       items: [
-        { label: "Residents", href: "/residents", icon: UserRound },
-        { label: "Admissions", href: "/admissions", icon: ClipboardPlus },
+        { label: "Residents", href: "/residents", icon: UserRound, permission: "residents.view" },
+        {
+          label: "Admissions",
+          href: "/admissions",
+          icon: ClipboardPlus,
+          permission: ["admissions.view", "admissions.view_own"],
+        },
       ],
     },
   },
@@ -93,11 +120,17 @@ export const navigation: NavEntry[] = [
       label: "Attendance & Leave",
       icon: CalendarClock,
       items: [
-        { label: "Daily Attendance", href: "/attendance", icon: CalendarCheck },
+        {
+          label: "Daily Attendance",
+          href: "/attendance",
+          icon: CalendarCheck,
+          permission: ["attendance.view", "attendance.view_own"],
+        },
         {
           label: "Leave Requests",
           href: "/leave-requests",
           icon: CalendarDays,
+          permission: ["leave_requests.view", "leave_requests.view_own"],
         },
       ],
     },
@@ -110,8 +143,18 @@ export const navigation: NavEntry[] = [
       label: "Visitors & Security",
       icon: ShieldCheck,
       items: [
-        { label: "Visitors", href: "/visitors", icon: Users },
-        { label: "Gate Passes", href: "/gate-passes", icon: BadgeCheck },
+        {
+          label: "Visitors",
+          href: "/visitors",
+          icon: Users,
+          permission: ["visitors.view", "visitors.view_own"],
+        },
+        {
+          label: "Gate Passes",
+          href: "/gate-passes",
+          icon: BadgeCheck,
+          permission: ["gate_passes.view", "gate_passes.view_own"],
+        },
       ],
     },
   },
@@ -123,10 +166,30 @@ export const navigation: NavEntry[] = [
       label: "Finance & Fees",
       icon: Banknote,
       items: [
-        { label: "Fee Structures", href: "/fee-structures", icon: Banknote },
-        { label: "Resident Charges", href: "/resident-charges", icon: Receipt },
-        { label: "Invoices", href: "/invoices", icon: Receipt },
-        { label: "Payments", href: "/payments", icon: CreditCard },
+        {
+          label: "Fee Structures",
+          href: "/fee-structures",
+          icon: Banknote,
+          permission: "fee_structures.view",
+        },
+        {
+          label: "Resident Charges",
+          href: "/resident-charges",
+          icon: Receipt,
+          permission: "resident_charges.view",
+        },
+        {
+          label: "Invoices",
+          href: "/invoices",
+          icon: Receipt,
+          permission: ["invoices.view", "invoices.view_own"],
+        },
+        {
+          label: "Payments",
+          href: "/payments",
+          icon: CreditCard,
+          permission: ["payments.view", "payments.view_own"],
+        },
       ],
     },
   },
@@ -138,9 +201,14 @@ export const navigation: NavEntry[] = [
       label: "Maintenance & Inventory",
       icon: Wrench,
       items: [
-        { label: "Maintenance", href: "/maintenance", icon: Wrench },
-        { label: "Inventory", href: "/inventory", icon: Package },
-        { label: "Assets", href: "/assets", icon: Landmark },
+        {
+          label: "Maintenance",
+          href: "/maintenance",
+          icon: Wrench,
+          permission: "maintenance_tickets.view",
+        },
+        { label: "Inventory", href: "/inventory", icon: Package, permission: "inventory_items.view" },
+        { label: "Assets", href: "/assets", icon: Landmark, permission: "assets.view" },
       ],
     },
   },
@@ -151,6 +219,7 @@ export const navigation: NavEntry[] = [
       label: "Mess Menus & Meals",
       href: "/mess-menus-meals",
       icon: UtensilsCrossed,
+      permission: ["mess_menus.view", "meals.view"],
     },
   },
 
@@ -161,11 +230,11 @@ export const navigation: NavEntry[] = [
 
   {
     type: "link",
-    data: { label: "Reports", href: "/reports", icon: BarChart3 },
+    data: { label: "Reports", href: "/reports", icon: BarChart3, unbuilt: true },
   },
   {
     type: "link",
-    data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock },
+    data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock, unbuilt: true },
   },
 
   {
@@ -175,10 +244,15 @@ export const navigation: NavEntry[] = [
       label: "User Management",
       icon: UserCog,
       items: [
-        { label: "Users", href: "/users", icon: Users },
-        { label: "Staff", href: "/staff", icon: UserCog },
-        { label: "Roles", href: "/roles", icon: ShieldCheck },
-        { label: "Permissions", href: "/permissions", icon: KeyRound },
+        { label: "Users", href: "/users", icon: Users, permission: "users.view" },
+        { label: "Staff", href: "/staff", icon: UserCog, permission: "staff.view" },
+        {
+          label: "Roles",
+          href: "/roles",
+          icon: ShieldCheck,
+          permission: ["roles.view", "roles.manage"],
+        },
+        { label: "Permissions", href: "/permissions", icon: KeyRound, unbuilt: true },
       ],
     },
   },
@@ -194,6 +268,7 @@ export const navigation: NavEntry[] = [
           label: "Hostel Settings",
           href: "/settings",
           icon: SlidersHorizontal,
+          unbuilt: true,
         },
       ],
     },
@@ -226,3 +301,36 @@ export const residentNavigation: NavEntry[] = [
     data: { label: "Profile", href: "/portal/profile", icon: UserRound },
   },
 ];
+
+function isNavEntryVisible(
+  entry: { permission?: string | string[]; unbuilt?: true },
+  has: (permission: string) => boolean,
+  hasAny: (...permissions: string[]) => boolean,
+): boolean {
+  if (entry.unbuilt) return false;
+  if (!entry.permission) return true;
+  return Array.isArray(entry.permission)
+    ? hasAny(...entry.permission)
+    : has(entry.permission);
+}
+
+/** Filters a nav array down to entries the current user is allowed to see.
+ * An entry with no `permission` is always shown; `unbuilt` entries are
+ * always hidden. A group is dropped entirely once all of its items are
+ * filtered out. Entries that declare neither field (e.g. every
+ * `residentNavigation` entry) pass through unchanged. */
+export function filterNavigation(
+  entries: NavEntry[],
+  has: (permission: string) => boolean,
+  hasAny: (...permissions: string[]) => boolean,
+): NavEntry[] {
+  return entries.reduce<NavEntry[]>((visible, entry) => {
+    if (entry.type === "link") {
+      if (isNavEntryVisible(entry.data, has, hasAny)) visible.push(entry);
+      return visible;
+    }
+    const items = entry.data.items.filter((item) => isNavEntryVisible(item, has, hasAny));
+    if (items.length > 0) visible.push({ type: "group", data: { ...entry.data, items } });
+    return visible;
+  }, []);
+}

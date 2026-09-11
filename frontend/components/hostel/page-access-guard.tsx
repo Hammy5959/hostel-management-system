@@ -3,6 +3,7 @@
 import { ShieldOff } from "lucide-react"
 
 import { EmptyState } from "@/components/hostel/empty-state"
+import { getStoredUser } from "@/lib/auth"
 import { usePermissions } from "@/lib/permissions"
 
 /**
@@ -17,17 +18,26 @@ import { usePermissions } from "@/lib/permissions"
  */
 export function PageAccessGuard({
   permission,
+  allowSelfId,
   children,
 }: {
   permission: string | string[] | null
+  /** Lets a user reach this page for their own id even without `permission`
+   * — e.g. /users/{id} must stay reachable via the profile-avatar link for
+   * every role, most of which lack users.view. Compared against the same
+   * synchronous getStoredUser() cache the page's own self-view logic uses. */
+  allowSelfId?: string
   children: React.ReactNode
 }) {
   const { has, hasAny, isLoading } = usePermissions()
 
   if (isLoading) return null
 
+  const isSelf = allowSelfId !== undefined && getStoredUser()?.id === allowSelfId
   const allowed =
-    permission === null ? true : Array.isArray(permission) ? hasAny(...permission) : has(permission)
+    isSelf || permission === null
+      ? true
+      : Array.isArray(permission) ? hasAny(...permission) : has(permission)
 
   if (!allowed) {
     const label = Array.isArray(permission) ? permission.join(" or ") : permission
