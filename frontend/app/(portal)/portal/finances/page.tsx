@@ -1,15 +1,20 @@
-import { StubTabsPage } from "@/components/portal/stub-tabs-page"
+"use client"
+
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+
+import { PortalFinancesView } from "@/components/portal/portal-finances-view"
+
+function PortalFinancesContent() {
+  const searchParams = useSearchParams()
+
+  return <PortalFinancesView initialTab={searchParams.get("tab") ?? undefined} />
+}
 
 export default function PortalFinancesPage() {
   return (
-    <StubTabsPage
-      title="My Finances"
-      description="Invoices, payments, and charges for your stay."
-      tabs={[
-        { value: "invoices", label: "Invoices" },
-        { value: "payments", label: "Payments" },
-        { value: "charges", label: "Charges" },
-      ]}
-    />
+    <Suspense>
+      <PortalFinancesContent />
+    </Suspense>
   )
 }

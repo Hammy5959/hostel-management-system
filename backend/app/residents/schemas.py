@@ -74,6 +74,19 @@ class ResidentUserRef(BaseModel):
     status: str | None = None
 
 
+class RoommateOut(BaseModel):
+    """Minimal identity for another resident sharing the caller's room —
+    deliberately excludes everything else on ResidentOut (email, phone,
+    guardian/emergency contact, student_id, payment info, ...)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    first_name: str
+    last_name: str | None = None
+    profile_picture_url: str | None = None
+
+
 class ResidentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

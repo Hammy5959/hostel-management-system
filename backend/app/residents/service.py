@@ -23,6 +23,7 @@ from app.residents.schemas import (
     ResidentPortalUserCreate,
     ResidentSummaryOut,
     ResidentUpdate,
+    RoommateOut,
 )
 from app.users import crud as users_crud
 from app.users.crud import get_user_by_id
@@ -82,6 +83,41 @@ def has_active_allocation(db: Client, resident_id: str) -> bool:
         from app.database.supabase import raise_for_error
         raise_for_error(res, "check active allocation")
     return bool(res.data)
+
+
+def get_own_roommates(db: Client, user: dict) -> list[RoommateOut]:
+    """Other residents actively sharing the caller's own room.
+
+    Queries room_allocations directly (not app.allocations.service) for the
+    same reason has_active_allocation above does — that module imports
+    get_resident_by_user from this one, so this module must never import
+    back from it.
+    """
+    resident = get_resident_by_user(db, user["id"])
+    if resident is None:
+        raise NotFoundError("No resident profile linked to this account", code="resident_not_linked")
+
+    from app.database.supabase import raise_for_error
+
+    own = (
+        db.table("room_allocations").select("room_id")
+        .eq("resident_id", resident["id"]).eq("status", "active").execute()
+    )
+    if getattr(own, "error", None):
+        raise_for_error(own, "load own allocation")
+    if not own.data:
+        return []
+
+    room_id = own.data[0]["room_id"]
+    others = (
+        db.table("room_allocations")
+        .select("resident:residents!inner(id, first_name, last_name, profile_picture_url)")
+        .eq("room_id", room_id).eq("status", "active").neq("resident_id", resident["id"])
+        .execute()
+    )
+    if getattr(others, "error", None):
+        raise_for_error(others, "load roommates")
+    return [RoommateOut.model_validate(row["resident"]) for row in others.data if row.get("resident")]
 
 
 def list_institutions(db: Client) -> list[str]:

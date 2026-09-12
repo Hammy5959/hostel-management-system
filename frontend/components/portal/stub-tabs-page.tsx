@@ -16,12 +16,19 @@ export function StubTabsPage({
   title,
   description,
   tabs,
+  initialTab,
 }: {
   title: string
   description?: string
   tabs: { value: string; label: string }[]
+  /** Lets a caller (e.g. Requests page reading ?tab= for Home page Quick
+   * Actions deep-links) open on a specific tab. Falls back to the first tab
+   * when omitted or when it doesn't match one of this page's tabs. */
+  initialTab?: string
 }) {
-  const [tab, setTab] = useState(tabs[0]?.value)
+  const [tab, setTab] = useState(
+    tabs.some((t) => t.value === initialTab) ? initialTab! : tabs[0]?.value,
+  )
 
   return (
     <div className="space-y-6">

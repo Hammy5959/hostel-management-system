@@ -648,6 +648,16 @@ export interface Resident {
   user?: { id: string; email: string; status: string } | null
 }
 
+/** Minimal identity for another resident sharing the caller's room — see
+ * GET /residents/me/roommates. Deliberately excludes everything else on
+ * Resident (email, phone, guardian/emergency contact, student_id, etc.). */
+export interface Roommate {
+  id: string
+  first_name: string
+  last_name: string | null
+  profile_picture_url: string | null
+}
+
 export interface ResidentPortalUserCreateInput {
   email: string
   first_name: string

@@ -15,6 +15,7 @@ from app.residents.schemas import (
     ResidentOut,
     ResidentPortalUserCreate,
     ResidentUpdate,
+    RoommateOut,
 )
 
 router = APIRouter(prefix="/residents", tags=["residents"])
@@ -76,6 +77,14 @@ def update_me(
     db: Client = Depends(get_db),
 ) -> ResidentOut:
     return service.update_own_resident(db, user, payload)
+
+
+@router.get("/me/roommates", response_model=list[RoommateOut], summary="List other residents in own room")
+def get_my_roommates(
+    user: dict = Depends(require_permission("residents.view_own")),
+    db: Client = Depends(get_db),
+) -> list[RoommateOut]:
+    return service.get_own_roommates(db, user)
 
 
 @router.get("/{resident_id}", response_model=ResidentOut, summary="Get a resident")

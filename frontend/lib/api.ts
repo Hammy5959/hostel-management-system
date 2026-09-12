@@ -107,6 +107,7 @@ import type {
   ResidentList,
   ResidentRefList,
   ResidentUpdateInput,
+  Roommate,
   Room,
   RoomCreateInput,
   RoomDetail,
@@ -738,6 +739,12 @@ export function getResident(id: string): Promise<Resident> {
  * `users` account row, not their linked `residents` row. */
 export function getMyResident(): Promise<Resident> {
   return apiFetch<Resident>("/residents/me")
+}
+
+/** Other residents actively sharing the caller's own room — minimal
+ * name+photo only (see Roommate type). Empty if no active allocation. */
+export function getMyRoommates(): Promise<Roommate[]> {
+  return apiFetch<Roommate[]>("/residents/me/roommates")
 }
 
 export function createResident(payload: ResidentCreateInput): Promise<Resident> {
