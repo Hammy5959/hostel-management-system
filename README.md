@@ -16,7 +16,7 @@ Authorization is fully permission-based — every role (including "resident") is
 - **Finance** — fee structures, per-resident charges, invoices with line items, payments, expenses, and security deposits.
 - **Maintenance & inventory** — resident complaints, maintenance tickets, inventory categories and items with stock adjustments, and assets with assignment tracking.
 - **Mess & communication** — mess menus, meal marking and registers, notices with audience targeting by building/floor, and in-app notifications.
-- **Administration** — user accounts, staff records, roles and a granular permission catalog, audit logs, and operational reports (occupancy, attendance, leave, and a dashboard summary).
+- **Administration** — user accounts, staff records, roles and a granular permission catalog, audit logs, and operational reports (dashboard summary; occupancy with building/floor breakdown; admissions, stays, finance and defaulters; attendance, leaves, visitors, maintenance and gate passes with date filtering; inventory, mess/meals, and notices; and collections/occupancy trend data for charts).
 
 ### Resident portal
 

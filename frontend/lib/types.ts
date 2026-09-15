@@ -93,6 +93,28 @@ export interface AttendanceReport {
   excused: number
 }
 
+export interface OccupancyBuildingBreakdownRow {
+  building_id: string
+  building_name: string
+  building_type: string | null
+  total_rooms: number
+  total_beds: number
+  occupied_beds: number
+  available_beds: number
+  occupancy_rate: number
+}
+
+export interface OccupancyFloorBreakdownRow {
+  floor_id: string
+  floor_name: string
+  building_id: string
+  total_rooms: number
+  total_beds: number
+  occupied_beds: number
+  available_beds: number
+  occupancy_rate: number
+}
+
 export interface OccupancyReport {
   total_beds: number
   occupied: number
@@ -100,6 +122,7 @@ export interface OccupancyReport {
   cleaning: number
   maintenance: number
   occupancy_rate: number
+  breakdown: (OccupancyBuildingBreakdownRow | OccupancyFloorBreakdownRow)[]
 }
 
 export interface AuditLogItem {
@@ -1236,6 +1259,124 @@ export interface LeaveReport {
   rejected: number
   completed: number
   cancelled: number
+}
+
+/* ── Reports (extended) ───────────────────────────────────────────── */
+
+export interface AdmissionsReport {
+  total: number
+  pending: number
+  approved: number
+  rejected: number
+  cancelled: number
+}
+
+export interface StaysReport {
+  checked_in: number
+  checked_out: number
+  scheduled: number
+}
+
+export interface FinanceReport {
+  total_payments: number | string
+  total_expenses: number | string
+  outstanding_balance: number | string
+  paid_invoices: number
+  overdue_invoices: number
+  draft_invoices: number
+}
+
+export interface VisitorsReport {
+  expected: number
+  checked_in: number
+  checked_out: number
+  cancelled: number
+}
+
+export interface MaintenanceReport {
+  open_tickets: number
+  assigned_tickets: number
+  in_progress_tickets: number
+  resolved_tickets: number
+  open_complaints: number
+  resolved_complaints: number
+}
+
+export interface InventoryReport {
+  total_items: number
+  low_stock_items: number
+  out_of_stock_items: number
+}
+
+export interface MessReport {
+  total_records: number
+  consumed: number
+  not_consumed: number
+  breakfast: number
+  lunch: number
+  dinner: number
+}
+
+export interface GatePassesReport {
+  total: number
+  pending: number
+  approved: number
+  issued: number
+  exited: number
+  returned: number
+  expired: number
+  rejected: number
+  cancelled: number
+}
+
+export interface NoticesReport {
+  total: number
+  published: number
+  draft: number
+  audience_all: number
+  audience_building: number
+  audience_floor: number
+}
+
+export interface DefaulterRow {
+  resident_id: string
+  first_name: string
+  last_name: string | null
+  student_id: string | null
+  room_number: string | null
+  bed_number: string | null
+  total_outstanding: number | string
+  oldest_overdue_date: string | null
+}
+
+export interface DefaultersReport {
+  items: DefaulterRow[]
+  total: number
+}
+
+export interface CollectionsTrendPoint {
+  period: string
+  total: number | string
+}
+
+export interface CollectionsTrend {
+  granularity: "month" | "week"
+  items: CollectionsTrendPoint[]
+}
+
+export interface OccupancyTrendPoint {
+  period: string
+  occupied_beds: number
+  total_beds: number
+  occupancy_rate: number
+}
+
+export interface OccupancyTrend {
+  granularity: "month" | "week"
+  date_from: string
+  date_to: string
+  note: string
+  items: OccupancyTrendPoint[]
 }
 
 /* ── Payments (Finance) ───────────────────────────────────────────── */

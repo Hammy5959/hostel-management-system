@@ -233,7 +233,7 @@ export function LeaveRequestsView() {
 
   const reportQuery = useQuery({
     queryKey: ["leave-report"],
-    queryFn: getLeaveReport,
+    queryFn: () => getLeaveReport(),
     enabled: canViewReports,
   })
 

@@ -79,7 +79,19 @@ import type {
   NoticeUpdateInput,
   NotificationItem,
   NotificationList,
+  AdmissionsReport,
+  CollectionsTrend,
+  DefaultersReport,
+  FinanceReport,
+  GatePassesReport,
+  InventoryReport,
+  MaintenanceReport,
+  MessReport,
+  NoticesReport,
   OccupancyReport,
+  OccupancyTrend,
+  StaysReport,
+  VisitorsReport,
   OTPRequestResponse,
   Resident,
   ResidentCheckoutInput,
@@ -278,8 +290,13 @@ export function getDashboardSummary(): Promise<DashboardSummary> {
   return apiFetch<DashboardSummary>("/reports/summary")
 }
 
-export function getOccupancyReport(): Promise<OccupancyReport> {
-  return apiFetch<OccupancyReport>("/reports/occupancy")
+export interface OccupancyReportParams {
+  building_id?: string
+  floor_id?: string
+}
+
+export function getOccupancyReport(params: OccupancyReportParams = {}): Promise<OccupancyReport> {
+  return apiFetch<OccupancyReport>(`/reports/occupancy${toQueryString({ ...params })}`)
 }
 
 export interface AttendanceReportParams {
@@ -291,8 +308,69 @@ export function getAttendanceReport(params: AttendanceReportParams = {}): Promis
   return apiFetch<AttendanceReport>(`/reports/attendance${toQueryString({ ...params })}`)
 }
 
-export function getLeaveReport(): Promise<LeaveReport> {
-  return apiFetch<LeaveReport>("/reports/leaves")
+/** Shared date-range params for the report endpoints below — same optional
+ * date_from/date_to shape as AttendanceReportParams. */
+export interface ReportDateRangeParams {
+  date_from?: string
+  date_to?: string
+}
+
+export function getLeaveReport(params: ReportDateRangeParams = {}): Promise<LeaveReport> {
+  return apiFetch<LeaveReport>(`/reports/leaves${toQueryString({ ...params })}`)
+}
+
+export function getAdmissionsReport(params: ReportDateRangeParams = {}): Promise<AdmissionsReport> {
+  return apiFetch<AdmissionsReport>(`/reports/admissions${toQueryString({ ...params })}`)
+}
+
+export function getStaysReport(params: ReportDateRangeParams = {}): Promise<StaysReport> {
+  return apiFetch<StaysReport>(`/reports/stays${toQueryString({ ...params })}`)
+}
+
+export function getFinanceReport(params: ReportDateRangeParams = {}): Promise<FinanceReport> {
+  return apiFetch<FinanceReport>(`/reports/finance${toQueryString({ ...params })}`)
+}
+
+export function getVisitorsReport(params: ReportDateRangeParams = {}): Promise<VisitorsReport> {
+  return apiFetch<VisitorsReport>(`/reports/visitors${toQueryString({ ...params })}`)
+}
+
+export function getMaintenanceReport(params: ReportDateRangeParams = {}): Promise<MaintenanceReport> {
+  return apiFetch<MaintenanceReport>(`/reports/maintenance${toQueryString({ ...params })}`)
+}
+
+export function getInventoryReport(): Promise<InventoryReport> {
+  return apiFetch<InventoryReport>("/reports/inventory")
+}
+
+export function getMessReport(params: ReportDateRangeParams = {}): Promise<MessReport> {
+  return apiFetch<MessReport>(`/reports/mess${toQueryString({ ...params })}`)
+}
+
+export function getGatePassesReport(params: ReportDateRangeParams = {}): Promise<GatePassesReport> {
+  return apiFetch<GatePassesReport>(`/reports/gate-passes${toQueryString({ ...params })}`)
+}
+
+export function getNoticesReport(): Promise<NoticesReport> {
+  return apiFetch<NoticesReport>("/reports/notices")
+}
+
+export function getDefaultersReport(): Promise<DefaultersReport> {
+  return apiFetch<DefaultersReport>("/reports/defaulters")
+}
+
+export interface TrendParams {
+  date_from?: string
+  date_to?: string
+  granularity?: "month" | "week"
+}
+
+export function getCollectionsTrend(params: TrendParams = {}): Promise<CollectionsTrend> {
+  return apiFetch<CollectionsTrend>(`/reports/trends/collections${toQueryString({ ...params })}`)
+}
+
+export function getOccupancyTrend(params: TrendParams = {}): Promise<OccupancyTrend> {
+  return apiFetch<OccupancyTrend>(`/reports/trends/occupancy${toQueryString({ ...params })}`)
 }
 
 /* ── Activity / audit ─────────────────────────────────────────── */

@@ -230,7 +230,7 @@ export const navigation: NavEntry[] = [
 
   {
     type: "link",
-    data: { label: "Reports", href: "/reports", icon: BarChart3, unbuilt: true },
+    data: { label: "Reports", href: "/reports", icon: BarChart3, permission: "reports.view" },
   },
   {
     type: "link",

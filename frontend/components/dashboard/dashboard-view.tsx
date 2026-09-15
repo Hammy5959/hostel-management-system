@@ -254,7 +254,7 @@ export function DashboardView() {
   })
   const occupancyQuery = useQuery({
     queryKey: ["dashboard-occupancy"],
-    queryFn: getOccupancyReport,
+    queryFn: () => getOccupancyReport(),
     enabled: canViewReports,
   })
   const logsQuery = useQuery({

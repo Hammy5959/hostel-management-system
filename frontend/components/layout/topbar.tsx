@@ -43,6 +43,18 @@ interface TopbarProps {
   /** "Edit Profile" target. Default reproduces today's staff behavior
    * (computed from the logged-in user's own id at click time). */
   profileHref?: string
+  /** Displayed name. Default (undefined) reproduces today's staff behavior
+   * of deriving it from the logged-in user account. Portal passes the
+   * resident record's name instead, so the topbar matches /portal/profile. */
+  identityName?: string
+  /** Avatar image. Default (undefined) reproduces today's staff behavior
+   * of using the user account's photo. Portal passes the resident record's
+   * own profile_picture_url instead. */
+  identityPhotoUrl?: string | null
+  /** Avatar fallback initials, paired with identityName (initials() needs
+   * first/last name separately, so the caller computes this rather than
+   * Topbar re-splitting a combined name string). */
+  identityInitials?: string
 }
 
 export function Topbar({
@@ -50,6 +62,9 @@ export function Topbar({
   homeHref = "/dashboard",
   brandLabel = "SHMS Admin",
   profileHref,
+  identityName,
+  identityPhotoUrl,
+  identityInitials,
 }: TopbarProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -125,7 +140,9 @@ export function Topbar({
   }
 
   const unreadCount = countData?.unread_count ?? 0
-  const fullName = user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : ""
+  const fullName = identityName ?? (user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "")
+  const avatarUrl = identityPhotoUrl !== undefined ? (identityPhotoUrl ?? undefined) : (user?.profile_picture_url ?? undefined)
+  const avatarInitials = identityInitials ?? (user ? initials(user.first_name, user.last_name) : "?")
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-white px-4 md:px-6">
@@ -268,9 +285,9 @@ export function Topbar({
             className="flex items-center gap-2 rounded-full outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring/50 hover:opacity-90"
           >
             <Avatar size="lg" className="size-9">
-              <AvatarImage src={user?.profile_picture_url ?? undefined} alt="" />
+              <AvatarImage src={avatarUrl} alt="" />
               <AvatarFallback className="bg-primary-fixed text-sm font-semibold text-on-primary-fixed">
-                {user ? initials(user.first_name, user.last_name) : "?"}
+                {avatarInitials}
               </AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium text-on-surface sm:inline">

@@ -207,6 +207,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "gate_passes.view", "gate_passes.approve", "gate_passes.reject",
         "complaints.view", "complaints.update",
         "maintenance_tickets.view",
+        "reports.view",
     ],
     "accountant": [
         "residents.view",

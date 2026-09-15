@@ -20,6 +20,9 @@ interface AppShellProps {
     homeHref?: string;
     brandLabel?: string;
     profileHref?: string;
+    identityName?: string;
+    identityPhotoUrl?: string | null;
+    identityInitials?: string;
   };
 }
 
