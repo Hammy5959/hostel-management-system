@@ -53,12 +53,27 @@ export function VisitorFormDialog({
   onOpenChange,
   visitor,
   residentName,
+  residentId,
+  hideCheckInOption = false,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   visitor: Visitor | null
   /** Resolved by the parent — only needed in edit mode. */
   residentName?: string
+  /** Create mode only: when set, the resident picker is skipped and this id
+   * is submitted directly — the Resident Portal's self-service create flow.
+   * Staff call sites don't pass this and keep the existing picker-driven
+   * flow. Meaningless in edit mode (a visitor's resident never changes). */
+  residentId?: string
+  /** Create mode only: hides the "Check in immediately" checkbox — it drives
+   * checkInVisitor(), which needs visitor_logs.create, a permission
+   * residents don't hold. Defaults to false so staff behavior is unchanged. */
+  hideCheckInOption?: boolean
+  /** Extra hook run after a successful submit, alongside the existing
+   * staff-query invalidation below. */
+  onSuccess?: () => void
 }) {
   const isEdit = !!visitor
   return (
@@ -76,7 +91,10 @@ export function VisitorFormDialog({
             key={visitor?.id ?? "create"}
             visitor={visitor}
             residentName={residentName}
+            residentId={residentId}
+            hideCheckInOption={hideCheckInOption}
             onOpenChange={onOpenChange}
+            onSuccess={onSuccess}
           />
         )}
       </DialogContent>
@@ -87,11 +105,17 @@ export function VisitorFormDialog({
 function VisitorForm({
   visitor,
   residentName,
+  residentId,
+  hideCheckInOption,
   onOpenChange,
+  onSuccess,
 }: {
   visitor: Visitor | null
   residentName?: string
+  residentId?: string
+  hideCheckInOption?: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }) {
   const queryClient = useQueryClient()
   const isEdit = !!visitor
@@ -111,7 +135,7 @@ function VisitorForm({
 
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
-    if (!isEdit && !resident) {
+    if (!isEdit && !residentId && !resident) {
       setResidentError("Resident is required")
       return
     }
@@ -136,7 +160,7 @@ function VisitorForm({
         toast.success("Visitor updated.")
       } else {
         const created = await createVisitor({
-          resident_id: resident!.value,
+          resident_id: residentId ?? resident!.value,
           visitor_name: visitorName.trim(),
           visitor_phone: visitorPhone || null,
           relationship: relationship || null,
@@ -152,6 +176,7 @@ function VisitorForm({
       }
       queryClient.invalidateQueries({ queryKey: ["visitors"] })
       queryClient.invalidateQueries({ queryKey: ["visitor-logs"] })
+      onSuccess?.()
       onOpenChange(false)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -177,22 +202,24 @@ function VisitorForm({
               </p>
             </Field>
           ) : (
-            <Field data-invalid={!!residentError}>
-              <FieldLabel htmlFor="visitor-form-resident">
-                Resident <span className="text-destructive">*</span>
-              </FieldLabel>
-              <EntityCombobox
-                id="visitor-form-resident"
-                value={resident}
-                onChange={(next) => {
-                  setResident(next)
-                  if (next) setResidentError(null)
-                }}
-                fetchOptions={fetchVisitorEligibleResidentOptions}
-                placeholder="Search by name or student ID…"
-              />
-              <FieldError errors={[residentError ? { message: residentError } : undefined]} />
-            </Field>
+            !residentId && (
+              <Field data-invalid={!!residentError}>
+                <FieldLabel htmlFor="visitor-form-resident">
+                  Resident <span className="text-destructive">*</span>
+                </FieldLabel>
+                <EntityCombobox
+                  id="visitor-form-resident"
+                  value={resident}
+                  onChange={(next) => {
+                    setResident(next)
+                    if (next) setResidentError(null)
+                  }}
+                  fetchOptions={fetchVisitorEligibleResidentOptions}
+                  placeholder="Search by name or student ID…"
+                />
+                <FieldError errors={[residentError ? { message: residentError } : undefined]} />
+              </Field>
+            )
           )}
 
           <Field data-invalid={!!nameError}>
@@ -267,7 +294,7 @@ function VisitorForm({
             />
           </Field>
 
-          {!isEdit && (
+          {!isEdit && !hideCheckInOption && (
             <div className="flex items-center gap-2">
               <Checkbox
                 id="visitor-form-check-in-now"

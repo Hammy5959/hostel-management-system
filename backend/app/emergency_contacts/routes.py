@@ -41,3 +41,12 @@ def update_contact(
     db: Client = Depends(get_db),
 ) -> EmergencyContactOut:
     return service.update_contact(db, user, contact_id, payload)
+
+
+@router.delete("/{contact_id}", summary="Delete an emergency contact")
+def delete_contact(
+    contact_id: str,
+    user: dict = Depends(require_any_permission("emergency_contacts.manage", "emergency_contacts.manage_own")),
+    db: Client = Depends(get_db),
+) -> dict:
+    return service.delete_contact(db, user, contact_id)

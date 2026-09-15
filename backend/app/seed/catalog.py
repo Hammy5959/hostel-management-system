@@ -130,8 +130,10 @@ PERMISSIONS: list[dict] = [
     {"name": "complaints.create", "module": "complaints", "description": "Create complaints"},
     {"name": "complaints.update", "module": "complaints", "description": "Update complaints"},
     {"name": "maintenance_tickets.view", "module": "maintenance_tickets", "description": "View maintenance tickets"},
+    {"name": "maintenance_tickets.view_own", "module": "maintenance_tickets", "description": "View own assigned maintenance tickets"},
     {"name": "maintenance_tickets.create", "module": "maintenance_tickets", "description": "Create maintenance tickets"},
     {"name": "maintenance_tickets.update", "module": "maintenance_tickets", "description": "Update maintenance tickets"},
+    {"name": "maintenance_tickets.update_own", "module": "maintenance_tickets", "description": "Update own assigned maintenance tickets"},
     {"name": "inventory_categories.view", "module": "inventory_categories", "description": "View inventory categories"},
     {"name": "inventory_categories.manage", "module": "inventory_categories", "description": "Manage inventory categories"},
     {"name": "inventory_items.view", "module": "inventory_items", "description": "View inventory items"},
@@ -236,8 +238,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "meals.view", "meals.create", "meals.update",
     ],
     "maintenance_staff": [
-        "complaints.view", "complaints.update",
-        "maintenance_tickets.view", "maintenance_tickets.create", "maintenance_tickets.update",
+        "maintenance_tickets.view_own", "maintenance_tickets.update_own",
         "inventory_items.view", "inventory_items.update",
     ],
     "inventory_manager": [

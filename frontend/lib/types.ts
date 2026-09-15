@@ -613,6 +613,50 @@ export interface GatePassActionInput {
   notes?: string | null
 }
 
+/* ── Emergency Contacts ────────────────────────────────────────── */
+
+export interface EmergencyContact {
+  id: string
+  resident_id: string
+  name: string
+  relationship: string
+  phone: string
+  alternate_phone: string | null
+  email: string | null
+  address: string | null
+  is_primary: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface EmergencyContactList {
+  items: EmergencyContact[]
+  total: number
+  page: number
+  per_page: number
+}
+
+export interface EmergencyContactCreateInput {
+  resident_id: string
+  name: string
+  relationship: string
+  phone: string
+  alternate_phone?: string | null
+  email?: string | null
+  address?: string | null
+  is_primary?: boolean
+}
+
+export interface EmergencyContactUpdateInput {
+  name?: string
+  relationship?: string
+  phone?: string
+  alternate_phone?: string | null
+  email?: string | null
+  address?: string | null
+  is_primary?: boolean
+}
+
 /* ── Residents ─────────────────────────────────────────────────── */
 
 export type ResidentStatus = "applicant" | "active" | "on_leave" | "checked_out" | "inactive"
@@ -1323,6 +1367,15 @@ export interface MaintenanceTicket {
   resolution_notes: string | null
   created_at: string
   updated_at: string
+  /** Embedded by GET /maintenance-tickets only (not the create/update
+   * response) — see backend TicketOut.room. Lets the UI show a ticket's
+   * location without needing the rooms.view permission. */
+  room?: {
+    id: string
+    room_number: string
+    floor_name: string | null
+    building_name: string | null
+  } | null
 }
 
 export interface MaintenanceTicketList {

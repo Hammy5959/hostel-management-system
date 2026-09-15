@@ -48,12 +48,22 @@ export function ComplaintFormDialog({
   onOpenChange,
   complaint,
   residentName,
+  residentId,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   complaint: Complaint | null
   /** Resolved by the parent — only needed in edit mode. */
   residentName?: string
+  /** Create mode only: when set, the resident picker is skipped and this id
+   * is submitted directly — the Resident Portal's self-service create flow.
+   * Staff call sites don't pass this and keep the existing picker-driven
+   * flow. Meaningless in edit mode (a complaint's resident never changes). */
+  residentId?: string
+  /** Extra hook run after a successful submit, alongside the existing
+   * staff-query invalidation below. */
+  onSuccess?: () => void
 }) {
   const isEdit = !!complaint
   return (
@@ -62,11 +72,23 @@ export function ComplaintFormDialog({
         <DialogHeader className="shrink-0">
           <DialogTitle>{isEdit ? "Edit Complaint" : "New Complaint"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update this complaint's details." : "File a maintenance complaint on behalf of a resident."}
+            {isEdit
+              ? "Update this complaint's details."
+              : residentId
+                ? "File a maintenance complaint."
+                : "File a maintenance complaint on behalf of a resident."}
           </DialogDescription>
         </DialogHeader>
 
-        {open && <ComplaintForm complaint={complaint} residentName={residentName} onOpenChange={onOpenChange} />}
+        {open && (
+          <ComplaintForm
+            complaint={complaint}
+            residentName={residentName}
+            residentId={residentId}
+            onOpenChange={onOpenChange}
+            onSuccess={onSuccess}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -75,11 +97,15 @@ export function ComplaintFormDialog({
 function ComplaintForm({
   complaint,
   residentName,
+  residentId,
   onOpenChange,
+  onSuccess,
 }: {
   complaint: Complaint | null
   residentName?: string
+  residentId?: string
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }) {
   const queryClient = useQueryClient()
   const isEdit = !!complaint
@@ -103,13 +129,15 @@ function ComplaintForm({
     enabled: isEdit && !!complaint?.room_id,
     staleTime: 5 * 60_000,
   })
-  // Create mode: the selected resident's current active allocation, used to
-  // auto-fill Room — a convenience prefill, not a validation gate, so a
-  // resident with no active allocation just leaves Room blank.
+  // Create mode: the selected (or fixed, portal) resident's current active
+  // allocation, used to auto-fill Room — a convenience prefill, not a
+  // validation gate, so a resident with no active allocation just leaves
+  // Room blank.
+  const activeResidentId = residentId ?? resident?.value
   const allocationQuery = useQuery({
-    queryKey: ["resident-active-allocation", resident?.value],
-    queryFn: () => getAllocations({ resident_id: resident!.value, active_only: true, per_page: 1 }),
-    enabled: !isEdit && !!resident,
+    queryKey: ["resident-active-allocation", activeResidentId],
+    queryFn: () => getAllocations({ resident_id: activeResidentId!, active_only: true, per_page: 1 }),
+    enabled: !isEdit && !!activeResidentId,
     staleTime: 5 * 60_000,
   })
   const autoRoom: ComboOption | null = isEdit
@@ -151,7 +179,7 @@ function ComplaintForm({
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
     let hasError = false
-    if (!isEdit && !resident) {
+    if (!isEdit && !residentId && !resident) {
       setResidentError("Resident is required")
       hasError = true
     }
@@ -178,7 +206,7 @@ function ComplaintForm({
         toast.success("Complaint updated.")
       } else {
         await createComplaint({
-          resident_id: resident!.value,
+          resident_id: residentId ?? resident!.value,
           title: title.trim(),
           description: description.trim(),
           category: category.trim() || null,
@@ -188,6 +216,7 @@ function ComplaintForm({
         toast.success("Complaint filed.")
       }
       queryClient.invalidateQueries({ queryKey: ["complaints"] })
+      onSuccess?.()
       onOpenChange(false)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -213,22 +242,24 @@ function ComplaintForm({
               </p>
             </Field>
           ) : (
-            <Field data-invalid={!!residentError}>
-              <FieldLabel htmlFor="complaint-form-resident">
-                Resident <span className="text-destructive">*</span>
-              </FieldLabel>
-              <EntityCombobox
-                id="complaint-form-resident"
-                value={resident}
-                onChange={(next) => {
-                  setResident(next)
-                  if (next) setResidentError(null)
-                }}
-                fetchOptions={fetchMaintenanceEligibleResidentOptions}
-                placeholder="Search by name or student ID…"
-              />
-              <FieldError errors={[residentError ? { message: residentError } : undefined]} />
-            </Field>
+            !residentId && (
+              <Field data-invalid={!!residentError}>
+                <FieldLabel htmlFor="complaint-form-resident">
+                  Resident <span className="text-destructive">*</span>
+                </FieldLabel>
+                <EntityCombobox
+                  id="complaint-form-resident"
+                  value={resident}
+                  onChange={(next) => {
+                    setResident(next)
+                    if (next) setResidentError(null)
+                  }}
+                  fetchOptions={fetchMaintenanceEligibleResidentOptions}
+                  placeholder="Search by name or student ID…"
+                />
+                <FieldError errors={[residentError ? { message: residentError } : undefined]} />
+              </Field>
+            )
           )}
 
           <Field data-invalid={!!titleError}>
@@ -299,13 +330,22 @@ function ComplaintForm({
                 <span className="ml-1 font-normal text-on-surface-variant">— auto-filled from resident</span>
               )}
             </FieldLabel>
-            <EntityCombobox
-              id="complaint-form-room"
-              value={room}
-              onChange={setRoomOverride}
-              fetchOptions={fetchMaintenanceRoomOptions}
-              placeholder="Search by room number…"
-            />
+            {residentId ? (
+              // A resident holds no rooms.view permission, so the manual
+              // override combobox below (which searches all rooms) would
+              // 403 for them — show their auto-filled room as plain text.
+              <p className="rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-sm text-on-surface-variant">
+                {room ? `${room.label}${room.sublabel ? ` · ${room.sublabel}` : ""}` : "—"}
+              </p>
+            ) : (
+              <EntityCombobox
+                id="complaint-form-room"
+                value={room}
+                onChange={setRoomOverride}
+                fetchOptions={fetchMaintenanceRoomOptions}
+                placeholder="Search by room number…"
+              />
+            )}
           </Field>
         </FieldGroup>
       </div>

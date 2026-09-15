@@ -26,9 +26,20 @@ import { todayLocalDate } from "@/lib/utils"
 export function NewLeaveRequestDialog({
   open,
   onOpenChange,
+  residentId,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** When set, the resident picker is skipped and this id is submitted
+   * directly — the Resident Portal's self-service create flow, where the
+   * caller is always filing for themselves. Staff call sites simply don't
+   * pass this and keep the existing picker-driven flow unchanged. */
+  residentId?: string
+  /** Extra hook run after a successful submit, alongside the existing
+   * staff-query invalidation below — lets a caller (e.g. the portal) also
+   * invalidate its own query keys without this file knowing about them. */
+  onSuccess?: () => void
 }) {
   const queryClient = useQueryClient()
   const [resident, setResident] = useState<ComboOption | null>(null)
@@ -58,7 +69,7 @@ export function NewLeaveRequestDialog({
     e.preventDefault()
 
     let valid = true
-    if (!resident) {
+    if (!residentId && !resident) {
       setResidentError("Resident is required")
       valid = false
     }
@@ -78,7 +89,7 @@ export function NewLeaveRequestDialog({
     setSubmitting(true)
     try {
       await createLeaveRequest({
-        resident_id: resident!.value,
+        resident_id: residentId ?? resident!.value,
         start_date: startDate,
         end_date: endDate,
         reason: reason.trim(),
@@ -88,6 +99,7 @@ export function NewLeaveRequestDialog({
       toast.success("Leave request submitted.")
       queryClient.invalidateQueries({ queryKey: ["leave-requests"] })
       queryClient.invalidateQueries({ queryKey: ["leave-report"] })
+      onSuccess?.()
       onOpenChange(false)
       reset()
     } catch (err) {
@@ -113,27 +125,31 @@ export function NewLeaveRequestDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New Leave Request</DialogTitle>
-          <DialogDescription>Submit a leave request on behalf of a resident.</DialogDescription>
+          <DialogDescription>
+            {residentId ? "Submit a leave request." : "Submit a leave request on behalf of a resident."}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} noValidate>
           <FieldGroup>
-            <Field data-invalid={!!residentError}>
-              <FieldLabel htmlFor="new-leave-resident">
-                Resident <span className="text-destructive">*</span>
-              </FieldLabel>
-              <EntityCombobox
-                id="new-leave-resident"
-                value={resident}
-                onChange={(next) => {
-                  setResident(next)
-                  if (next) setResidentError(null)
-                }}
-                fetchOptions={fetchLeaveEligibleResidentOptions}
-                placeholder="Search by name or student ID…"
-              />
-              <FieldError errors={[residentError ? { message: residentError } : undefined]} />
-            </Field>
+            {!residentId && (
+              <Field data-invalid={!!residentError}>
+                <FieldLabel htmlFor="new-leave-resident">
+                  Resident <span className="text-destructive">*</span>
+                </FieldLabel>
+                <EntityCombobox
+                  id="new-leave-resident"
+                  value={resident}
+                  onChange={(next) => {
+                    setResident(next)
+                    if (next) setResidentError(null)
+                  }}
+                  fetchOptions={fetchLeaveEligibleResidentOptions}
+                  placeholder="Search by name or student ID…"
+                />
+                <FieldError errors={[residentError ? { message: residentError } : undefined]} />
+              </Field>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <Field data-invalid={!!dateError}>

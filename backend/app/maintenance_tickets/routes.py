@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
 from app.api.deps import get_db
-from app.core.permissions import require_permission
+from app.core.permissions import require_any_permission, require_permission
 from app.maintenance_tickets import service
 from app.maintenance_tickets.schemas import TicketCreate, TicketList, TicketOut, TicketUpdate
 
@@ -21,10 +21,10 @@ def list_tickets(
     room_id: str | None = None,
     assigned_to: str | None = None,
     search: str | None = None,
-    _: dict = Depends(require_permission("maintenance_tickets.view")),
+    user: dict = Depends(require_any_permission("maintenance_tickets.view", "maintenance_tickets.view_own")),
     db: Client = Depends(get_db),
 ) -> TicketList:
-    return service.list_tickets(db, page=page, per_page=per_page, status=status, room_id=room_id, assigned_to=assigned_to, search=search)
+    return service.list_tickets(db, user, page=page, per_page=per_page, status=status, room_id=room_id, assigned_to=assigned_to, search=search)
 
 
 @router.post("", response_model=TicketOut, status_code=201, summary="Create a maintenance ticket")
@@ -40,7 +40,7 @@ def create(
 def update_ticket(
     ticket_id: str,
     payload: TicketUpdate,
-    _: dict = Depends(require_permission("maintenance_tickets.update")),
+    user: dict = Depends(require_any_permission("maintenance_tickets.update", "maintenance_tickets.update_own")),
     db: Client = Depends(get_db),
 ) -> TicketOut:
-    return service.update_ticket(db, ticket_id, payload)
+    return service.update_ticket(db, user, ticket_id, payload)

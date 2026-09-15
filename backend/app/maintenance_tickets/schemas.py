@@ -31,6 +31,15 @@ class TicketUpdate(BaseModel):
     status: TicketStatus | None = None
 
 
+class TicketRoomRef(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    room_number: str
+    floor_name: str | None = None
+    building_name: str | None = None
+
+
 class TicketOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -49,6 +58,11 @@ class TicketOut(BaseModel):
     resolution_notes: str | None = None
     created_at: datetime
     updated_at: datetime
+    # Populated by list_tickets (embedded room:rooms(...) select) so the
+    # frontend can show a ticket's location without needing rooms.view —
+    # always None from create()/update_ticket()'s plain-select responses,
+    # which the UI never reads for display anyway.
+    room: TicketRoomRef | None = None
 
 
 class TicketList(BaseModel):

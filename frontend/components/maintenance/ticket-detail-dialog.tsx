@@ -41,6 +41,7 @@ export function TicketDetailDialog({
   staffLabel,
   complaintTitle,
   canUpdate,
+  canCancel,
   canAssign,
   acting,
   onAssign,
@@ -55,7 +56,15 @@ export function TicketDetailDialog({
   roomLabel: string | null
   staffLabel: (staffId: string | null) => string
   complaintTitle: string | null
+  /** Gates Start/Resolve/Close — status progression. True for a full
+   * maintenance_tickets.update holder OR a .update_own holder acting on
+   * their own assigned ticket. */
   canUpdate: boolean
+  /** Gates Cancel Ticket — deliberately separate from `canUpdate`: a
+   * .update_own holder may progress their own ticket but never cancel it
+   * (mirrors the backend guard in app.maintenance_tickets.service.update_ticket,
+   * which rejects status:"cancelled" from an .update_own-only caller). */
+  canCancel: boolean
   canAssign: boolean
   acting: boolean
   onAssign: () => void
@@ -70,7 +79,7 @@ export function TicketDetailDialog({
   const isAssigned = ticket.status === "assigned"
   const isInProgress = ticket.status === "in_progress"
   const isResolved = ticket.status === "resolved"
-  const isCancellable = canUpdate && (isOpen || isAssigned || isInProgress)
+  const isCancellable = canCancel && (isOpen || isAssigned || isInProgress)
 
   const showActions =
     (isOpen && canAssign) || (isAssigned && canUpdate) || (isInProgress && canUpdate) || (isResolved && canUpdate) || isCancellable

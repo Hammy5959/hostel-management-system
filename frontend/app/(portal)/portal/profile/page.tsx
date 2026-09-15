@@ -1,15 +1,20 @@
-import { StubTabsPage } from "@/components/portal/stub-tabs-page"
+"use client"
+
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+
+import { PortalProfileView } from "@/components/portal/portal-profile-view"
+
+function PortalProfileContent() {
+  const searchParams = useSearchParams()
+
+  return <PortalProfileView initialTab={searchParams.get("tab") ?? undefined} />
+}
 
 export default function PortalProfilePage() {
   return (
-    <StubTabsPage
-      title="Profile"
-      description="Your profile, documents, and emergency contacts."
-      tabs={[
-        { value: "profile", label: "Profile" },
-        { value: "documents", label: "Documents" },
-        { value: "emergency-contacts", label: "Emergency Contacts" },
-      ]}
-    />
+    <Suspense>
+      <PortalProfileContent />
+    </Suspense>
   )
 }

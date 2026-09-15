@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from supabase import Client
 
+from app.audit.service import record_audit
 from app.common.authz import has_permission
 from app.core.exceptions import ForbiddenError, NotFoundError
-from app.database.crud import get_by_id, insert, list_page, update
+from app.database.crud import delete, get_by_id, insert, list_page, update
 from app.emergency_contacts.schemas import EmergencyContactCreate, EmergencyContactList, EmergencyContactOut, EmergencyContactUpdate
 from app.residents.service import get_resident_by_user
 
@@ -63,3 +64,22 @@ def update_contact(db: Client, user: dict, contact_id: str, data: EmergencyConta
     if not _can_manage(db, user, contact["resident_id"]):
         raise ForbiddenError("You cannot manage this contact", code="not_your_resident")
     return EmergencyContactOut.model_validate(update(db, _TABLE, contact_id, data.model_dump(exclude_unset=True)))
+
+
+def delete_contact(db: Client, user: dict, contact_id: str) -> dict:
+    contact = get_by_id(db, _TABLE, contact_id)
+    if contact is None:
+        raise NotFoundError("Emergency contact not found", code="contact_not_found")
+    if not _can_manage(db, user, contact["resident_id"]):
+        raise ForbiddenError("You cannot manage this contact", code="not_your_resident")
+    delete(db, _TABLE, contact_id)
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="emergency_contact.delete",
+        module="emergency_contacts",
+        entity_type="emergency_contact",
+        entity_id=contact_id,
+        description=f"Deleted emergency contact {contact['name']} for resident {contact['resident_id']}",
+    )
+    return {"detail": "Emergency contact deleted"}

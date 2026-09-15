@@ -38,25 +38,46 @@ function toLocalInputValue(value: string | null): string {
 export function GatePassFormDialog({
   open,
   onOpenChange,
+  residentId,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** When set, the resident picker is skipped and this id is submitted
+   * directly — the Resident Portal's self-service create flow. Staff call
+   * sites don't pass this and keep the existing picker-driven flow. */
+  residentId?: string
+  /** Extra hook run after a successful submit, alongside the existing
+   * staff-query invalidation below. */
+  onSuccess?: () => void
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
         <DialogHeader className="shrink-0">
           <DialogTitle>New Gate Pass</DialogTitle>
-          <DialogDescription>Request a gate pass for a resident leaving the hostel.</DialogDescription>
+          <DialogDescription>
+            {residentId
+              ? "Request a gate pass to leave the hostel."
+              : "Request a gate pass for a resident leaving the hostel."}
+          </DialogDescription>
         </DialogHeader>
 
-        {open && <GatePassForm onOpenChange={onOpenChange} />}
+        {open && <GatePassForm onOpenChange={onOpenChange} residentId={residentId} onSuccess={onSuccess} />}
       </DialogContent>
     </Dialog>
   )
 }
 
-function GatePassForm({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+function GatePassForm({
+  onOpenChange,
+  residentId,
+  onSuccess,
+}: {
+  onOpenChange: (open: boolean) => void
+  residentId?: string
+  onSuccess?: () => void
+}) {
   const queryClient = useQueryClient()
 
   const [resident, setResident] = useState<ComboOption | null>(null)
@@ -71,7 +92,7 @@ function GatePassForm({ onOpenChange }: { onOpenChange: (open: boolean) => void 
 
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault()
-    if (!resident) {
+    if (!residentId && !resident) {
       setResidentError("Resident is required")
       return
     }
@@ -84,7 +105,7 @@ function GatePassForm({ onOpenChange }: { onOpenChange: (open: boolean) => void 
     setSubmitting(true)
     try {
       await createGatePass({
-        resident_id: resident.value,
+        resident_id: residentId ?? resident!.value,
         reason: reason.trim(),
         destination: destination || null,
         departure_at: departureAt ? new Date(departureAt).toISOString() : null,
@@ -94,6 +115,7 @@ function GatePassForm({ onOpenChange }: { onOpenChange: (open: boolean) => void 
       toast.success("Gate pass requested.")
       queryClient.invalidateQueries({ queryKey: ["gate-passes"] })
       queryClient.invalidateQueries({ queryKey: ["gate-passes-stat"] })
+      onSuccess?.()
       onOpenChange(false)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -111,22 +133,24 @@ function GatePassForm({ onOpenChange }: { onOpenChange: (open: boolean) => void 
     <form onSubmit={onSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <FieldGroup>
-          <Field data-invalid={!!residentError}>
-            <FieldLabel htmlFor="gate-pass-form-resident">
-              Resident <span className="text-destructive">*</span>
-            </FieldLabel>
-            <EntityCombobox
-              id="gate-pass-form-resident"
-              value={resident}
-              onChange={(next) => {
-                setResident(next)
-                if (next) setResidentError(null)
-              }}
-              fetchOptions={fetchVisitorEligibleResidentOptions}
-              placeholder="Search by name or student ID…"
-            />
-            <FieldError errors={[residentError ? { message: residentError } : undefined]} />
-          </Field>
+          {!residentId && (
+            <Field data-invalid={!!residentError}>
+              <FieldLabel htmlFor="gate-pass-form-resident">
+                Resident <span className="text-destructive">*</span>
+              </FieldLabel>
+              <EntityCombobox
+                id="gate-pass-form-resident"
+                value={resident}
+                onChange={(next) => {
+                  setResident(next)
+                  if (next) setResidentError(null)
+                }}
+                fetchOptions={fetchVisitorEligibleResidentOptions}
+                placeholder="Search by name or student ID…"
+              />
+              <FieldError errors={[residentError ? { message: residentError } : undefined]} />
+            </Field>
+          )}
 
           <Field data-invalid={!!reasonError}>
             <FieldLabel htmlFor="gate-pass-form-reason">

@@ -295,10 +295,10 @@ function QuickActions() {
   const router = useRouter()
 
   const actions: { icon: LucideIcon; label: string; href: string }[] = [
-    { icon: CalendarDays, label: "Request Leave", href: "/portal/requests?tab=leave" },
-    { icon: BadgeCheck, label: "Request Gate Pass", href: "/portal/requests?tab=gate-passes" },
-    { icon: MessageSquareWarning, label: "File Complaint", href: "/portal/requests?tab=complaints" },
-    { icon: UserPlus, label: "Register Visitor", href: "/portal/requests?tab=visitors" },
+    { icon: CalendarDays, label: "Request Leave", href: "/portal/requests?tab=leave&create=1" },
+    { icon: BadgeCheck, label: "Request Gate Pass", href: "/portal/requests?tab=gate-passes&create=1" },
+    { icon: MessageSquareWarning, label: "File Complaint", href: "/portal/requests?tab=complaints&create=1" },
+    { icon: UserPlus, label: "Register Visitor", href: "/portal/requests?tab=visitors&create=1" },
   ]
 
   return (

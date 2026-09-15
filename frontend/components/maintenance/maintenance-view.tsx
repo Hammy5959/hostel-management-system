@@ -5,7 +5,7 @@ import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AlertTriangle, CheckCircle2, ClipboardList, Eye, Inbox, Plus, Search, ShieldOff, Wrench } from "lucide-react"
 import { toast } from "sonner"
 
-import { todayLocalDate } from "@/lib/utils"
+import { cn, todayLocalDate } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -163,7 +163,8 @@ export function MaintenanceView() {
   const { has, hasAny } = usePermissions()
   const queryClient = useQueryClient()
 
-  const [tab, setTab] = useState<"complaints" | "tickets">("complaints")
+  const canViewComplaints = hasAny("complaints.view", "complaints.view_own")
+  const [tab, setTab] = useState<"complaints" | "tickets">(canViewComplaints ? "complaints" : "tickets")
   const [formOpen, setFormOpen] = useState(false)
   const [editingComplaint, setEditingComplaint] = useState<Complaint | null>(null)
   const [complaintDetailTarget, setComplaintDetailTarget] = useState<Complaint | null>(null)
@@ -192,14 +193,21 @@ export function MaintenanceView() {
   const [ticketPage, setTicketPage] = useState(1)
   const [ticketPerPage, setTicketPerPage] = useState(PAGE_SIZE)
 
-  const canViewComplaints = hasAny("complaints.view", "complaints.view_own")
   const canCreateComplaint = has("complaints.create")
   const canUpdateComplaint = has("complaints.update")
-  const canViewTickets = has("maintenance_tickets.view")
+  const canViewTickets = hasAny("maintenance_tickets.view", "maintenance_tickets.view_own")
   const canCreateTicket = has("maintenance_tickets.create")
-  const canUpdateTicket = has("maintenance_tickets.update")
+  // Status progression (Start/Resolve/Close) is allowed with either the
+  // full permission or the self-scoped .update_own one; cancelling and
+  // (re)assigning a ticket stay full-.update-only — mirrors the backend
+  // guard in app.maintenance_tickets.service.update_ticket, which lets an
+  // .update_own holder progress their own assigned ticket but rejects a
+  // status:"cancelled" or assigned_to change from them.
+  const canProgressTicket = hasAny("maintenance_tickets.update", "maintenance_tickets.update_own")
+  const canManageTicket = has("maintenance_tickets.update")
   const canViewStaff = has("staff.view")
-  const canAssign = canUpdateTicket && canViewStaff
+  const canAssign = canManageTicket && canViewStaff
+  const canCancelTicket = canManageTicket
 
   /* ── Bulk data (shared by stats, both tabs, and cross-linking) ─────── */
 
@@ -238,17 +246,24 @@ export function MaintenanceView() {
     return resident ? [resident.first_name, resident.last_name].filter(Boolean).join(" ") : "Loading…"
   }
 
+  // Tickets carry their room embedded (TicketOut.room, from list_tickets'
+  // select) so they never need a rooms.view-gated GET /rooms/{id} lookup —
+  // see ticketRoomLabel below. Complaints don't have that embed, so they
+  // still resolve via this per-id lookup.
   const roomIds = useMemo(() => {
     const ids = new Set<string>()
     for (const c of allComplaints) if (c.room_id) ids.add(c.room_id)
-    for (const t of allTickets) if (t.room_id) ids.add(t.room_id)
     return [...ids]
-  }, [allComplaints, allTickets])
+  }, [allComplaints])
   const roomMap = useRoomLookup(roomIds)
   function roomLabel(roomId: string | null): string | null {
     if (!roomId) return null
     const room = roomMap.get(roomId)
     return room ? `Room ${room.room_number}` : null
+  }
+  function ticketRoomLabel(ticket: MaintenanceTicket): string | null {
+    if (!ticket.room) return null
+    return [`Room ${ticket.room.room_number}`, ticket.room.building_name].filter(Boolean).join(" · ")
   }
 
   const staffIds = useMemo(
@@ -493,13 +508,20 @@ export function MaintenanceView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={ClipboardList}
-          iconClassName="bg-amber-50 text-amber-600"
-          label="Open Complaints"
-          value={canViewComplaints ? openComplaintsStatQuery.data?.total : 0}
-        />
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4 sm:grid-cols-2",
+          canViewComplaints ? "lg:grid-cols-4" : "lg:grid-cols-2",
+        )}
+      >
+        {canViewComplaints && (
+          <StatCard
+            icon={ClipboardList}
+            iconClassName="bg-amber-50 text-amber-600"
+            label="Open Complaints"
+            value={openComplaintsStatQuery.data?.total}
+          />
+        )}
         <StatCard
           icon={Wrench}
           iconClassName="bg-blue-50 text-blue-600"
@@ -512,23 +534,27 @@ export function MaintenanceView() {
           label="Resolved Today"
           value={canViewTickets ? resolvedTodayCount : 0}
         />
-        <StatCard
-          icon={AlertTriangle}
-          iconClassName="bg-error-container text-error"
-          label="Urgent"
-          value={canViewComplaints ? urgentCount : 0}
-        />
+        {canViewComplaints && (
+          <StatCard
+            icon={AlertTriangle}
+            iconClassName="bg-error-container text-error"
+            label="Urgent"
+            value={urgentCount}
+          />
+        )}
       </div>
 
       <Tabs value={tab} onValueChange={(value) => (value === "complaints" || value === "tickets") && setTab(value)}>
         <div className="border-b border-outline-variant">
           <TabsList variant="line" className="h-auto justify-start gap-8 bg-transparent p-0">
-            <TabsTrigger
-              value="complaints"
-              className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
-            >
-              Complaints
-            </TabsTrigger>
+            {canViewComplaints && (
+              <TabsTrigger
+                value="complaints"
+                className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
+              >
+                Complaints
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="tickets"
               className="rounded-none border-none px-1 py-4 text-sm font-medium text-on-surface-variant data-active:font-bold data-active:text-primary data-active:after:bg-primary"
@@ -538,6 +564,7 @@ export function MaintenanceView() {
           </TabsList>
         </div>
 
+        {canViewComplaints && (
         <TabsContent value="complaints" className="space-y-6 pt-6">
           <div className="flex flex-col gap-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 lg:flex-row lg:items-center">
             <form
@@ -700,6 +727,7 @@ export function MaintenanceView() {
             </>
           )}
         </TabsContent>
+        )}
 
         <TabsContent value="tickets" className="space-y-6 pt-6">
           <div className="flex flex-col gap-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 lg:flex-row lg:items-center">
@@ -871,7 +899,7 @@ export function MaintenanceView() {
                             {ticket.title}
                           </TableCell>
                           <TableCell className="px-6 py-4 text-sm text-on-surface-variant">
-                            {roomLabel(ticket.room_id) ?? "—"}
+                            {ticketRoomLabel(ticket) ?? "—"}
                           </TableCell>
                           <TableCell className="px-6 py-4 text-sm text-on-surface-variant">
                             {ticket.assigned_to ? staffLabel(ticket.assigned_to) : "—"}
@@ -969,12 +997,13 @@ export function MaintenanceView() {
         open={!!ticketDetailTarget}
         onOpenChange={(open) => !open && setTicketDetailTarget(null)}
         ticket={ticketDetailTarget}
-        roomLabel={ticketDetailTarget ? roomLabel(ticketDetailTarget.room_id) : null}
+        roomLabel={ticketDetailTarget ? ticketRoomLabel(ticketDetailTarget) : null}
         staffLabel={staffLabel}
         complaintTitle={
           ticketDetailTarget?.complaint_id ? (complaintById.get(ticketDetailTarget.complaint_id)?.title ?? null) : null
         }
-        canUpdate={canUpdateTicket}
+        canUpdate={canProgressTicket}
+        canCancel={canCancelTicket}
         canAssign={canAssign}
         acting={(!!ticketDetailTarget && actingId === ticketDetailTarget.id) || dialogLoading}
         onAssign={() => ticketDetailTarget && setAssignTarget(ticketDetailTarget)}

@@ -205,7 +205,7 @@ export const navigation: NavEntry[] = [
           label: "Maintenance",
           href: "/maintenance",
           icon: Wrench,
-          permission: "maintenance_tickets.view",
+          permission: ["maintenance_tickets.view", "maintenance_tickets.view_own"],
         },
         { label: "Inventory", href: "/inventory", icon: Package, permission: "inventory_items.view" },
         { label: "Assets", href: "/assets", icon: Landmark, permission: "assets.view" },

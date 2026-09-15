@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from supabase import Client
 
+from app.audit.service import record_audit
 from app.common.authz import has_permission
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
@@ -104,4 +105,31 @@ def update_complaint(db: Client, complaint_id: str, data: ComplaintUpdate) -> Co
             reference_type="complaint",
             reference_id=str(updated.id),
         )
+    return updated
+
+
+def cancel_complaint(db: Client, user: dict, complaint_id: str) -> ComplaintOut:
+    complaint = _fetch(db, complaint_id)
+    # Staff with complaints.update may still cancel via PATCH's full status
+    # machine at any stage; this endpoint is the resident self-withdraw path,
+    # so its status guard applies unconditionally — it only ever cancels from
+    # "open", mirroring app.gate_passes.service.cancel's ownership+guard shape.
+    if not has_permission(db, user, "complaints.update"):
+        own = get_resident_by_user(db, user["id"])
+        if own is None or str(own["id"]) != str(complaint["resident_id"]):
+            raise ForbiddenError("You can only cancel your own complaint", code="not_your_complaint")
+    if complaint["status"] != "open":
+        raise ConflictError(
+            f"Cannot cancel a complaint in '{complaint['status']}' state", code="invalid_transition"
+        )
+    updated = ComplaintOut.model_validate(update(db, _TABLE, complaint_id, {"status": "cancelled"}))
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="complaint.cancel",
+        module="complaints",
+        entity_type="complaint",
+        entity_id=complaint_id,
+        description=f"Cancelled complaint '{updated.title}'",
+    )
     return updated

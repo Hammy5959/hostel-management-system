@@ -38,6 +38,10 @@ import type {
   ComplaintList,
   ComplaintUpdateInput,
   DashboardSummary,
+  EmergencyContact,
+  EmergencyContactCreateInput,
+  EmergencyContactList,
+  EmergencyContactUpdateInput,
   FeeStructure,
   FeeStructureCreateInput,
   FeeStructureList,
@@ -673,6 +677,30 @@ export function checkOutVisitor(logId: string, payload: VisitorLogCheckOutInput 
   return apiFetch<VisitorLog>(`/visitor-logs/${logId}/check-out`, { method: "POST", body: payload })
 }
 
+/* ── Emergency Contacts ────────────────────────────────────────── */
+
+export interface EmergencyContactListParams {
+  page?: number
+  per_page?: number
+  resident_id?: string
+}
+
+export function getEmergencyContacts(params: EmergencyContactListParams = {}): Promise<EmergencyContactList> {
+  return apiFetch<EmergencyContactList>(`/emergency-contacts${toQueryString({ ...params })}`)
+}
+
+export function createEmergencyContact(payload: EmergencyContactCreateInput): Promise<EmergencyContact> {
+  return apiFetch<EmergencyContact>("/emergency-contacts", { method: "POST", body: payload })
+}
+
+export function updateEmergencyContact(id: string, payload: EmergencyContactUpdateInput): Promise<EmergencyContact> {
+  return apiFetch<EmergencyContact>(`/emergency-contacts/${id}`, { method: "PATCH", body: payload })
+}
+
+export function deleteEmergencyContact(id: string): Promise<{ detail: string }> {
+  return apiFetch<{ detail: string }>(`/emergency-contacts/${id}`, { method: "DELETE" })
+}
+
 /* ── Gate Passes ───────────────────────────────────────────────── */
 
 export interface GatePassListParams {
@@ -739,6 +767,11 @@ export function getResident(id: string): Promise<Resident> {
  * `users` account row, not their linked `residents` row. */
 export function getMyResident(): Promise<Resident> {
   return apiFetch<Resident>("/residents/me")
+}
+
+/** Resident-portal self-edit — PATCH /residents/me, gated by residents.update_own. */
+export function updateMyResident(payload: ResidentUpdateInput): Promise<Resident> {
+  return apiFetch<Resident>("/residents/me", { method: "PATCH", body: payload })
 }
 
 /** Other residents actively sharing the caller's own room — minimal
@@ -1081,6 +1114,10 @@ export function createComplaint(payload: ComplaintCreateInput): Promise<Complain
 
 export function updateComplaint(id: string, payload: ComplaintUpdateInput): Promise<Complaint> {
   return apiFetch<Complaint>(`/complaints/${id}`, { method: "PATCH", body: payload })
+}
+
+export function cancelComplaint(id: string): Promise<Complaint> {
+  return apiFetch<Complaint>(`/complaints/${id}/cancel`, { method: "POST" })
 }
 
 /* ── Maintenance Tickets ───────────────────────────────────────────── */

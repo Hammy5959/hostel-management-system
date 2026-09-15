@@ -1,19 +1,21 @@
-import type { Metadata } from "next"
-import { Suspense } from "react"
+import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { MaintenanceView } from "@/components/maintenance/maintenance-view"
-import { PageAccessGuard } from "@/components/hostel/page-access-guard"
+import { MaintenanceView } from "@/components/maintenance/maintenance-view";
+import { PageAccessGuard } from "@/components/hostel/page-access-guard";
 
 export const metadata: Metadata = {
   title: "Maintenance",
-}
+};
 
 export default function MaintenancePage() {
   return (
-    <PageAccessGuard permission="maintenance_tickets.view">
+    <PageAccessGuard
+      permission={["maintenance_tickets.view", "maintenance_tickets.view_own"]}
+    >
       <Suspense>
         <MaintenanceView />
       </Suspense>
     </PageAccessGuard>
-  )
+  );
 }

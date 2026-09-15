@@ -3,24 +3,15 @@
 import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
-import { StubTabsPage } from "@/components/portal/stub-tabs-page"
-
-const TABS = [
-  { value: "leave", label: "Leave" },
-  { value: "gate-passes", label: "Gate Passes" },
-  { value: "complaints", label: "Complaints" },
-  { value: "visitors", label: "Visitors" },
-]
+import { PortalRequestsView } from "@/components/portal/portal-requests-view"
 
 function PortalRequestsContent() {
   const searchParams = useSearchParams()
 
   return (
-    <StubTabsPage
-      title="My Requests"
-      description="Leave requests, gate passes, complaints, and visitors."
-      tabs={TABS}
+    <PortalRequestsView
       initialTab={searchParams.get("tab") ?? undefined}
+      autoOpenCreate={searchParams.get("create") === "1"}
     />
   )
 }

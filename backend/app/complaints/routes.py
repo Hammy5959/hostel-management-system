@@ -43,3 +43,12 @@ def update_complaint(
     db: Client = Depends(get_db),
 ) -> ComplaintOut:
     return service.update_complaint(db, complaint_id, payload)
+
+
+@router.post("/{complaint_id}/cancel", response_model=ComplaintOut, summary="Cancel own complaint")
+def cancel_complaint(
+    complaint_id: str,
+    user: dict = Depends(require_any_permission("complaints.update", "complaints.view_own")),
+    db: Client = Depends(get_db),
+) -> ComplaintOut:
+    return service.cancel_complaint(db, user, complaint_id)

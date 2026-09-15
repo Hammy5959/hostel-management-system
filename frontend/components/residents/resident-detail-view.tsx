@@ -671,7 +671,7 @@ export function ResidentDetailView({ residentId }: { residentId: string }) {
             <p className="text-sm text-on-surface-variant">{subline || "—"}</p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-3 self-start md:self-auto">
+        <div className="flex flex-wrap items-center justify-end gap-3 self-start md:self-auto">
           {canMarkReturned && resident.status === "on_leave" && (
             <Button
               type="button"
