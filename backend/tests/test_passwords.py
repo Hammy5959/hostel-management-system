@@ -15,7 +15,7 @@ class TestPasswordPolicy:
     @pytest.mark.parametrize(
         "password",
         [
-            "***REMOVED***",      # meets all rules
+            "Valid1Pass!",      # meets all rules
             "Str0ng!pass",
             "a1!b2@c3#d4",
             "X1$y2^z3&",      # symbols from the explicit set
@@ -42,29 +42,29 @@ class TestPasswordPolicy:
 # ── Hashing ───────────────────────────────────────────────────────────────────
 class TestHashing:
     def test_hash_is_not_plaintext(self):
-        hashed = hash_password("***REMOVED***")
-        assert hashed != "***REMOVED***"
+        hashed = hash_password("Valid1Pass!")
+        assert hashed != "Valid1Pass!"
         assert hashed.startswith("$argon2id$")  # Argon2id, the required KDF
 
     def test_hashes_are_salted(self):
         """Two hashes of the same password differ (unique random salt)."""
-        assert hash_password("***REMOVED***") != hash_password("***REMOVED***")
+        assert hash_password("Valid1Pass!") != hash_password("Valid1Pass!")
 
     def test_correct_password_verifies(self):
-        hashed = hash_password("***REMOVED***")
-        assert verify_password(hashed, "***REMOVED***") is True
+        hashed = hash_password("Valid1Pass!")
+        assert verify_password(hashed, "Valid1Pass!") is True
 
     def test_wrong_password_fails(self):
-        hashed = hash_password("***REMOVED***")
+        hashed = hash_password("Valid1Pass!")
         assert verify_password(hashed, "wrong-pass") is False
 
     def test_missing_hash_fails(self):
-        assert verify_password(None, "***REMOVED***") is False
-        assert verify_password("", "***REMOVED***") is False
+        assert verify_password(None, "Valid1Pass!") is False
+        assert verify_password("", "Valid1Pass!") is False
 
     def test_garbage_hash_fails(self):
-        assert verify_password("not-an-argon2-hash", "***REMOVED***") is False
+        assert verify_password("not-an-argon2-hash", "Valid1Pass!") is False
 
     def test_password_never_appears_in_hash(self):
-        hashed = hash_password("***REMOVED***")
-        assert "***REMOVED***" not in hashed
+        hashed = hash_password("Valid1Pass!")
+        assert "Valid1Pass!" not in hashed

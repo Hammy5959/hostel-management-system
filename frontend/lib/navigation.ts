@@ -21,7 +21,6 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
-  SlidersHorizontal,
   UserCog,
   UserRound,
   Users,
@@ -258,20 +257,8 @@ export const navigation: NavEntry[] = [
   },
 
   {
-    type: "group",
-    data: {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      items: [
-        {
-          label: "Hostel Settings",
-          href: "/settings",
-          icon: SlidersHorizontal,
-          permission: "hostel_settings.view",
-        },
-      ],
-    },
+    type: "link",
+    data: { label: "Settings", href: "/settings", icon: Settings, permission: "hostel_settings.view" },
   },
 ];
 

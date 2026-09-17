@@ -3,28 +3,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import {
-  Bell,
-  LogOut,
-  Menu,
-  Search,
-  UserRound,
-  CheckCheck,
-} from "lucide-react";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogOut, Menu, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+
 import {
   clearToken,
   getStoredRoleName,
@@ -34,12 +18,6 @@ import {
 import { useHostelBranding } from "@/lib/hostel-settings";
 import type { BrandingCookieValue } from "@/lib/branding-cookie";
 import { formatRoleName, initials } from "@/components/users/user-badges";
-import {
-  getNotifications,
-  getUnreadNotificationCount,
-  markAllNotificationsRead,
-  markNotificationRead,
-} from "@/lib/api";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -87,7 +65,6 @@ export function Topbar({
   const queryClient = useQueryClient();
   const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null);
   const branding = useHostelBranding();
-  const [notifOpen, setNotifOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountCloseTimeout = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -132,41 +109,12 @@ export function Topbar({
     () => null,
   );
 
-  const { data: countData } = useQuery({
-    queryKey: ["notification-count"],
-    queryFn: getUnreadNotificationCount,
-    refetchInterval: 60_000,
-  });
-
-  const { data: notifData } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => getNotifications(5),
-  });
-
-  const markAllRead = useMutation({
-    mutationFn: markAllNotificationsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      toast.success("All notifications marked as read.");
-    },
-  });
-
-  const markRead = useMutation({
-    mutationFn: markNotificationRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
   function handleSignOut() {
     clearToken();
     queryClient.clear();
     router.replace("/login");
   }
 
-  const unreadCount = countData?.unread_count ?? 0;
   const fullName =
     identityName ??
     (user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "");
