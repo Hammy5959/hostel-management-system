@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
+import { DocumentTitleSync } from "@/components/layout/document-title-sync"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,6 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TooltipProvider>
           {children}
           <Toaster position="top-right" richColors closeButton />
+          <DocumentTitleSync />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

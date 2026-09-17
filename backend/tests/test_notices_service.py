@@ -27,7 +27,7 @@ import pytest
 
 from app.core.exceptions import BadRequestError, NotFoundError
 from app.notices.schemas import NoticeCreate, NoticeUpdate
-from app.notices.service import _validate_audience, create, get, list_notices, set_published, update
+from app.notices.service import _validate_audience, create, delete_notice, get, list_notices, set_published, update
 
 USER = {"id": str(uuid4())}
 
@@ -264,3 +264,31 @@ def test_create_rejects_mismatched_audience(mock_insert):
     with pytest.raises(BadRequestError):
         create(None, USER, data)
     mock_insert.assert_not_called()
+
+
+@patch("app.notices.service.record_audit")
+@patch("app.notices.service.delete")
+@patch("app.notices.service.get_by_id")
+def test_delete_notice_records_audit(mock_get_by_id, mock_delete, mock_record_audit):
+    notice = _notice_row()
+    mock_get_by_id.return_value = notice
+
+    result = delete_notice(None, USER, notice["id"])
+
+    mock_delete.assert_called_once()
+    mock_record_audit.assert_called_once()
+    kwargs = mock_record_audit.call_args.kwargs
+    assert kwargs["action"] == "notice.delete"
+    assert kwargs["user_id"] == USER["id"]
+    assert result == {"detail": "Notice deleted"}
+
+
+@patch("app.notices.service.record_audit")
+@patch("app.notices.service.get_by_id")
+def test_delete_notice_not_found_skips_audit(mock_get_by_id, mock_record_audit):
+    mock_get_by_id.return_value = None
+
+    with pytest.raises(NotFoundError):
+        delete_notice(None, USER, str(uuid4()))
+
+    mock_record_audit.assert_not_called()

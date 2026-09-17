@@ -97,6 +97,8 @@ def bulk_mark(db: Client, user: dict, data: AttendanceBulkMark) -> AttendanceBul
         module="attendance",
         entity_type="attendance",
         description=f"Bulk marked attendance: {len(created)} created, {len(skipped)} skipped",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return AttendanceBulkResult(
         created=created,

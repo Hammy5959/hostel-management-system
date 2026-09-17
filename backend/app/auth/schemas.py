@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.core.passwords import validate_password
+from app.hostel_settings.schemas import HostelBrandingOut
 from app.users.schemas import UserOut
 
 
@@ -43,6 +44,7 @@ class TokenResponse(BaseModel):
     user: UserOut
     permissions: list[str]
     role_name: str | None = None
+    branding: HostelBrandingOut
 
 
 class OTPRequestResponse(BaseModel):

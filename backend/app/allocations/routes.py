@@ -57,7 +57,7 @@ def transfer_allocation(
 @router.post("/{allocation_id}/release", response_model=AllocationOut, summary="Release (complete) an allocation")
 def release_allocation(
     allocation_id: str,
-    _: dict = Depends(require_permission("allocations.update")),
+    user: dict = Depends(require_permission("allocations.update")),
     db: Client = Depends(get_db),
 ) -> AllocationOut:
-    return service.release_allocation(db, allocation_id)
+    return service.release_allocation(db, user, allocation_id)

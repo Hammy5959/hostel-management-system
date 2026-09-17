@@ -80,7 +80,7 @@ def reject_admission(
 @router.post("/{admission_id}/cancel", response_model=AdmissionOut, summary="Cancel an admission")
 def cancel_admission(
     admission_id: str,
-    _: dict = Depends(require_permission("admissions.update")),
+    user: dict = Depends(require_permission("admissions.update")),
     db: Client = Depends(get_db),
 ) -> AdmissionOut:
-    return service.cancel_admission(db, admission_id)
+    return service.cancel_admission(db, user, admission_id)

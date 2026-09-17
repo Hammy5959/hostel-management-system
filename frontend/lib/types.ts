@@ -53,6 +53,13 @@ export interface UserPasswordResetInput {
   password: string
 }
 
+export interface HostelBranding {
+  hostel_name: string
+  logo_url: string | null
+  timezone: string | null
+  currency: string | null
+}
+
 export interface TokenResponse {
   access_token: string
   token_type: "bearer"
@@ -60,6 +67,7 @@ export interface TokenResponse {
   user: User
   permissions: string[]
   role_name: string | null
+  branding: HostelBranding
 }
 
 export interface OTPRequestResponse {
@@ -125,6 +133,13 @@ export interface OccupancyReport {
   breakdown: (OccupancyBuildingBreakdownRow | OccupancyFloorBreakdownRow)[]
 }
 
+export interface AuditLogActor {
+  id: string
+  first_name: string
+  last_name: string | null
+  email: string
+}
+
 export interface AuditLogItem {
   id: string
   user_id: string | null
@@ -133,8 +148,12 @@ export interface AuditLogItem {
   entity_type: string | null
   entity_id: string | null
   description: string | null
+  old_values: Record<string, unknown> | null
+  new_values: Record<string, unknown> | null
   ip_address: string | null
+  user_agent: string | null
   created_at: string
+  actor: AuditLogActor | null
 }
 
 export interface AuditLogList {
@@ -1906,4 +1925,39 @@ export interface NoticeList {
   total: number
   page: number
   per_page: number
+}
+
+/* ── Hostel settings ──────────────────────────────────────────── */
+
+export interface HostelSettings {
+  id: string
+  hostel_name: string
+  hostel_code: string | null
+  address: string | null
+  city: string | null
+  state: string | null
+  country: string | null
+  phone: string | null
+  email: string | null
+  total_capacity: number | null
+  logo_url: string | null
+  timezone: string | null
+  currency: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface HostelSettingsUpdateInput {
+  hostel_name?: string
+  hostel_code?: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  country?: string | null
+  phone?: string | null
+  email?: string | null
+  total_capacity?: number | null
+  logo_url?: string | null
+  timezone?: string | null
+  currency?: string | null
 }

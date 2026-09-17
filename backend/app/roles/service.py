@@ -64,6 +64,8 @@ def create_role(db: Client, data: RoleCreate, actor: dict | None = None) -> Role
         entity_id=role["id"],
         description=f"Created role {role['name']}",
         new_values={"name": role["name"]},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return RoleOut.model_validate(role)
 
@@ -106,6 +108,8 @@ def _audit_role_changes(db: Client, role: dict, payload: dict, actor: dict | Non
             entity_type="role", entity_id=role["id"],
             description=f"Renamed role {role['name']} → {payload['name']}",
             old_values={"name": role["name"]}, new_values={"name": payload["name"]},
+            ip_address=actor.get("_ip_address") if actor else None,
+            user_agent=actor.get("_user_agent") if actor else None,
         )
     if "is_active" in payload:
         state = "deactivated" if payload["is_active"] is False else "activated"
@@ -114,6 +118,8 @@ def _audit_role_changes(db: Client, role: dict, payload: dict, actor: dict | Non
             entity_type="role", entity_id=role["id"],
             description=f"{state.capitalize()} role {role['name']}",
             old_values={"is_active": role["is_active"]}, new_values={"is_active": payload["is_active"]},
+            ip_address=actor.get("_ip_address") if actor else None,
+            user_agent=actor.get("_user_agent") if actor else None,
         )
     if "description" in payload:
         record_audit(
@@ -121,6 +127,8 @@ def _audit_role_changes(db: Client, role: dict, payload: dict, actor: dict | Non
             entity_type="role", entity_id=role["id"],
             description=f"Updated role {role['name']}",
             old_values={"description": role.get("description")}, new_values={"description": payload["description"]},
+            ip_address=actor.get("_ip_address") if actor else None,
+            user_agent=actor.get("_user_agent") if actor else None,
         )
 
 
@@ -148,6 +156,8 @@ def delete_role(db: Client, role_id: str, actor: dict | None = None) -> None:
         entity_id=role_id,
         description=f"Deleted role {role['name']}",
         old_values={"name": role["name"], "is_active": role["is_active"]},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
 
 
@@ -177,5 +187,7 @@ def set_role_permissions(db: Client, role_id: str, data: RolePermissionsUpdate, 
         description=f"Updated permissions for role {role['name']}",
         old_values={"permissions": old},
         new_values={"permissions": permissions},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return RoleWithPermissions(**role, permissions=permissions)

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
 import { OtpInput } from "@/components/auth/otp-input"
-import { setStoredPermissions, setStoredRoleName, setStoredUser, setToken } from "@/lib/auth"
+import { setStoredBranding, setStoredPermissions, setStoredRoleName, setStoredUser, setToken } from "@/lib/auth"
 import { ApiError, requestOtp, verifyOtp } from "@/lib/api"
 
 const RESEND_COOLDOWN_SECONDS = 45
@@ -76,6 +76,7 @@ export function VerifyOtpForm({ email: initialEmail }: VerifyOtpFormProps) {
       setStoredUser(res.user)
       setStoredPermissions(res.permissions)
       setStoredRoleName(res.role_name)
+      setStoredBranding(res.branding)
       toast.success(`Welcome back, ${res.user.first_name} ${res.user.last_name}!`)
       window.sessionStorage.removeItem("shms.otp_email")
       router.replace("/dashboard")

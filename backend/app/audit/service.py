@@ -29,6 +29,8 @@ def record_audit(
     description: str | None = None,
     old_values: dict[str, Any] | None = None,
     new_values: dict[str, Any] | None = None,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
 ) -> None:
     """Write one audit log row. Never raises to the caller — audit must not
     break the primary operation."""
@@ -41,6 +43,8 @@ def record_audit(
         "description": description,
         "old_values": old_values,
         "new_values": new_values,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
     }
     try:
         res = db.table(_TABLE).insert(payload).execute()

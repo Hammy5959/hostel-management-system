@@ -7,7 +7,7 @@ user. Permission checks (Phase 3) build on top of it.
 from __future__ import annotations
 
 import jwt
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from supabase import Client
 
@@ -20,13 +20,17 @@ _bearer = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     db: Client = Depends(get_db),
 ) -> dict:
     """Resolve the authenticated user from the Authorization bearer token.
 
-    Returns the public.users row as a dict. Raises 401 on missing/invalid
-    tokens and 403 if the account has been disabled.
+    Returns the public.users row as a dict, with the requesting client's IP
+    and user agent stashed under private (`_`-prefixed) keys for callers that
+    forward them into record_audit() — see app.audit.service.record_audit.
+    Raises 401 on missing/invalid tokens and 403 if the account has been
+    disabled.
     """
     if credentials is None:
         raise UnauthorizedError("Missing authentication token", code="missing_token")
@@ -46,4 +50,6 @@ def get_current_user(
     if user.get("status") in BLOCKED_STATUSES:
         raise ForbiddenError("This account is disabled", code="account_disabled")
 
+    user["_ip_address"] = request.client.host if request.client else None
+    user["_user_agent"] = request.headers.get("user-agent")
     return user

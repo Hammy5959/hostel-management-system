@@ -64,6 +64,8 @@ def record_payment(db: Client, user: dict, data: PaymentCreate) -> PaymentOut:
         entity_id=str(payment.id),
         description=f"Recorded payment {payment.payment_reference} of {payment.amount}",
         new_values={"amount": str(payment.amount), "invoice_id": str(payment.invoice_id)},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,

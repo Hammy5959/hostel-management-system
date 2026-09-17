@@ -22,8 +22,9 @@ from app.allocations.schemas import (
 )
 from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.core.exceptions import ForbiddenError
-from app.database.crud import list_page
+from app.database.crud import get_by_id, list_page
 from app.database.rpc import rpc_call
 from app.database.supabase import raise_for_error
 from app.invoices.service import (
@@ -46,6 +47,11 @@ _SELECT = (
     "room:rooms!inner(id, room_number, floors!inner(name, building_id, buildings(name))), "
     "resident:residents!inner(id, first_name, last_name, student_id, profile_picture_url)"
 )
+
+
+def _resident_name(db: Client, resident_id: str) -> str:
+    resident = get_by_id(db, "residents", str(resident_id))
+    return full_name(resident["first_name"], resident.get("last_name")) if resident else str(resident_id)
 
 
 def _flatten_room_location(item: dict) -> None:
@@ -94,7 +100,9 @@ def create_allocation(db: Client, user: dict, data: AllocationCreate) -> Allocat
         module="room_allocations",
         entity_type="room_allocation",
         entity_id=str(created.id),
-        description=f"Allocated bed to resident {created.resident_id}",
+        description=f"Allocated a bed to {_resident_name(db, created.resident_id)}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return created
 
@@ -115,21 +123,26 @@ def transfer_allocation(db: Client, user: dict, allocation_id: str, data: Alloca
         module="room_allocations",
         entity_type="room_allocation",
         entity_id=str(created.id),
-        description=f"Transferred allocation to bed {created.bed_id}",
+        description=f"Transferred {_resident_name(db, created.resident_id)} to a new bed",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return created
 
 
-def release_allocation(db: Client, allocation_id: str) -> AllocationOut:
+def release_allocation(db: Client, user: dict, allocation_id: str) -> AllocationOut:
     rows = rpc_call(db, "hms_release_allocation", {"p_allocation_id": allocation_id}, _ERR_MAP)
     released = AllocationOut.model_validate(rows[0])
     record_audit(
         db,
+        user_id=user["id"],
         action="allocation.release",
         module="room_allocations",
         entity_type="room_allocation",
         entity_id=allocation_id,
-        description=f"Released allocation {allocation_id}",
+        description=f"Released {_resident_name(db, released.resident_id)} from their allocation",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return released
 

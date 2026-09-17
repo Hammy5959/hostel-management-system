@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from supabase import Client
 
+from app.audit.service import record_audit
 from app.core.exceptions import NotFoundError
-from app.database.crud import delete, get_by_id, insert, list_page, update
+from app.database.crud import delete, get_by_id, insert, list_page
+from app.database.crud import update as db_update
 from app.mess_menus.schemas import MenuCreate, MenuList, MenuOut, MenuUpdate
 
 _TABLE = "mess_menus"
@@ -37,11 +39,24 @@ def list_menus(db: Client, *, page: int, per_page: int, date_from: str | None, d
 def update(db: Client, menu_id: str, data: MenuUpdate) -> MenuOut:
     if get_by_id(db, _TABLE, menu_id) is None:
         raise NotFoundError("Mess menu not found", code="menu_not_found")
-    return MenuOut.model_validate(update(db, _TABLE, menu_id, data.model_dump(exclude_unset=True)))
+    return MenuOut.model_validate(db_update(db, _TABLE, menu_id, data.model_dump(exclude_unset=True)))
 
 
-def delete_menu(db: Client, menu_id: str) -> dict:
-    if get_by_id(db, _TABLE, menu_id) is None:
+def delete_menu(db: Client, user: dict, menu_id: str) -> dict:
+    existing = get_by_id(db, _TABLE, menu_id)
+    if existing is None:
         raise NotFoundError("Mess menu not found", code="menu_not_found")
     delete(db, _TABLE, menu_id)
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="mess_menu.delete",
+        module="mess_menus",
+        entity_type="mess_menu",
+        entity_id=menu_id,
+        description=f"Deleted mess menu for {existing.get('menu_date')}",
+        old_values={"menu_date": str(existing.get("menu_date"))},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
     return {"detail": "Mess menu deleted"}

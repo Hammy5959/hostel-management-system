@@ -234,7 +234,7 @@ export const navigation: NavEntry[] = [
   },
   {
     type: "link",
-    data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock, unbuilt: true },
+    data: { label: "Audit Logs", href: "/audit-logs", icon: FileClock, permission: "audit_logs.view" },
   },
 
   {
@@ -268,7 +268,7 @@ export const navigation: NavEntry[] = [
           label: "Hostel Settings",
           href: "/settings",
           icon: SlidersHorizontal,
-          unbuilt: true,
+          permission: "hostel_settings.view",
         },
       ],
     },

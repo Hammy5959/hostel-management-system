@@ -275,6 +275,18 @@ export async function fetchStaffEligibleUserOptions(search: string): Promise<Com
     }))
 }
 
+/** Any user who could appear as an audit-log actor — unscoped, since staff
+ * and residents alike can trigger audited actions. Used by the Audit Logs
+ * page's Actor filter. */
+export async function fetchAuditActorOptions(search: string): Promise<ComboOption[]> {
+  const res = await getUsers({ search: search || undefined, per_page: 20 })
+  return res.items.map((u) => ({
+    value: u.id,
+    label: [u.first_name, u.last_name].filter(Boolean).join(" "),
+    sublabel: u.email,
+  }))
+}
+
 /** Inventory items for the New Asset form's optional "link to inventory
  * item" picker — a plain unscoped search, since any item can back an
  * asset. */

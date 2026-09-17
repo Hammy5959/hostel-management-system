@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from supabase import Client
 
 from app.api.deps import get_db
@@ -20,15 +20,23 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     response_model=OTPRequestResponse,
     summary="Verify password, then request a login OTP",
 )
-def request_otp(payload: OTPRequest, db: Client = Depends(get_db)) -> dict:
+def request_otp(payload: OTPRequest, request: Request, db: Client = Depends(get_db)) -> dict:
     """Step 1 of login: verify the email+password, then issue an OTP.
     The JWT is only issued by verify-otp after the OTP succeeds."""
-    return service.request_otp(db, payload.email, payload.password)
+    return service.request_otp(
+        db, payload.email, payload.password,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
 
 
 @router.post("/verify-otp", response_model=TokenResponse, summary="Verify OTP and obtain a JWT")
-def verify_otp(payload: OTPVerify, db: Client = Depends(get_db)) -> TokenResponse:
-    return service.verify_otp(db, payload.email, payload.otp)
+def verify_otp(payload: OTPVerify, request: Request, db: Client = Depends(get_db)) -> TokenResponse:
+    return service.verify_otp(
+        db, payload.email, payload.otp,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
 
 
 @router.get("/me", response_model=UserOut, summary="Current authenticated user")

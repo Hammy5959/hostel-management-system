@@ -11,12 +11,18 @@ import { cn } from "@/lib/utils"
 import { filterNavigation, type NavEntry } from "@/lib/navigation"
 import { clearToken } from "@/lib/auth"
 import { usePermissions } from "@/lib/permissions"
+import { useHostelBranding } from "@/lib/hostel-settings"
+import type { BrandingCookieValue } from "@/lib/branding-cookie"
 
 interface SidebarProps {
   navigation: NavEntry[]
   onNavigate?: () => void
   collapsed?: boolean
   onToggleCollapsed?: () => void
+  /** Server-rendered branding snapshot — seeds the name/logo on the very
+   * first paint, before hydration/the live client fetch resolves. See
+   * app/(app)/layout.tsx / app/(portal)/layout.tsx. */
+  initialBranding?: BrandingCookieValue | null
 }
 
 export function Sidebar({
@@ -24,11 +30,15 @@ export function Sidebar({
   onNavigate,
   collapsed = false,
   onToggleCollapsed,
+  initialBranding,
 }: SidebarProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const pathname = usePathname()
   const { has, hasAny } = usePermissions()
+  const branding = useHostelBranding()
+  // Whole-object precedence — see topbar.tsx for why not a per-field `??`.
+  const effectiveBranding = branding ?? initialBranding
   const visibleNavigation = filterNavigation(navigation, has, hasAny)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
 
@@ -78,17 +88,26 @@ export function Sidebar({
           )}
         >
           <div className="flex size-10 shrink-0 items-center justify-center rounded bg-surface-container-lowest p-1.5 shadow-sm ring-1 ring-outline-variant">
-            <Building2
-              aria-hidden
-              className="size-6 text-primary"
-              strokeWidth={2}
-            />
+            {effectiveBranding?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={effectiveBranding.logo_url}
+                alt=""
+                className="size-full rounded object-contain"
+              />
+            ) : (
+              <Building2
+                aria-hidden
+                className="size-6 text-primary"
+                strokeWidth={2}
+              />
+            )}
           </div>
 
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-lg font-semibold leading-6 text-on-surface">
-                Main Campus
+                {effectiveBranding?.hostel_name ?? "Main Campus"}
               </p>
 
               <p className="truncate text-xs font-semibold tracking-wide text-on-surface-variant">

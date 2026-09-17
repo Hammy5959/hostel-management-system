@@ -56,7 +56,7 @@ def update(
 @router.delete("/{menu_id}", summary="Delete a mess menu")
 def delete_menu(
     menu_id: str,
-    _: dict = Depends(require_permission("mess_menus.delete")),
+    user: dict = Depends(require_permission("mess_menus.delete")),
     db: Client = Depends(get_db),
 ) -> dict:
-    return service.delete_menu(db, menu_id)
+    return service.delete_menu(db, user, menu_id)

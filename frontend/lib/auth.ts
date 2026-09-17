@@ -1,4 +1,5 @@
-import type { User } from "@/lib/types"
+import { BRANDING_COOKIE } from "@/lib/branding-cookie"
+import type { HostelBranding, User } from "@/lib/types"
 
 const TOKEN_KEY = "shms.access_token"
 const USER_KEY = "shms.user"
@@ -38,6 +39,7 @@ function clearPortalCookie(): void {
 
 const PERMISSIONS_KEY = "shms.permissions"
 const ROLE_NAME_KEY = "shms.role_name"
+const BRANDING_KEY = "shms.branding"
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null
@@ -54,6 +56,7 @@ export function clearToken(): void {
   window.localStorage.removeItem(USER_KEY)
   window.localStorage.removeItem(PERMISSIONS_KEY)
   window.localStorage.removeItem(ROLE_NAME_KEY)
+  window.localStorage.removeItem(BRANDING_KEY)
   // Drop any leftover OTP-flow session data so nothing stale survives logout.
   window.sessionStorage.removeItem("shms.otp_email")
   _cachedUser = null
@@ -61,9 +64,12 @@ export function clearToken(): void {
   _permissionsLoaded = false
   _cachedRoleName = null
   _roleNameLoaded = false
+  _cachedBranding = null
+  _brandingLoaded = false
   emit()
   clearAuthCookie()
   clearPortalCookie()
+  document.cookie = `${BRANDING_COOKIE}=; path=/; Max-Age=0; SameSite=Lax`
 }
 
 /* ── User store (for useSyncExternalStore) ────────────────────── */
@@ -177,5 +183,46 @@ export function setStoredRoleName(roleName: string | null): void {
   } else {
     clearPortalCookie()
   }
+  emit()
+}
+
+/* ── Hostel branding store (synchronous, set at login + on save) ──────── */
+
+let _cachedBranding: HostelBranding | null = null
+let _brandingLoaded = false
+
+function loadCachedBranding(): HostelBranding | null {
+  if (_brandingLoaded) return _cachedBranding
+  _brandingLoaded = true
+  if (typeof window === "undefined") {
+    _cachedBranding = null
+  } else {
+    const raw = window.localStorage.getItem(BRANDING_KEY)
+    if (raw) {
+      try {
+        _cachedBranding = JSON.parse(raw) as HostelBranding
+      } catch {
+        _cachedBranding = null
+      }
+    }
+  }
+  return _cachedBranding
+}
+
+export function getStoredBranding(): HostelBranding | null {
+  return loadCachedBranding()
+}
+
+export function setStoredBranding(branding: HostelBranding): void {
+  _cachedBranding = branding
+  window.localStorage.setItem(BRANDING_KEY, JSON.stringify(branding))
+  // Also mirrored into a cookie (same mechanism as AUTH_COOKIE/PORTAL_COOKIE)
+  // so the server can render the correct name/logo on the very first paint —
+  // see lib/branding-cookie.ts and app/(app)/layout.tsx.
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  const cookieValue = encodeURIComponent(
+    JSON.stringify({ hostel_name: branding.hostel_name, logo_url: branding.logo_url }),
+  )
+  document.cookie = `${BRANDING_COOKIE}=${cookieValue}; path=/; SameSite=Lax${secure}`
   emit()
 }

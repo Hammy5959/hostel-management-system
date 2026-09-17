@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { navigation as staffNavigation, type NavEntry } from "@/lib/navigation";
+import type { BrandingCookieValue } from "@/lib/branding-cookie";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -24,11 +25,16 @@ interface AppShellProps {
     identityPhotoUrl?: string | null;
     identityInitials?: string;
   };
+  /** Server-rendered branding snapshot (read from the shms.branding cookie
+   * in app/(app)/layout.tsx or app/(portal)/layout.tsx) — seeds Topbar and
+   * Sidebar's very first paint so it's correct before hydration/the live
+   * client fetch resolves. null when no cookie exists yet. */
+  initialBranding?: BrandingCookieValue | null;
 }
 
 // Auth is guarded server-side by proxy.ts before this ever renders — no
 // client-side redirect needed here (and none would be flash-free anyway).
-export function AppShell({ children, navigation = staffNavigation, topbarProps }: AppShellProps) {
+export function AppShell({ children, navigation = staffNavigation, topbarProps, initialBranding }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -38,7 +44,7 @@ export function AppShell({ children, navigation = staffNavigation, topbarProps }
 
   return (
     <div className="min-h-dvh bg-background">
-      <Topbar onMenuClick={() => setMobileOpen(true)} {...topbarProps} />
+      <Topbar onMenuClick={() => setMobileOpen(true)} initialBranding={initialBranding} {...topbarProps} />
 
       {/* Desktop sidebar */}
       <aside
@@ -47,7 +53,12 @@ export function AppShell({ children, navigation = staffNavigation, topbarProps }
           collapsed ? "w-[72px]" : "w-[280px]",
         )}
       >
-        <Sidebar navigation={navigation} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+        <Sidebar
+          navigation={navigation}
+          collapsed={collapsed}
+          onToggleCollapsed={toggleCollapsed}
+          initialBranding={initialBranding}
+        />
 
         {/* Collapse / expand toggle, centered on the sidebar's right edge */}
         <button
@@ -71,7 +82,11 @@ export function AppShell({ children, navigation = staffNavigation, topbarProps }
           showCloseButton={false}
           className="w-[280px] bg-surface-container-low p-0 sm:max-w-[280px]"
         >
-          <Sidebar navigation={navigation} onNavigate={() => setMobileOpen(false)} />
+          <Sidebar
+            navigation={navigation}
+            onNavigate={() => setMobileOpen(false)}
+            initialBranding={initialBranding}
+          />
         </SheetContent>
       </Sheet>
 

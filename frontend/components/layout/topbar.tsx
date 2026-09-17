@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { formatDistanceToNow } from "date-fns"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
   LogOut,
@@ -12,137 +12,181 @@ import {
   Search,
   UserRound,
   CheckCheck,
-} from "lucide-react"
-import { toast } from "sonner"
+} from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
-import { clearToken, getStoredRoleName, getStoredUser, subscribeUser } from "@/lib/auth"
-import { formatRoleName, initials } from "@/components/users/user-badges"
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import {
+  clearToken,
+  getStoredRoleName,
+  getStoredUser,
+  subscribeUser,
+} from "@/lib/auth";
+import { useHostelBranding } from "@/lib/hostel-settings";
+import type { BrandingCookieValue } from "@/lib/branding-cookie";
+import { formatRoleName, initials } from "@/components/users/user-badges";
 import {
   getNotifications,
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/lib/api"
+} from "@/lib/api";
 
 interface TopbarProps {
-  onMenuClick: () => void
+  onMenuClick: () => void;
   /** Brand logo/link target. Default reproduces today's staff behavior. */
-  homeHref?: string
-  /** Brand text next to the logo. Default reproduces today's staff behavior. */
-  brandLabel?: string
+  homeHref?: string;
+  /** Brand text next to the logo. Default (undefined) reads the live hostel
+   * name from GET /hostel-settings/current, falling back to "SHMS Admin"
+   * while it loads/on error. Portal passes "Resident Portal" to override
+   * this entirely — an explicit override also suppresses the hostel logo
+   * image, since it's a distinct page-context label, not the institution
+   * brand. */
+  brandLabel?: string;
   /** "Edit Profile" target. Default reproduces today's staff behavior
    * (computed from the logged-in user's own id at click time). */
-  profileHref?: string
+  profileHref?: string;
   /** Displayed name. Default (undefined) reproduces today's staff behavior
    * of deriving it from the logged-in user account. Portal passes the
    * resident record's name instead, so the topbar matches /portal/profile. */
-  identityName?: string
+  identityName?: string;
   /** Avatar image. Default (undefined) reproduces today's staff behavior
    * of using the user account's photo. Portal passes the resident record's
    * own profile_picture_url instead. */
-  identityPhotoUrl?: string | null
+  identityPhotoUrl?: string | null;
   /** Avatar fallback initials, paired with identityName (initials() needs
    * first/last name separately, so the caller computes this rather than
    * Topbar re-splitting a combined name string). */
-  identityInitials?: string
+  identityInitials?: string;
+  /** Server-rendered branding snapshot — seeds the brand name/logo on the
+   * very first paint (before hydration/the live client fetch resolves), so
+   * there's no flash on refresh. See app/(app)/layout.tsx. */
+  initialBranding?: BrandingCookieValue | null;
 }
 
 export function Topbar({
   onMenuClick,
   homeHref = "/dashboard",
-  brandLabel = "SHMS Admin",
+  brandLabel,
   profileHref,
   identityName,
   identityPhotoUrl,
   identityInitials,
+  initialBranding,
 }: TopbarProps) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null)
-  const [notifOpen, setNotifOpen] = useState(false)
-  const [accountOpen, setAccountOpen] = useState(false)
-  const accountCloseTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const accountRef = useRef<HTMLDivElement>(null)
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useSyncExternalStore(subscribeUser, getStoredUser, () => null);
+  const branding = useHostelBranding();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountCloseTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const accountRef = useRef<HTMLDivElement>(null);
 
   function openAccountMenu() {
     if (accountCloseTimeout.current) {
-      clearTimeout(accountCloseTimeout.current)
-      accountCloseTimeout.current = null
+      clearTimeout(accountCloseTimeout.current);
+      accountCloseTimeout.current = null;
     }
-    setAccountOpen(true)
+    setAccountOpen(true);
   }
 
   function scheduleCloseAccountMenu() {
-    accountCloseTimeout.current = setTimeout(() => setAccountOpen(false), 150)
+    accountCloseTimeout.current = setTimeout(() => setAccountOpen(false), 150);
   }
 
   // Closes the account menu on outside click/tap — needed since touch
   // devices have no mouseleave to trigger scheduleCloseAccountMenu.
   useEffect(() => {
-    if (!accountOpen) return
+    if (!accountOpen) return;
     function handleOutside(e: MouseEvent | TouchEvent) {
-      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
-        setAccountOpen(false)
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(e.target as Node)
+      ) {
+        setAccountOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleOutside)
-    document.addEventListener("touchstart", handleOutside)
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
     return () => {
-      document.removeEventListener("mousedown", handleOutside)
-      document.removeEventListener("touchstart", handleOutside)
-    }
-  }, [accountOpen])
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [accountOpen]);
 
-  const roleName = useSyncExternalStore(subscribeUser, getStoredRoleName, () => null)
+  const roleName = useSyncExternalStore(
+    subscribeUser,
+    getStoredRoleName,
+    () => null,
+  );
 
   const { data: countData } = useQuery({
     queryKey: ["notification-count"],
     queryFn: getUnreadNotificationCount,
     refetchInterval: 60_000,
-  })
+  });
 
   const { data: notifData } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => getNotifications(5),
-  })
+  });
 
   const markAllRead = useMutation({
     mutationFn: markAllNotificationsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notification-count"] })
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      toast.success("All notifications marked as read.")
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("All notifications marked as read.");
     },
-  })
+  });
 
   const markRead = useMutation({
     mutationFn: markNotificationRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notification-count"] })
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["notification-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
-  })
+  });
 
   function handleSignOut() {
-    clearToken()
-    queryClient.clear()
-    router.replace("/login")
+    clearToken();
+    queryClient.clear();
+    router.replace("/login");
   }
 
-  const unreadCount = countData?.unread_count ?? 0
-  const fullName = identityName ?? (user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "")
-  const avatarUrl = identityPhotoUrl !== undefined ? (identityPhotoUrl ?? undefined) : (user?.profile_picture_url ?? undefined)
-  const avatarInitials = identityInitials ?? (user ? initials(user.first_name, user.last_name) : "?")
+  const unreadCount = countData?.unread_count ?? 0;
+  const fullName =
+    identityName ??
+    (user ? `${user.first_name} ${user.last_name ?? ""}`.trim() : "");
+  const avatarUrl =
+    identityPhotoUrl !== undefined
+      ? (identityPhotoUrl ?? undefined)
+      : (user?.profile_picture_url ?? undefined);
+  const avatarInitials =
+    identityInitials ??
+    (user ? initials(user.first_name, user.last_name) : "?");
+  // Whole-object precedence, not per-field `??` — branding is always either
+  // the full object or fully absent (never partially populated), so this
+  // can't accidentally fall back to a stale initialBranding.logo_url when
+  // the live value has legitimately resolved to "no logo" (null).
+  const effectiveBranding = branding ?? initialBranding;
+  const effectiveBrand =
+    brandLabel ?? effectiveBranding?.hostel_name ?? "SHMS Admin";
+  const effectiveLogo = brandLabel
+    ? null
+    : (effectiveBranding?.logo_url ?? null);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-white px-4 md:px-6">
@@ -158,113 +202,21 @@ export function Topbar({
           <Menu aria-hidden className="size-5" />
         </Button>
         <Link href={homeHref} className="flex items-center gap-3">
-          <span className="text-xl font-bold text-primary">{brandLabel}</span>
+          {effectiveLogo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={effectiveLogo}
+              alt=""
+              className="size-8 rounded-md object-contain"
+            />
+          )}
+          <span className="text-xl font-bold text-primary">
+            {effectiveBrand}
+          </span>
         </Link>
       </div>
 
-      {/* Right: search + actions */}
       <div className="flex items-center gap-2 md:gap-4 ">
-        {/* Search */}
-        <div className="relative hidden md:-ml-2 md:block">
-          <Search
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-3.5 my-auto size-4 text-on-surface-variant"
-          />
-          <Input
-            type="search"
-            placeholder="Search..."
-            aria-label="Search"
-            className="h-10 w-64 rounded-full border-outline-variant bg-surface pl-10 pr-4 text-sm placeholder:text-on-surface-variant focus-visible:ring-primary/20"
-          />
-        </div>
-
-        {/* Notifications */}
-        <DropdownMenu
-          open={notifOpen}
-          onOpenChange={(open) => {
-            setNotifOpen(open)
-            if (open) queryClient.invalidateQueries({ queryKey: ["notifications"] })
-          }}
-        >
-          <DropdownMenuTrigger
-            render={
-              <button
-                type="button"
-                aria-label={`Notifications${unreadCount ? ` (${unreadCount} unread)` : ""}`}
-                className={cn(
-                  "relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low",
-                )}
-              >
-                <Bell aria-hidden className="size-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-error ring-2 ring-surface" />
-                )}
-              </button>
-            }
-          >
-            <DropdownMenuContent
-              align="end"
-              sideOffset={10}
-              className="w-[min(22rem,calc(100vw-2rem))] p-0"
-            >
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">Notifications</p>
-                {unreadCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => markAllRead.mutate()}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:underline"
-                  >
-                    <CheckCheck aria-hidden className="size-3.5" />
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <ScrollArea className="max-h-80">
-                {!notifData || notifData.items.length === 0 ? (
-                  <div className="px-4 py-10 text-center">
-                    <Bell aria-hidden className="mx-auto mb-2 size-6 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">You&apos;re all caught up.</p>
-                  </div>
-                ) : (
-                  <ul>
-                    {notifData.items.map((n) => (
-                      <li key={n.id}>
-                        <button
-                          type="button"
-                          onClick={() => !n.is_read && markRead.mutate(n.id)}
-                          className="flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
-                        >
-                          <span
-                            aria-hidden
-                            className={cn(
-                              "mt-1.5 size-2 shrink-0 rounded-full",
-                              n.is_read ? "bg-outline-variant" : "bg-primary",
-                            )}
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium text-foreground">
-                              {n.title}
-                            </span>
-                            {n.message && (
-                              <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
-                                {n.message}
-                              </span>
-                            )}
-                            <span className="mt-1 block text-xs text-outline">
-                              {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </ScrollArea>
-            </DropdownMenuContent>
-          </DropdownMenuTrigger>
-        </DropdownMenu>
-
         {/* Account */}
         <div
           ref={accountRef}
@@ -272,7 +224,7 @@ export function Topbar({
           onMouseEnter={openAccountMenu}
           onMouseLeave={scheduleCloseAccountMenu}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setAccountOpen(false)
+            if (e.key === "Escape") setAccountOpen(false);
           }}
         >
           <button
@@ -302,7 +254,9 @@ export function Topbar({
             >
               <div className="px-1.5 py-1">
                 <div className="flex flex-col gap-0.5 px-1 py-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{fullName || "…"}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {fullName || "…"}
+                  </p>
                   <p className="truncate text-xs font-normal text-muted-foreground">
                     {user?.email ?? "Loading…"}
                   </p>
@@ -318,8 +272,8 @@ export function Topbar({
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  setAccountOpen(false)
-                  if (user) router.push(profileHref ?? `/users/${user.id}`)
+                  setAccountOpen(false);
+                  if (user) router.push(profileHref ?? `/users/${user.id}`);
                 }}
                 className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
               >
@@ -330,8 +284,8 @@ export function Topbar({
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  setAccountOpen(false)
-                  handleSignOut()
+                  setAccountOpen(false);
+                  handleSignOut();
                 }}
                 className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm text-destructive outline-hidden select-none hover:bg-destructive/10 focus:bg-destructive/10 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-destructive"
               >
@@ -343,5 +297,5 @@ export function Topbar({
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from supabase import Client
 
+from app.audit.service import record_audit
 from app.common.authz import has_permission
 from app.core.exceptions import BadRequestError, NotFoundError
 from app.core.logging import get_logger
@@ -185,8 +186,21 @@ def _notify_audience(db: Client, notice: NoticeOut) -> None:
             get_logger(__name__).exception("Failed to notify resident %s of notice %s", resident_id, notice.id)
 
 
-def delete_notice(db: Client, notice_id: str) -> dict:
-    if get_by_id(db, _TABLE, notice_id) is None:
+def delete_notice(db: Client, user: dict, notice_id: str) -> dict:
+    existing = get_by_id(db, _TABLE, notice_id)
+    if existing is None:
         raise NotFoundError("Notice not found", code="notice_not_found")
     delete(db, _TABLE, notice_id)
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="notice.delete",
+        module="notices",
+        entity_type="notice",
+        entity_id=notice_id,
+        description=f"Deleted notice {existing.get('title')}",
+        old_values={"title": existing.get("title"), "is_published": existing.get("is_published")},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
     return {"detail": "Notice deleted"}

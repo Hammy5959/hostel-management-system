@@ -131,5 +131,7 @@ def cancel_complaint(db: Client, user: dict, complaint_id: str) -> ComplaintOut:
         entity_type="complaint",
         entity_id=complaint_id,
         description=f"Cancelled complaint '{updated.title}'",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return updated

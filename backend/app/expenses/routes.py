@@ -49,7 +49,7 @@ def get(
 def update(
     expense_id: str,
     payload: ExpenseUpdate,
-    _: dict = Depends(require_permission("expenses.update")),
+    user: dict = Depends(require_permission("expenses.update")),
     db: Client = Depends(get_db),
 ) -> ExpenseOut:
-    return service.update(db, expense_id, payload)
+    return service.update(db, user, expense_id, payload)

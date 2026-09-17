@@ -23,6 +23,7 @@ import { ErrorState } from "@/components/hostel/error-state"
 import { cn, formatCurrency } from "@/lib/utils"
 import { getStoredUser } from "@/lib/auth"
 import { usePermissions } from "@/lib/permissions"
+import { humanizeAction } from "@/lib/audit-log-format"
 import {
   getAuditLogs,
   getDashboardSummary,
@@ -31,12 +32,6 @@ import {
 import type { AuditLogItem, OccupancyReport } from "@/lib/types"
 
 /* ── helpers ──────────────────────────────────────────────────── */
-
-function humanizeAction(action: string): string {
-  return action
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
 
 function logStyle(module: string): { icon: LucideIcon; bg: string } {
   const m = module?.toLowerCase() ?? ""
@@ -259,7 +254,7 @@ export function DashboardView() {
   })
   const logsQuery = useQuery({
     queryKey: ["dashboard-logs"],
-    queryFn: () => getAuditLogs(6),
+    queryFn: () => getAuditLogs({ per_page: 6 }),
     enabled: canViewAuditLogs,
   })
 

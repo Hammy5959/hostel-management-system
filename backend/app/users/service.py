@@ -82,6 +82,8 @@ def create_user(db: Client, data: UserCreate, actor: dict | None = None) -> User
         entity_id=user["id"],
         description=f"Created user {user['email']}",
         new_values={"email": user["email"], "role_id": user["role_id"]},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return UserOut.model_validate(user)
 
@@ -170,6 +172,8 @@ def _audit_user_update(db: Client, old_user: dict, updated: dict, payload: dict,
             description=f"Changed role of {old_user['email']} from {old_role['name'] if old_role else 'none'} to {new_role['name']}",
             old_values={"role_id": old_user.get("role_id"), "role_name": old_role["name"] if old_role else None},
             new_values={"role_id": payload["role_id"], "role_name": new_role["name"]},
+            ip_address=actor.get("_ip_address") if actor else None,
+            user_agent=actor.get("_user_agent") if actor else None,
         )
 
     changed = {k: v for k, v in payload.items() if k != "role_id" and k != "email_verified"}
@@ -180,6 +184,8 @@ def _audit_user_update(db: Client, old_user: dict, updated: dict, payload: dict,
             description=f"Updated user {old_user['email']}",
             old_values={k: old_user.get(k) for k in changed},
             new_values=changed,
+            ip_address=actor.get("_ip_address") if actor else None,
+            user_agent=actor.get("_user_agent") if actor else None,
         )
 
 
@@ -199,6 +205,8 @@ def update_self(db: Client, user: dict, data: UserSelfUpdate) -> UserOut:
         description=f"Updated own profile ({user['email']})",
         old_values={k: user.get(k) for k in payload},
         new_values=payload,
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return UserOut.model_validate(updated)
 
@@ -225,6 +233,8 @@ def set_user_status(db: Client, user_id: str, data: UserStatusUpdate, actor: dic
         description=f"Changed status of {user['email']} to {data.status}",
         old_values={"status": user.get("status")},
         new_values={"status": data.status},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return UserOut.model_validate(updated)
 
@@ -244,6 +254,8 @@ def reset_user_password(db: Client, user_id: str, data: UserPasswordReset, actor
         entity_type="user",
         entity_id=user_id,
         description=f"Reset password for {user['email']}",
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return UserOut.model_validate(updated)
 
@@ -276,5 +288,7 @@ def delete_user(db: Client, user_id: str, actor: dict | None = None) -> UserOut:
         description=f"Deleted (archived) user {user['email']}",
         old_values={"status": user.get("status"), "email": user["email"]},
         new_values={"status": "deleted"},
+        ip_address=actor.get("_ip_address") if actor else None,
+        user_agent=actor.get("_user_agent") if actor else None,
     )
     return UserOut.model_validate(updated)

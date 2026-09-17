@@ -10,6 +10,7 @@ from __future__ import annotations
 from supabase import Client
 
 from app.audit.service import record_audit
+from app.common.names import full_name
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.core.passwords import hash_password
 from app.database.crud import insert, list_page, update
@@ -383,7 +384,9 @@ def checkout_resident(db: Client, user: dict, resident_id: str, data: ResidentCh
         module="residents",
         entity_type="resident",
         entity_id=resident_id,
-        description=f"Checked out resident {resident_id}",
+        description=f"Checked out {full_name(resident.first_name, resident.last_name)}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -424,7 +427,9 @@ def mark_returned(db: Client, user: dict, resident_id: str) -> ResidentOut:
         module="residents",
         entity_type="resident",
         entity_id=resident_id,
-        description=f"Marked resident {resident_id} as returned from leave",
+        description=f"Marked {full_name(resident.first_name, resident.last_name)} as returned from leave",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -480,6 +485,8 @@ def create_portal_user(db: Client, user: dict, resident_id: str, data: ResidentP
         module="residents",
         entity_type="resident",
         entity_id=resident_id,
-        description=f"Enabled portal access for resident {resident_id} ({email})",
+        description=f"Enabled portal access for {full_name(resident.first_name, resident.last_name)} ({email})",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return resident

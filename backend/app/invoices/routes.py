@@ -53,25 +53,25 @@ def get_invoice(
 def update_invoice(
     invoice_id: str,
     payload: InvoiceUpdate,
-    _: dict = Depends(require_permission("invoices.update")),
+    user: dict = Depends(require_permission("invoices.update")),
     db: Client = Depends(get_db),
 ) -> InvoiceOut:
-    return service.update_invoice(db, invoice_id, payload)
+    return service.update_invoice(db, user, invoice_id, payload)
 
 
 @router.post("/{invoice_id}/issue", response_model=InvoiceOut, summary="Issue an invoice")
 def issue_invoice(
     invoice_id: str,
-    _: dict = Depends(require_permission("invoices.update")),
+    user: dict = Depends(require_permission("invoices.update")),
     db: Client = Depends(get_db),
 ) -> InvoiceOut:
-    return service.issue_invoice(db, invoice_id)
+    return service.issue_invoice(db, user, invoice_id)
 
 
 @router.post("/{invoice_id}/cancel", response_model=InvoiceOut, summary="Cancel an invoice")
 def cancel_invoice(
     invoice_id: str,
-    _: dict = Depends(require_permission("invoices.update")),
+    user: dict = Depends(require_permission("invoices.update")),
     db: Client = Depends(get_db),
 ) -> InvoiceOut:
-    return service.cancel_invoice(db, invoice_id)
+    return service.cancel_invoice(db, user, invoice_id)

@@ -84,6 +84,8 @@ import type {
   DefaultersReport,
   FinanceReport,
   GatePassesReport,
+  HostelSettings,
+  HostelSettingsUpdateInput,
   InventoryReport,
   MaintenanceReport,
   MessReport,
@@ -375,8 +377,19 @@ export function getOccupancyTrend(params: TrendParams = {}): Promise<OccupancyTr
 
 /* ── Activity / audit ─────────────────────────────────────────── */
 
-export function getAuditLogs(perPage = 6): Promise<AuditLogList> {
-  return apiFetch<AuditLogList>(`/audit-logs?per_page=${perPage}`)
+export interface AuditLogListParams {
+  page?: number
+  per_page?: number
+  action?: string
+  module?: string
+  entity_type?: string
+  user_id?: string
+  date_from?: string
+  date_to?: string
+}
+
+export function getAuditLogs(params: AuditLogListParams = {}): Promise<AuditLogList> {
+  return apiFetch<AuditLogList>(`/audit-logs${toQueryString({ ...params })}`)
 }
 
 /* ── Notices ──────────────────────────────────────────────────── */
@@ -1345,4 +1358,14 @@ export function createAssetAssignment(payload: AssetAssignmentCreateInput): Prom
 
 export function returnAssetAssignment(id: string, payload: AssetAssignmentReturnInput = {}): Promise<AssetAssignment> {
   return apiFetch<AssetAssignment>(`/asset-assignments/${id}/return`, { method: "POST", body: payload })
+}
+
+/* ── Hostel settings ────────────────────────────────────────────────── */
+
+export function getHostelSettings(): Promise<HostelSettings> {
+  return apiFetch<HostelSettings>("/hostel-settings/current")
+}
+
+export function updateHostelSettings(payload: HostelSettingsUpdateInput): Promise<HostelSettings> {
+  return apiFetch<HostelSettings>("/hostel-settings/current", { method: "PATCH", body: payload })
 }

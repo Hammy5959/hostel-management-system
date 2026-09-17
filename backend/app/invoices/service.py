@@ -12,7 +12,9 @@ from decimal import Decimal
 
 from supabase import Client
 
+from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.common.numbers import generate_number
 from app.core.exceptions import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, list_page
@@ -256,7 +258,27 @@ def create_invoice(db: Client, user: dict, data: InvoiceCreate) -> InvoiceOut:
         if getattr(res_charges, "error", None):
             raise_for_error(res_charges, "link resident charges to invoice")
 
-    return InvoiceOut.model_validate(_fetch(db, created["id"]))
+    created_invoice = InvoiceOut.model_validate(_fetch(db, created["id"]))
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="invoice.create",
+        module="invoices",
+        entity_type="invoice",
+        entity_id=str(created_invoice.id),
+        description=(
+            f"Created invoice {created_invoice.invoice_number} for "
+            f"{full_name(created_invoice.resident.first_name, created_invoice.resident.last_name) if created_invoice.resident else created_invoice.resident_id}"
+        ),
+        new_values={
+            "resident_id": str(created_invoice.resident_id),
+            "total_amount": str(created_invoice.total_amount),
+            "status": created_invoice.status,
+        },
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
+    return created_invoice
 
 
 def get_invoice(db: Client, user: dict, invoice_id: str) -> InvoiceOut:
@@ -325,7 +347,7 @@ def list_invoices(
     )
 
 
-def update_invoice(db: Client, invoice_id: str, data: InvoiceUpdate) -> InvoiceOut:
+def update_invoice(db: Client, user: dict, invoice_id: str, data: InvoiceUpdate) -> InvoiceOut:
     invoice = _fetch(db, invoice_id)
     if invoice["status"] not in ("draft",):
         raise ConflictError("Only draft invoices can be edited", code="invoice_locked")
@@ -338,10 +360,27 @@ def update_invoice(db: Client, invoice_id: str, data: InvoiceUpdate) -> InvoiceO
     res = db.table(_TABLE).update(payload).eq("id", invoice_id).execute()
     if getattr(res, "error", None):
         raise_for_error(res, "update invoice")
-    return InvoiceOut.model_validate(_fetch(db, invoice_id))
+    updated = InvoiceOut.model_validate(_fetch(db, invoice_id))
+    tracked = ("discount", "total_amount", "due_date", "notes")
+    changed = {k: v for k, v in payload.items() if k in tracked}
+    if changed:
+        record_audit(
+            db,
+            user_id=user["id"],
+            action="invoice.update",
+            module="invoices",
+            entity_type="invoice",
+            entity_id=invoice_id,
+            description=f"Updated invoice {invoice['invoice_number']}",
+            old_values={k: invoice.get(k) for k in changed},
+            new_values=changed,
+            ip_address=user.get("_ip_address"),
+            user_agent=user.get("_user_agent"),
+        )
+    return updated
 
 
-def issue_invoice(db: Client, invoice_id: str) -> InvoiceOut:
+def issue_invoice(db: Client, user: dict, invoice_id: str) -> InvoiceOut:
     invoice = _fetch(db, invoice_id)
     if invoice["status"] != "draft":
         raise ConflictError("Only draft invoices can be issued", code="invalid_transition")
@@ -351,6 +390,19 @@ def issue_invoice(db: Client, invoice_id: str) -> InvoiceOut:
     if getattr(res, "error", None):
         raise_for_error(res, "issue invoice")
     issued = InvoiceOut.model_validate(_fetch(db, invoice_id))
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="invoice.issue",
+        module="invoices",
+        entity_type="invoice",
+        entity_id=invoice_id,
+        description=f"Issued invoice {issued.invoice_number}",
+        old_values={"status": invoice["status"]},
+        new_values={"status": "issued"},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
     due = f" due {issued.due_date}" if issued.due_date else ""
     notify_resident(
         db,
@@ -363,7 +415,7 @@ def issue_invoice(db: Client, invoice_id: str) -> InvoiceOut:
     return issued
 
 
-def cancel_invoice(db: Client, invoice_id: str) -> InvoiceOut:
+def cancel_invoice(db: Client, user: dict, invoice_id: str) -> InvoiceOut:
     invoice = _fetch(db, invoice_id)
     if invoice["status"] in ("paid", "cancelled"):
         raise ConflictError(f"Cannot cancel an invoice in '{invoice['status']}' state", code="invalid_transition")
@@ -395,4 +447,17 @@ def cancel_invoice(db: Client, invoice_id: str) -> InvoiceOut:
     )
     if getattr(res_charges, "error", None):
         raise_for_error(res_charges, "revert resident charges on cancelled invoice")
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="invoice.cancel",
+        module="invoices",
+        entity_type="invoice",
+        entity_id=invoice_id,
+        description=f"Cancelled invoice {invoice['invoice_number']}",
+        old_values={"status": invoice["status"]},
+        new_values={"status": "cancelled"},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
     return InvoiceOut.model_validate(_fetch(db, invoice_id))

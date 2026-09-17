@@ -12,6 +12,7 @@ from supabase import Client
 
 from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.core.logging import get_logger
 from app.database.crud import get_by_id, insert, list_page, update
@@ -25,6 +26,11 @@ _AUTO_EXCUSE_REMARKS = "Auto-excused: approved leave"
 
 # A leave request only makes sense for a resident currently residing in the hostel.
 _ATTENDANCE_ALLOWED_STATUSES = {"active", "on_leave"}
+
+
+def _resident_name(db: Client, resident_id: str) -> str:
+    resident = get_by_id(db, "residents", str(resident_id))
+    return full_name(resident["first_name"], resident.get("last_name")) if resident else str(resident_id)
 
 
 def _fetch(db: Client, leave_id: str) -> dict:
@@ -182,7 +188,9 @@ def approve(db: Client, user: dict, leave_id: str, data: LeaveReview) -> LeaveOu
         module="leave_requests",
         entity_type="leave_request",
         entity_id=leave_id,
-        description=f"Approved leave request for resident {leave.resident_id}",
+        description=f"Approved leave request for {_resident_name(db, leave.resident_id)}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -205,7 +213,9 @@ def reject(db: Client, user: dict, leave_id: str, data: LeaveReview) -> LeaveOut
         module="leave_requests",
         entity_type="leave_request",
         entity_id=leave_id,
-        description=f"Rejected leave request for resident {leave.resident_id}",
+        description=f"Rejected leave request for {_resident_name(db, leave.resident_id)}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -232,7 +242,9 @@ def cancel(db: Client, user: dict, leave_id: str) -> LeaveOut:
         module="leave_requests",
         entity_type="leave_request",
         entity_id=leave_id,
-        description=f"Cancelled leave request for resident {leave.resident_id}",
+        description=f"Cancelled leave request for {_resident_name(db, leave.resident_id)}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,

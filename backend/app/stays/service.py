@@ -11,6 +11,7 @@ from supabase import Client
 
 from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page
 from app.database.rpc import rpc_call
@@ -56,6 +57,7 @@ def check_in(db: Client, user: dict, stay_id: str, data: StayCheckIn) -> StayOut
         "p_notes": data.notes,
     }, _STAY_ERR_MAP)
     stay = StayOut.model_validate(rows[0])
+    resident = get_by_id(db, "residents", str(stay.resident_id))
     record_audit(
         db,
         user_id=user["id"],
@@ -63,7 +65,9 @@ def check_in(db: Client, user: dict, stay_id: str, data: StayCheckIn) -> StayOut
         module="resident_stays",
         entity_type="resident_stay",
         entity_id=stay_id,
-        description=f"Checked in resident {stay.resident_id}",
+        description=f"Checked in {full_name(resident['first_name'], resident.get('last_name')) if resident else stay.resident_id}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return stay
 
@@ -75,6 +79,7 @@ def check_out(db: Client, user: dict, stay_id: str, data: StayCheckOut) -> StayO
         "p_notes": data.notes,
     }, _STAY_ERR_MAP)
     stay = StayOut.model_validate(rows[0])
+    resident = get_by_id(db, "residents", str(stay.resident_id))
     record_audit(
         db,
         user_id=user["id"],
@@ -82,7 +87,9 @@ def check_out(db: Client, user: dict, stay_id: str, data: StayCheckOut) -> StayO
         module="resident_stays",
         entity_type="resident_stay",
         entity_id=stay_id,
-        description=f"Checked out resident {stay.resident_id}",
+        description=f"Checked out {full_name(resident['first_name'], resident.get('last_name')) if resident else stay.resident_id}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return stay
 

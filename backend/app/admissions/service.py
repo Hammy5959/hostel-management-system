@@ -14,6 +14,7 @@ from supabase import Client
 from app.admissions.schemas import AdmissionCreate, AdmissionList, AdmissionOut, AdmissionUpdate
 from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.common.numbers import generate_number
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.database.crud import get_by_id, insert, list_page, update
@@ -45,7 +46,20 @@ def create_admission(db: Client, user: dict, data: AdmissionCreate) -> Admission
     payload["admission_number"] = payload.get("admission_number") or generate_number("ADM")
     payload["status"] = "pending"
     payload["created_by"] = user["id"]
-    return AdmissionOut.model_validate(insert(db, _TABLE, payload))
+    created = AdmissionOut.model_validate(insert(db, _TABLE, payload))
+    record_audit(
+        db,
+        user_id=user["id"],
+        action="admission.create",
+        module="admissions",
+        entity_type="admission",
+        entity_id=str(created.id),
+        description=f"Created admission {created.admission_number} for {full_name(resident['first_name'], resident.get('last_name'))}",
+        new_values={"resident_id": resident_id, "status": "pending"},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
+    )
+    return created
 
 
 def get_admission(db: Client, admission_id: str) -> AdmissionOut:
@@ -130,6 +144,8 @@ def approve_admission(db: Client, user: dict, admission_id: str) -> AdmissionOut
         entity_type="admission",
         entity_id=admission_id,
         description=f"Approved admission {admission.admission_number}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -155,6 +171,8 @@ def reject_admission(db: Client, user: dict, admission_id: str, notes: str | Non
         entity_type="admission",
         entity_id=admission_id,
         description=f"Rejected admission {admission.admission_number}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     notify_resident(
         db,
@@ -167,14 +185,17 @@ def reject_admission(db: Client, user: dict, admission_id: str, notes: str | Non
     return admission
 
 
-def cancel_admission(db: Client, admission_id: str) -> AdmissionOut:
+def cancel_admission(db: Client, user: dict, admission_id: str) -> AdmissionOut:
     admission = _transition(db, admission_id, "cancelled", actor_key=None, actor_id=None, ts_col=None)
     record_audit(
         db,
+        user_id=user["id"],
         action="admission.cancel",
         module="admissions",
         entity_type="admission",
         entity_id=admission_id,
         description=f"Cancelled admission {admission.admission_number}",
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return admission

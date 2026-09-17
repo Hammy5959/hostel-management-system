@@ -10,7 +10,8 @@ from supabase import Client
 
 from app.audit.service import record_audit
 from app.core.exceptions import BadRequestError, NotFoundError
-from app.database.crud import get_by_id, insert, list_page, update
+from app.database.crud import get_by_id, insert, list_page
+from app.database.crud import update as db_update
 from app.database.supabase import raise_for_error
 from app.inventory_items.schemas import InventoryItemCreate, InventoryItemList, InventoryItemOut, InventoryItemUpdate, StockAdjustment
 
@@ -75,10 +76,10 @@ def list_items(
 
 def update(db: Client, item_id: str, data: InventoryItemUpdate) -> InventoryItemOut:
     _fetch(db, item_id)
-    return InventoryItemOut.model_validate(update(db, _TABLE, item_id, data.model_dump(exclude_unset=True)))
+    return InventoryItemOut.model_validate(db_update(db, _TABLE, item_id, data.model_dump(exclude_unset=True)))
 
 
-def adjust_stock(db: Client, item_id: str, data: StockAdjustment) -> InventoryItemOut:
+def adjust_stock(db: Client, user: dict, item_id: str, data: StockAdjustment) -> InventoryItemOut:
     item = _fetch(db, item_id)
     new_quantity = item["quantity"] + data.delta
     if new_quantity < 0:
@@ -90,6 +91,7 @@ def adjust_stock(db: Client, item_id: str, data: StockAdjustment) -> InventoryIt
         raise_for_error(res, "adjust stock")
     record_audit(
         db,
+        user_id=user["id"],
         action="inventory.adjust",
         module="inventory_items",
         entity_type="inventory_item",
@@ -97,5 +99,7 @@ def adjust_stock(db: Client, item_id: str, data: StockAdjustment) -> InventoryIt
         description=f"Adjusted stock of {item['name']} by {data.delta} ({data.reason or 'no reason'})",
         old_values={"quantity": item["quantity"]},
         new_values={"quantity": new_quantity},
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return InventoryItemOut.model_validate(res.data[0])

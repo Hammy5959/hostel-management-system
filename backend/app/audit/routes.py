@@ -13,6 +13,7 @@ from app.database.crud import list_page
 router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
 
 _TABLE = "audit_logs"
+_SELECT = "*, actor:users(id, first_name, last_name, email)"
 
 
 @router.get("", response_model=AuditLogList, summary="List audit logs")
@@ -38,7 +39,7 @@ def list_audit_logs(
     if user_id:
         eq["user_id"] = user_id
     items, total = list_page(
-        db, _TABLE, page=page, per_page=per_page, eq=eq or None,
+        db, _TABLE, page=page, per_page=per_page, select=_SELECT, eq=eq or None,
         gte={"created_at": date_from} if date_from else None,
         lte={"created_at": date_to} if date_to else None,
         order="created_at", desc=True,

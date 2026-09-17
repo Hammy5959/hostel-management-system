@@ -10,6 +10,7 @@ from supabase import Client
 
 from app.audit.service import record_audit
 from app.common.authz import has_permission
+from app.common.names import full_name
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.database.crud import delete, get_by_id, insert, list_page, update
 from app.emergency_contacts.schemas import EmergencyContactCreate, EmergencyContactList, EmergencyContactOut, EmergencyContactUpdate
@@ -73,6 +74,7 @@ def delete_contact(db: Client, user: dict, contact_id: str) -> dict:
     if not _can_manage(db, user, contact["resident_id"]):
         raise ForbiddenError("You cannot manage this contact", code="not_your_resident")
     delete(db, _TABLE, contact_id)
+    resident = get_by_id(db, "residents", contact["resident_id"])
     record_audit(
         db,
         user_id=user["id"],
@@ -80,6 +82,11 @@ def delete_contact(db: Client, user: dict, contact_id: str) -> dict:
         module="emergency_contacts",
         entity_type="emergency_contact",
         entity_id=contact_id,
-        description=f"Deleted emergency contact {contact['name']} for resident {contact['resident_id']}",
+        description=(
+            f"Deleted emergency contact {contact['name']} for "
+            f"{full_name(resident['first_name'], resident.get('last_name')) if resident else contact['resident_id']}"
+        ),
+        ip_address=user.get("_ip_address"),
+        user_agent=user.get("_user_agent"),
     )
     return {"detail": "Emergency contact deleted"}

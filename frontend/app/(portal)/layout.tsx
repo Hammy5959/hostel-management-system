@@ -1,37 +1,16 @@
-"use client";
+import { cookies } from "next/headers";
 
-import { AppShell } from "@/components/layout/app-shell";
-import { PortalResidentProvider, useMyResident } from "@/components/portal/resident-provider";
-import { initials } from "@/components/users/user-badges";
-import { residentNavigation } from "@/lib/navigation";
+import { PortalAppShell } from "@/components/portal/portal-app-shell";
+import { PortalResidentProvider } from "@/components/portal/resident-provider";
+import { BRANDING_COOKIE, parseBrandingCookie } from "@/lib/branding-cookie";
 
-function PortalAppShell({ children }: { children: React.ReactNode }) {
-  const { resident } = useMyResident();
+export default async function PortalLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const initialBranding = parseBrandingCookie(cookieStore.get(BRANDING_COOKIE)?.value);
 
-  return (
-    <AppShell
-      navigation={residentNavigation}
-      topbarProps={{
-        homeHref: "/portal",
-        brandLabel: "Resident Portal",
-        profileHref: "/portal/profile",
-        // Resident-record identity (not the login user account), so the
-        // topbar matches /portal/profile. Undefined while still loading —
-        // Topbar falls back to the user-account identity until it resolves.
-        identityName: resident ? `${resident.first_name} ${resident.last_name ?? ""}`.trim() : undefined,
-        identityPhotoUrl: resident?.profile_picture_url,
-        identityInitials: resident ? initials(resident.first_name, resident.last_name) : undefined,
-      }}
-    >
-      {children}
-    </AppShell>
-  );
-}
-
-export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
     <PortalResidentProvider>
-      <PortalAppShell>{children}</PortalAppShell>
+      <PortalAppShell initialBranding={initialBranding}>{children}</PortalAppShell>
     </PortalResidentProvider>
   );
 }

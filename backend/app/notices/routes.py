@@ -75,7 +75,7 @@ def unpublish(
 @router.delete("/{notice_id}", summary="Delete a notice")
 def delete_notice(
     notice_id: str,
-    _: dict = Depends(require_permission("notices.update")),
+    user: dict = Depends(require_permission("notices.update")),
     db: Client = Depends(get_db),
 ) -> dict:
-    return service.delete_notice(db, notice_id)
+    return service.delete_notice(db, user, notice_id)

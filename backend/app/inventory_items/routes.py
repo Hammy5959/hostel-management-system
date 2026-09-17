@@ -58,7 +58,7 @@ def update(
 def adjust_stock(
     item_id: str,
     payload: StockAdjustment,
-    _: dict = Depends(require_permission("inventory_items.update")),
+    user: dict = Depends(require_permission("inventory_items.update")),
     db: Client = Depends(get_db),
 ) -> InventoryItemOut:
-    return service.adjust_stock(db, item_id, payload)
+    return service.adjust_stock(db, user, item_id, payload)
