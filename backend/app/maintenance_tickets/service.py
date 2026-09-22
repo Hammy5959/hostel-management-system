@@ -110,7 +110,7 @@ def list_tickets(
             return TicketList(items=[], total=0, page=page, per_page=per_page)
         scope_assigned_to = str(own_staff["id"])  # forced — ignores any caller-supplied assigned_to
     else:
-        raise ForbiddenError("You cannot view maintenance tickets", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq: dict = {}
     if status:

@@ -29,6 +29,7 @@ import {
 
 import { markPermissionDenied } from "@/lib/permissions"
 import { ApiError, createUser, getRoles } from "@/lib/api"
+import { passwordPolicySchema } from "@/lib/password-policy"
 import { formatRoleName } from "@/components/users/user-badges"
 
 const userSchema = z.object({
@@ -37,7 +38,7 @@ const userSchema = z.object({
   last_name: z.string().max(200).optional().or(z.literal("")),
   phone: z.string().max(50).optional().or(z.literal("")),
   role_id: z.string().min(1, "Role is required"),
-  password: z.string().min(1, "Password is required").max(200),
+  password: passwordPolicySchema,
 })
 
 type UserFormValues = z.infer<typeof userSchema>

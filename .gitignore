@@ -15,7 +15,6 @@ backend/build/
 backend/dist/
 backend/wheels/
 *.egg-info
-backend/app/uploads/
 
 # Python caches (anywhere)
 **/__pycache__/

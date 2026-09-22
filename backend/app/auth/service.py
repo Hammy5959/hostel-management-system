@@ -9,7 +9,7 @@ from app.auth.otp import generate_otp, get_otp_sender, get_otp_store
 from app.auth.schemas import TokenResponse, UserOut
 from app.common.names import full_name
 from app.core.config import get_settings
-from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
+from app.core.exceptions import BadRequestError, ForbiddenError, UnauthorizedError
 from app.core.passwords import verify_password
 from app.core.permissions import get_role_name, get_user_permissions
 from app.core.security import create_access_token
@@ -61,8 +61,10 @@ def request_otp(
 
     user = get_user_by_email(db, normalized)
     if user is None:
+        # Same response as a wrong password (below) — the API must never
+        # reveal whether an email is registered.
         _audit_login_failed(db, user_id=None, email=normalized, reason="user_not_found", ip_address=ip_address, user_agent=user_agent)
-        raise NotFoundError("No account found with this email", code="user_not_found")
+        raise UnauthorizedError("Incorrect email or password", code="invalid_credentials")
     if user["status"] not in AUTHENTICABLE_STATUSES:
         _audit_login_failed(db, user_id=user["id"], email=normalized, reason="account_inactive", ip_address=ip_address, user_agent=user_agent)
         raise ForbiddenError("This account is not active", code="account_inactive")
@@ -92,8 +94,10 @@ def verify_otp(
 
     user = get_user_by_email(db, normalized)
     if user is None:
+        # Same response as a wrong password on the request-otp step — the API
+        # must never reveal whether an email is registered.
         _audit_login_failed(db, user_id=None, email=normalized, reason="user_not_found", ip_address=ip_address, user_agent=user_agent)
-        raise NotFoundError("No account found with this email", code="user_not_found")
+        raise UnauthorizedError("Incorrect email or password", code="invalid_credentials")
     if user["status"] not in AUTHENTICABLE_STATUSES:
         _audit_login_failed(db, user_id=user["id"], email=normalized, reason="account_inactive", ip_address=ip_address, user_agent=user_agent)
         raise ForbiddenError("This account is not active", code="account_inactive")

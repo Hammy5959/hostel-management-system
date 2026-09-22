@@ -48,7 +48,7 @@ def list_contacts(
     elif has_permission(db, user, "emergency_contacts.view_own"):
         scope = _own_resident_id(db, user)
     else:
-        raise ForbiddenError("You cannot view emergency contacts", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq = {"resident_id": scope} if scope else None
     items, total = list_page(

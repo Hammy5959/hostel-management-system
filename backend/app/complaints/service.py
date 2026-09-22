@@ -68,7 +68,7 @@ def list_complaints(
             raise ForbiddenError("No resident profile linked to this account", code="resident_not_linked")
         scope = str(own["id"])
     else:
-        raise ForbiddenError("You cannot view complaints", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq: dict = {}
     if scope:

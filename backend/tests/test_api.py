@@ -40,10 +40,18 @@ def test_request_otp_requires_password(client):
     assert res.json()["detail"]["code"] == "validation_error"
 
 
-def test_request_otp_rejects_weak_password(client):
+def test_request_otp_never_rejects_password_for_its_format(client):
+    """Regression test: the password-creation complexity policy (min length,
+    a digit, a special character) must never apply on login — only a
+    correct-vs-incorrect credential check. These passwords all violate that
+    policy but must still reach the credential check (here resolving to the
+    same 401 as any other login failure) instead of a 422."""
     for weak in ("short", "abcdefgh", "abcd1234"):
         res = client.post("/api/v1/auth/request-otp", json={"email": "a@example.com", "password": weak})
-        assert res.status_code == 422, (weak, res.text)
+        assert res.status_code == 401, (weak, res.text)
+        body = res.json()["detail"]
+        assert body["code"] == "invalid_credentials"
+        assert body["message"] == "Incorrect email or password"
 
 
 def test_verify_otp_validates_otp_presence(client):

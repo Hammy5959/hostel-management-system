@@ -145,7 +145,7 @@ def list_charges(
             raise ForbiddenError("No resident profile linked to this account", code="resident_not_linked")
         scope = own_scope = str(own["id"])
     else:
-        raise ForbiddenError("You cannot view resident charges", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq: dict = {}
     if scope:

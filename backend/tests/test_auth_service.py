@@ -10,7 +10,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from app.auth.service import request_otp, verify_otp
-from app.core.exceptions import BadRequestError, ForbiddenError, NotFoundError, UnauthorizedError
+from app.core.exceptions import BadRequestError, ForbiddenError, UnauthorizedError
 
 
 def _user_row(**overrides) -> dict:
@@ -35,20 +35,27 @@ def _user_row(**overrides) -> dict:
 
 @patch("app.auth.service.record_audit")
 @patch("app.auth.service.get_user_by_email")
-def test_request_otp_unknown_email_records_login_failed_with_null_user_id(mock_get_user, mock_record_audit):
+def test_request_otp_unknown_email_matches_wrong_password_response(mock_get_user, mock_record_audit):
+    """Account enumeration fix: an unknown email must return the exact same
+    response (status/code/message) as a wrong password — see the wrong
+    password test below. Only the internal audit reason differs."""
     mock_get_user.return_value = None
 
     try:
         request_otp(None, "nobody@example.com", "whatever", ip_address="1.2.3.4", user_agent="pytest")
-        assert False, "expected NotFoundError"
-    except NotFoundError:
-        pass
+        assert False, "expected UnauthorizedError"
+    except UnauthorizedError as exc:
+        assert exc.status_code == 401
+        assert exc.code == "invalid_credentials"
+        assert exc.message == "Incorrect email or password"
 
     mock_record_audit.assert_called_once()
     kwargs = mock_record_audit.call_args.kwargs
     assert kwargs["action"] == "login.failed"
     assert kwargs["user_id"] is None
     assert kwargs["new_values"]["email"] == "nobody@example.com"
+    # Internal audit trail keeps the granular reason even though the
+    # client-facing response is now identical to a wrong password.
     assert kwargs["new_values"]["reason"] == "user_not_found"
     assert kwargs["ip_address"] == "1.2.3.4"
     assert kwargs["user_agent"] == "pytest"
@@ -60,24 +67,77 @@ def test_request_otp_unknown_email_records_login_failed_with_null_user_id(mock_g
 @patch("app.auth.service.verify_password")
 @patch("app.auth.service.record_audit")
 @patch("app.auth.service.get_user_by_email")
-def test_request_otp_wrong_password_resolves_user_id(mock_get_user, mock_record_audit, mock_verify_password):
+def test_request_otp_wrong_password_meeting_complexity_rules(mock_get_user, mock_record_audit, mock_verify_password):
+    """Wrong password that satisfies the password-creation complexity policy
+    (letters, a number, a special character) — the pre-existing correct
+    behavior; the login bug only affected passwords that violate the policy
+    (see the next test)."""
     user = _user_row()
     mock_get_user.return_value = user
     mock_verify_password.return_value = False
 
     try:
-        request_otp(None, user["email"], "wrong-password", ip_address="1.2.3.4", user_agent="pytest")
+        request_otp(None, user["email"], "Wr0ng!Pass", ip_address="1.2.3.4", user_agent="pytest")
         assert False, "expected UnauthorizedError"
-    except UnauthorizedError:
-        pass
+    except UnauthorizedError as exc:
+        assert exc.status_code == 401
+        assert exc.code == "invalid_credentials"
+        assert exc.message == "Incorrect email or password"
 
     mock_record_audit.assert_called_once()
     kwargs = mock_record_audit.call_args.kwargs
     assert kwargs["action"] == "login.failed"
     assert kwargs["user_id"] == user["id"]
     assert kwargs["new_values"]["reason"] == "invalid_credentials"
-    assert "wrong-password" not in str(kwargs)
+    assert "Wr0ng!Pass" not in str(kwargs)
     assert "password" not in kwargs["description"].lower()
+
+
+@patch("app.auth.service.verify_password")
+@patch("app.auth.service.record_audit")
+@patch("app.auth.service.get_user_by_email")
+def test_request_otp_wrong_password_not_meeting_complexity_rules(mock_get_user, mock_record_audit, mock_verify_password):
+    """Regression test for the reported bug: a wrong password that does NOT
+    meet the password-creation complexity policy (no digit, no special
+    character — e.g. "asdfghjk") must fail exactly like any other wrong
+    password, never with a validation error. This only proves the
+    service-layer behavior; test_auth_schemas.py proves OTPRequest itself
+    never rejects such a password before reaching this function."""
+    user = _user_row()
+    mock_get_user.return_value = user
+    mock_verify_password.return_value = False
+
+    try:
+        request_otp(None, user["email"], "asdfghjk", ip_address="1.2.3.4", user_agent="pytest")
+        assert False, "expected UnauthorizedError"
+    except UnauthorizedError as exc:
+        assert exc.status_code == 401
+        assert exc.code == "invalid_credentials"
+        assert exc.message == "Incorrect email or password"
+
+    mock_record_audit.assert_called_once()
+    kwargs = mock_record_audit.call_args.kwargs
+    assert kwargs["new_values"]["reason"] == "invalid_credentials"
+    assert "asdfghjk" not in str(kwargs)
+
+
+@patch("app.auth.service.verify_password")
+@patch("app.auth.service._sender")
+@patch("app.auth.service._store")
+@patch("app.auth.service.get_user_by_email")
+def test_request_otp_correct_password_issues_otp(mock_get_user, mock_store, mock_sender, mock_verify_password):
+    """Correct login (step 1): a correct password issues an OTP and never
+    raises, regardless of the password's own format."""
+    user = _user_row()
+    mock_get_user.return_value = user
+    mock_verify_password.return_value = True
+
+    result = request_otp(None, user["email"], "correct-horse-battery-staple", ip_address="1.2.3.4", user_agent="pytest")
+
+    assert result["message"] == "OTP sent"
+    assert "expires_in_seconds" in result
+    mock_store.set.assert_called_once()
+    mock_sender.send.assert_called_once()
 
 
 @patch("app.auth.service.record_audit")
@@ -96,6 +156,25 @@ def test_request_otp_inactive_account_records_login_failed(mock_get_user, mock_r
     assert kwargs["new_values"]["reason"] == "account_inactive"
     assert kwargs["user_id"] == user["id"]
     assert "password" not in kwargs["description"].lower()
+
+
+@patch("app.auth.service.record_audit")
+@patch("app.auth.service.get_user_by_email")
+def test_verify_otp_unknown_email_matches_invalid_credentials(mock_get_user, mock_record_audit):
+    """Same account-enumeration fix as request_otp — see
+    test_request_otp_unknown_email_matches_wrong_password_response."""
+    mock_get_user.return_value = None
+
+    try:
+        verify_otp(None, "nobody@example.com", "123456", ip_address="1.2.3.4", user_agent="pytest")
+        assert False, "expected UnauthorizedError"
+    except UnauthorizedError as exc:
+        assert exc.status_code == 401
+        assert exc.code == "invalid_credentials"
+        assert exc.message == "Incorrect email or password"
+
+    kwargs = mock_record_audit.call_args.kwargs
+    assert kwargs["new_values"]["reason"] == "user_not_found"
 
 
 @patch("app.auth.service._store")

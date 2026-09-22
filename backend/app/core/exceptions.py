@@ -128,6 +128,109 @@ def _code_for_status(status: int) -> str:
     return mapping.get(status, "http_error")
 
 
+# Loc segments that are request-location markers, not field names — stripped
+# before turning a Pydantic error's `loc` into a human-readable field name.
+_LOC_PREFIXES = {"body", "query", "path", "header", "cookie"}
+
+# Segments rendered fully uppercase in a field label (e.g. "resident_id" ->
+# "Resident ID", not "Resident Id").
+_LABEL_ACRONYMS = {"id", "otp", "ip", "url", "cors", "jwt"}
+
+# Pydantic v2 error `type` prefix -> a plain-English word for what kind of
+# value was expected. Used to build "<Field> must be a valid <word>" for
+# type/parsing errors, which never say which field failed on their own.
+_TYPE_WORDS = {
+    "int": "number",
+    "float": "number",
+    "decimal": "number",
+    "bool": "true/false value",
+    "uuid": "ID",
+    "date": "date",
+    "datetime": "date and time",
+    "string": "piece of text",
+    "list": "list",
+    "dict": "object",
+    "json": "JSON value",
+}
+
+
+def _field_label(loc: tuple) -> str:
+    """Turn a Pydantic error ``loc`` tuple into a human-readable field name.
+
+    Drops the request-location prefix (``body``/``query``/...) and any array
+    indices, and never returns a raw dotted/loc-style path.
+    """
+    parts = [p for p in loc if not isinstance(p, int)]
+    if parts and parts[0] in _LOC_PREFIXES:
+        parts = parts[1:]
+    if not parts:
+        return "Value"
+    words = [w.upper() if w.lower() in _LABEL_ACRONYMS else w for w in str(parts[-1]).split("_")]
+    label = " ".join(w for w in words if w)
+    return (label[:1].upper() + label[1:]) if label else "Value"
+
+
+def _humanize_validation_error(error: dict) -> str:
+    """Turn one Pydantic v2 error dict into a safe, user-facing sentence.
+
+    Never includes the submitted input value or a raw ``loc`` path — only a
+    human field name (see ``_field_label``) and a plain-English reason.
+    """
+    field = _field_label(tuple(error.get("loc", ())))
+    error_type = str(error.get("type", ""))
+    raw_msg = str(error.get("msg", ""))
+
+    if error_type == "value_error":
+        # Pydantic prefixes a custom field-validator's ValueError with
+        # "Value error, " — e.g. the password-policy messages. Those messages
+        # are already specific and human-readable; just drop the prefix.
+        message = raw_msg[len("Value error, "):] if raw_msg.startswith("Value error, ") else raw_msg
+        return (message[:1].upper() + message[1:]) if message else f"{field} is invalid"
+
+    if error_type == "missing":
+        return f"{field} is required"
+
+    if error_type == "extra_forbidden":
+        return f"{field} is not a valid field"
+
+    if error_type in {"string_too_short", "too_short"}:
+        min_length = error.get("ctx", {}).get("min_length")
+        if isinstance(min_length, int):
+            unit = "character" if min_length == 1 else "characters"
+            return f"{field} must be at least {min_length} {unit} long"
+        return f"{field} is too short"
+
+    if error_type in {"string_too_long", "too_long"}:
+        max_length = error.get("ctx", {}).get("max_length")
+        if isinstance(max_length, int):
+            return f"{field} must be at most {max_length} characters long"
+        return f"{field} is too long"
+
+    if error_type in {"greater_than", "greater_than_equal", "less_than", "less_than_equal", "multiple_of"}:
+        return f"{field} is out of the allowed range"
+
+    if error_type in {"enum", "literal_error"}:
+        return f"{field} must be one of the allowed values"
+
+    if error_type == "json_invalid":
+        return f"{field} must be valid JSON"
+
+    if error_type.endswith("_parsing") or error_type.endswith("_type"):
+        word = _TYPE_WORDS.get(error_type.split("_", 1)[0], "value")
+        return f"{field} must be a valid {word}"
+
+    # Fallback for any Pydantic error type not explicitly mapped above.
+    # raw_msg is Pydantic's own wording; it never embeds the submitted value
+    # or the raw loc path, so it is safe to combine with the field label.
+    return f"{field}: {raw_msg}" if raw_msg else f"{field} is invalid"
+
+
+def _validation_error_message(errors: list[dict]) -> str:
+    if not errors:
+        return "Request validation failed"
+    return _humanize_validation_error(errors[0])
+
+
 def register_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error_handler(request: Request, exc: AppError) -> JSONResponse:
@@ -135,12 +238,22 @@ def register_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-        # Keep FastAPI's structured validation detail but wrap it consistently.
-        # errors are passed through _json_safe so validator-raised exceptions
-        # (e.g. password policy) survive JSON serialization.
+        # Keep FastAPI's structured validation detail (errors) but surface a
+        # specific, human-readable top-level message built from the first
+        # error instead of a generic "Request validation failed" — see
+        # _validation_error_message. errors are passed through _json_safe so
+        # validator-raised exceptions (e.g. password policy) survive JSON
+        # serialization.
+        raw_errors = exc.errors()
         return JSONResponse(
             status_code=422,
-            content={"detail": {"code": "validation_error", "message": "Request validation failed", "errors": _json_safe(exc.errors())}},
+            content={
+                "detail": {
+                    "code": "validation_error",
+                    "message": _validation_error_message(raw_errors),
+                    "errors": _json_safe(raw_errors),
+                }
+            },
         )
 
     @app.exception_handler(StarletteHTTPException)

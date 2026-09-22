@@ -168,7 +168,7 @@ def list_payments(
             raise ForbiddenError("No resident profile linked to this account", code="resident_not_linked")
         scope = str(own["id"])
     else:
-        raise ForbiddenError("You cannot view payments", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq = {"resident_id": scope} if scope else {}
     if invoice_id:

@@ -62,7 +62,7 @@ def bulk_mark(db: Client, user: dict, data: AttendanceBulkMark) -> AttendanceBul
     for record in data.records:
         resident = get_by_id(db, "residents", str(record.resident_id))
         if resident is None:
-            raise NotFoundError(f"Resident {record.resident_id} not found", code="resident_not_found")
+            raise NotFoundError("Resident not found", code="resident_not_found")
         if resident["status"] not in RESIDING_STATUSES:
             raise ConflictError(
                 f"Cannot mark attendance for resident {record.resident_id} with status '{resident['status']}'",
@@ -133,7 +133,7 @@ def list_attendance(
             raise ForbiddenError("No resident profile linked to this account", code="resident_not_linked")
         scope = str(own["id"])
     else:
-        raise ForbiddenError("You cannot view attendance", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq = {"resident_id": scope} if scope else {}
     if status:

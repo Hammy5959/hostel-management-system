@@ -20,10 +20,11 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 
 import { markPermissionDenied } from "@/lib/permissions"
 import { ApiError, resetUserPassword } from "@/lib/api"
+import { passwordPolicySchema } from "@/lib/password-policy"
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(1, "Password is required").max(200),
+    password: passwordPolicySchema,
     confirmPassword: z.string().min(1, "Please confirm the password"),
   })
   .refine((data) => data.password === data.confirmPassword, {

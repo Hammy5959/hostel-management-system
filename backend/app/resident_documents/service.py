@@ -50,7 +50,7 @@ def list_documents(db: Client, user: dict, *, resident_id: str | None, page: int
     elif has_permission(db, user, "resident_documents.view_own"):
         scope = _own_resident_id(db, user)
     else:
-        raise ForbiddenError("You cannot view resident documents", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
 
     eq = {"resident_id": scope} if scope else None
     items, total = list_page(
@@ -71,7 +71,7 @@ def update_document(db: Client, user: dict, document_id: str, data: DocumentUpda
 
 def verify_document(db: Client, user: dict, document_id: str) -> DocumentOut:
     if not has_permission(db, user, "resident_documents.manage"):
-        raise ForbiddenError("Only authorized staff can verify documents", code="missing_permission")
+        raise ForbiddenError("You are not authorized to perform this action", code="missing_permission")
     doc = get_by_id(db, _TABLE, document_id)
     if doc is None:
         raise NotFoundError("Document not found", code="document_not_found")

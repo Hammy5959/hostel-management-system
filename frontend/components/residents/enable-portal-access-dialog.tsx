@@ -22,6 +22,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 
 import { markPermissionDenied } from "@/lib/permissions"
 import { ApiError, createResidentPortalUser } from "@/lib/api"
+import { passwordPolicySchema } from "@/lib/password-policy"
 import type { Resident } from "@/lib/types"
 
 const portalUserSchema = z.object({
@@ -29,7 +30,7 @@ const portalUserSchema = z.object({
   first_name: z.string().min(1, "First name is required").max(200),
   last_name: z.string().max(200).optional().or(z.literal("")),
   phone: z.string().max(50).optional().or(z.literal("")),
-  password: z.string().min(1, "Password is required").max(200),
+  password: passwordPolicySchema,
 })
 
 type PortalUserFormValues = z.infer<typeof portalUserSchema>
