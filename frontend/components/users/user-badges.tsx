@@ -19,9 +19,9 @@ export const USER_STATUS_TONE: Record<string, Tone> = {
  * buildings-view.tsx's BuildingTypeBadge already use), no new raw hex.
  * super_admin gets a fixed distinct color rather than a hashed one. */
 const ROLE_BADGE_PALETTE = [
-  "bg-blue-50 text-blue-700",
-  "bg-emerald-50 text-emerald-700",
-  "bg-amber-50 text-amber-700",
+  "bg-info-50 text-info-700",
+  "bg-success-50 text-success-700",
+  "bg-warning-50 text-warning-700",
   "bg-secondary-container text-on-secondary-container",
   "bg-surface-container-high text-on-surface",
 ] as const

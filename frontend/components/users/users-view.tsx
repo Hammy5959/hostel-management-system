@@ -230,7 +230,7 @@ export function UsersView() {
           />
           <StatCard
             icon={UserCheck}
-            iconClassName="bg-emerald-100 text-emerald-700"
+            iconClassName="bg-success-100 text-success-700"
             label="Active"
             value={activeQuery.data?.total}
           />

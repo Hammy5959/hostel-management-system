@@ -1943,6 +1943,8 @@ export interface HostelSettings {
   logo_url: string | null
   timezone: string | null
   currency: string | null
+  /** "#rrggbb" or null (= default). Env NEXT_PUBLIC_BRAND_COLOR has priority. */
+  primary_color: string | null
   created_at: string
   updated_at: string
 }
@@ -1960,4 +1962,5 @@ export interface HostelSettingsUpdateInput {
   logo_url?: string | null
   timezone?: string | null
   currency?: string | null
+  primary_color?: string | null
 }

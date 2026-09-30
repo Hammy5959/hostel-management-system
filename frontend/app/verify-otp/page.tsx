@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Building2, ShieldCheck } from "lucide-react";
 
 import { VerifyOtpForm } from "@/components/auth/verify-otp-form";
+import { resolveAppName, resolveLogoUrl } from "@/lib/branding";
+import { getPublicBranding } from "@/lib/public-branding";
 
 export const metadata: Metadata = {
   title: "Security Verification",
@@ -17,6 +19,10 @@ export default async function VerifyOtpPage({
 }) {
   const { email } = await searchParams;
   const emailValue = typeof email === "string" ? email : undefined;
+  // env → Settings → default (lib/branding.ts), via the public endpoint.
+  const publicBranding = await getPublicBranding();
+  const appName = resolveAppName(publicBranding?.hostel_name);
+  const logoUrl = resolveLogoUrl(publicBranding?.logo_url);
 
   return (
     <main className="flex min-h-dvh bg-surface-container-lowest font-sans antialiased">
@@ -35,8 +41,13 @@ export default async function VerifyOtpPage({
         />
         <div className="relative z-20 flex w-full flex-col justify-between p-12">
           <div className="flex items-center gap-3">
-            <Building2 aria-hidden className="size-9 text-white" strokeWidth={1.75} />
-            <h1 className="text-2xl font-bold text-white">SHMS</h1>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="size-9 rounded-md object-contain" />
+            ) : (
+              <Building2 aria-hidden className="size-9 text-white" strokeWidth={1.75} />
+            )}
+            <h1 className="text-2xl font-bold text-white">{appName}</h1>
           </div>
           <div className="max-w-md">
             <h2 className="mb-6 text-5xl font-bold leading-[1.15] tracking-tight text-white">
@@ -54,8 +65,13 @@ export default async function VerifyOtpPage({
       <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:px-12 lg:px-24">
         {/* Mobile logo */}
         <div className="mb-12 flex items-center gap-3 lg:hidden">
-          <Building2 aria-hidden className="size-8 text-primary" strokeWidth={1.75} />
-          <span className="text-2xl font-bold text-primary">SHMS</span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="size-8 rounded-md object-contain" />
+          ) : (
+            <Building2 aria-hidden className="size-8 text-primary" strokeWidth={1.75} />
+          )}
+          <span className="text-2xl font-bold text-primary">{appName}</span>
         </div>
 
         <div className="mx-auto w-full max-w-md">

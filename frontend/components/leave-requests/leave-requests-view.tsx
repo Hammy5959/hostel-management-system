@@ -360,20 +360,20 @@ export function LeaveRequestsView() {
               />
               <StatCard
                 icon={CalendarClock}
-                iconClassName="bg-amber-50 text-amber-600"
+                iconClassName="bg-warning-50 text-warning-600"
                 label="Pending"
                 value={reportQuery.data?.pending}
                 hint="Awaiting review"
               />
               <StatCard
                 icon={CheckCircle2}
-                iconClassName="bg-emerald-50 text-emerald-600"
+                iconClassName="bg-success-50 text-success-600"
                 label="Approved"
                 value={reportQuery.data?.approved}
               />
               <StatCard
                 icon={XCircle}
-                iconClassName="bg-red-50 text-red-600"
+                iconClassName="bg-danger-50 text-danger-600"
                 label="Rejected"
                 value={reportQuery.data?.rejected}
               />
@@ -559,7 +559,7 @@ export function LeaveRequestsView() {
                                         size="icon-sm"
                                         aria-label={`Approve leave request for ${name}`}
                                         onClick={() => setReviewTarget({ leave, mode: "approve" })}
-                                        className="rounded-full text-emerald-600 hover:bg-emerald-50"
+                                        className="rounded-full text-success-600 hover:bg-success-50"
                                       />
                                     }
                                   >
@@ -578,7 +578,7 @@ export function LeaveRequestsView() {
                                         size="icon-sm"
                                         aria-label={`Reject leave request for ${name}`}
                                         onClick={() => setReviewTarget({ leave, mode: "reject" })}
-                                        className="rounded-full text-red-600 hover:bg-red-50"
+                                        className="rounded-full text-danger-600 hover:bg-danger-50"
                                       />
                                     }
                                   >

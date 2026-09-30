@@ -37,10 +37,10 @@ import type { FeeStructure } from "@/lib/types";
 import { FeeStructureFormDialog } from "@/components/fee-structures/fee-structure-form-dialog";
 
 const FREQUENCY_TONE: Record<string, string> = {
-  Monthly: "border-blue-200 bg-blue-100 text-blue-800",
-  Weekly: "border-cyan-200 bg-cyan-100 text-cyan-800",
-  Yearly: "border-indigo-200 bg-indigo-100 text-indigo-800",
-  "One-time": "border-purple-200 bg-purple-100 text-purple-800",
+  Monthly: "border-info-200 bg-info-100 text-info-800",
+  Weekly: "border-cyan-200 bg-cyan-100 text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-500/20 dark:text-cyan-200",
+  Yearly: "border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-200",
+  "One-time": "border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-500/30 dark:bg-purple-500/20 dark:text-purple-200",
 };
 const FREQUENCY_TONE_DEFAULT = "border-outline-variant bg-surface-container-high text-on-surface-variant";
 
@@ -113,7 +113,7 @@ function EffectiveFooter({ fs }: { fs: FeeStructure }) {
   }
   if (fs.date_status === "not_yet_active") {
     return (
-      <div className="flex items-center gap-2 text-xs text-amber-600">
+      <div className="flex items-center gap-2 text-xs text-warning-600">
         <Clock aria-hidden className="size-4" />
         Not yet active — starts {formatDate(fs.effective_from)}
       </div>
@@ -180,8 +180,8 @@ function FeeStructureCard({
           className={cn(
             "rounded-full border px-2.5 py-1 text-xs font-semibold",
             fs.is_active
-              ? "border-emerald-200 bg-emerald-100 text-emerald-800"
-              : "border-gray-200 bg-gray-100 text-gray-800",
+              ? "border-success-200 bg-success-100 text-success-800"
+              : "border-neutral-200 bg-neutral-100 text-neutral-800",
           )}
         >
           {fs.is_active ? "Active" : "Inactive"}
@@ -292,7 +292,7 @@ export function FeeStructuresView() {
             />
             <StatCard
               icon={CheckCircle2}
-              chipClassName="bg-emerald-100 text-emerald-700"
+              chipClassName="bg-success-100 text-success-700"
               label="Active"
               value={summary.active}
             />

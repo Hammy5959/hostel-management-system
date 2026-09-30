@@ -258,7 +258,7 @@ export function NoticesView() {
         <StatCard icon={Megaphone} iconClassName="bg-primary/10 text-primary" label="Total Notices" value={totalCount} />
         <StatCard
           icon={CheckCircle2}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-50 text-success-600"
           label="Published"
           value={publishedCount}
         />

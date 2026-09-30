@@ -170,39 +170,39 @@ function ProfileTab({ resident }: { resident: Resident }) {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-red-200 bg-red-50 p-6">
+      <div className="relative overflow-hidden rounded-xl border border-danger-200 bg-danger-50 p-6">
         <HeartPulse
           aria-hidden
-          className="absolute top-0 right-0 size-24 translate-x-2 -translate-y-2 text-red-600/10"
+          className="absolute top-0 right-0 size-24 translate-x-2 -translate-y-2 text-danger-600/10"
         />
-        <h3 className="relative mb-6 flex items-center gap-2 text-lg font-semibold text-red-700">
-          <HeartPulse aria-hidden className="size-5 text-red-700" />
+        <h3 className="relative mb-6 flex items-center gap-2 text-lg font-semibold text-danger-700">
+          <HeartPulse aria-hidden className="size-5 text-danger-700" />
           Emergency Contact
         </h3>
         <div className="relative grid grid-cols-1 gap-y-6">
-          <div className="flex items-center justify-between border-b border-red-200 pb-4">
+          <div className="flex items-center justify-between border-b border-danger-200 pb-4">
             <div>
-              <dt className="mb-1 text-xs font-semibold tracking-wider text-red-800/80 uppercase">
+              <dt className="mb-1 text-xs font-semibold tracking-wider text-danger-800/80 uppercase">
                 Name
               </dt>
-              <dd className="text-sm font-medium text-red-900">
+              <dd className="text-sm font-medium text-danger-900">
                 {resident.emergency_contact_name || "—"}
               </dd>
             </div>
             <div className="text-right">
-              <dt className="mb-1 text-xs font-semibold tracking-wider text-red-800/80 uppercase">
+              <dt className="mb-1 text-xs font-semibold tracking-wider text-danger-800/80 uppercase">
                 Relationship
               </dt>
-              <dd className="text-sm text-red-900">
+              <dd className="text-sm text-danger-900">
                 {resident.emergency_contact_relationship || "—"}
               </dd>
             </div>
           </div>
           <div>
-            <dt className="mb-1 text-xs font-semibold tracking-wider text-red-800/80 uppercase">
+            <dt className="mb-1 text-xs font-semibold tracking-wider text-danger-800/80 uppercase">
               Phone
             </dt>
-            <dd className="text-lg font-bold text-red-900">
+            <dd className="text-lg font-bold text-danger-900">
               {resident.emergency_contact_phone || "—"}
             </dd>
           </div>
@@ -213,9 +213,9 @@ function ProfileTab({ resident }: { resident: Resident }) {
 }
 
 const PAYMENT_STATUS_TEXT_TONE: Record<string, string> = {
-  paid: "text-emerald-700",
+  paid: "text-success-700",
   no_dues: "text-on-surface-variant",
-  pending: "text-amber-700",
+  pending: "text-warning-700",
   overdue: "text-destructive",
 };
 

@@ -23,17 +23,17 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = {
 }
 
 const STATUS_CELL_CLASS: Record<AttendanceStatus, string> = {
-  present: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  present: "bg-success-50 text-success-700 border-success-200",
   absent: "bg-error-container text-on-error-container border-error-container",
-  late: "bg-amber-50 text-amber-700 border-amber-200",
-  excused: "bg-blue-50 text-blue-700 border-blue-200",
+  late: "bg-warning-50 text-warning-700 border-warning-200",
+  excused: "bg-info-50 text-info-700 border-info-200",
 }
 
 const STATUS_DOT_CLASS: Record<AttendanceStatus, string> = {
-  present: "bg-emerald-500",
+  present: "bg-success-500",
   absent: "bg-destructive",
-  late: "bg-amber-500",
-  excused: "bg-blue-500",
+  late: "bg-warning-500",
+  excused: "bg-info-500",
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]

@@ -227,7 +227,7 @@ export function InventoryView() {
         />
         <StatCard
           icon={AlertTriangle}
-          iconClassName="bg-amber-50 text-amber-600"
+          iconClassName="bg-warning-50 text-warning-600"
           label="Low Stock"
           value={canView ? lowStockStatQuery.data?.total : 0}
         />
@@ -397,7 +397,7 @@ export function InventoryView() {
                         }}
                         className={cn(
                           "cursor-pointer border-b border-outline-variant last:border-0 hover:bg-surface-container-low/60",
-                          status === "low_stock" && "border-l-4 border-l-amber-500 bg-amber-50/40",
+                          status === "low_stock" && "border-l-4 border-l-warning-500 bg-warning-50/40",
                           status === "out_of_stock" && "border-l-4 border-l-destructive bg-destructive/5",
                         )}
                       >
@@ -420,7 +420,7 @@ export function InventoryView() {
                         <TableCell
                           className={cn(
                             "px-6 py-4 text-right font-bold",
-                            status === "out_of_stock" ? "text-destructive" : status === "low_stock" ? "text-amber-600" : "text-on-surface",
+                            status === "out_of_stock" ? "text-destructive" : status === "low_stock" ? "text-warning-600" : "text-on-surface",
                           )}
                         >
                           {item.quantity}

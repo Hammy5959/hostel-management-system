@@ -48,7 +48,7 @@ function GroupCard({
             ) : (
               <div
                 className={`mt-1 text-xl font-bold ${
-                  tile.tone === "danger" ? "text-error" : tile.tone === "warning" ? "text-amber-600" : "text-on-surface"
+                  tile.tone === "danger" ? "text-error" : tile.tone === "warning" ? "text-warning-600" : "text-on-surface"
                 }`}
               >
                 {tile.value.toLocaleString()}

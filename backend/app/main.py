@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
-from app.core.config import get_settings
+from app.core.config import DEFAULT_APP_NAME, get_settings
 from app.core.exceptions import register_handlers
 from app.core.logging import setup_logging
 
@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
     setup_logging()
 
     app = FastAPI(
-        title=settings.app_name,
+        title=f"{settings.app_name or DEFAULT_APP_NAME} API",
         version="0.1.0",
         description="Production-oriented Student Hostel Management System backend.",
         docs_url="/docs",
@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["system"], summary="Health check")
     def health() -> dict:
-        return {"status": "ok", "service": settings.app_name, "environment": settings.environment}
+        return {"status": "ok", "service": settings.app_name or DEFAULT_APP_NAME, "environment": settings.environment}
 
     return app
 

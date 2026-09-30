@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 
 import { getStoredUser, subscribeUser } from "@/lib/auth"
 import { useHostelBranding } from "@/lib/hostel-settings"
+import { ENV_APP_NAME } from "@/lib/branding"
 
 /** Syncs the live browser tab title to the hostel name once settings load.
  * This is NOT Next.js metadata — the root layout's `metadata` export is
@@ -27,7 +28,9 @@ export function DocumentTitleSync() {
   const branding = useHostelBranding({ enabled: !!user })
 
   useEffect(() => {
-    if (!branding?.hostel_name) return
+    // env name has priority and is already in the server-rendered title
+    // template (app/layout.tsx) — nothing to sync.
+    if (ENV_APP_NAME || !branding?.hostel_name) return
     const base = document.title.split(" · ")[0]
     document.title = `${base} · ${branding.hostel_name}`
     // pathname is a re-sync trigger, not a value read in the effect body.

@@ -62,9 +62,9 @@ const ADMISSION_STATUS_TONE: Record<AdmissionFullStatus, Tone> = {
 };
 
 const STRIP_COLOR: Record<AdmissionFullStatus, string> = {
-  pending: "bg-amber-400",
-  approved: "bg-emerald-500",
-  rejected: "bg-red-500",
+  pending: "bg-warning-400",
+  approved: "bg-success-500",
+  rejected: "bg-danger-500",
   cancelled: "bg-outline",
 };
 
@@ -198,7 +198,7 @@ function AdmissionCard({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-red-200 text-red-600 hover:bg-red-50"
+                className="border-danger-200 text-danger-600 hover:bg-danger-50"
                 onClick={onReject}
               >
                 Reject
@@ -208,7 +208,7 @@ function AdmissionCard({
               <Button
                 type="button"
                 size="sm"
-                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                className="bg-success-solid text-white hover:bg-success-solid-hover"
                 onClick={onApprove}
               >
                 Approve
@@ -395,19 +395,19 @@ export function AdmissionsView() {
         />
         <StatCard
           icon={Hourglass}
-          iconClassName="bg-amber-50 text-amber-600"
+          iconClassName="bg-warning-50 text-warning-600"
           label="Pending"
           value={pendingQuery.data?.total}
         />
         <StatCard
           icon={Award}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-50 text-success-600"
           label="Approved"
           value={approvedQuery.data?.total}
         />
         <StatCard
           icon={XCircle}
-          iconClassName="bg-red-50 text-red-600"
+          iconClassName="bg-danger-50 text-danger-600"
           label="Rejected"
           value={rejectedQuery.data?.total}
         />

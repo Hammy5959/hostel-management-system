@@ -209,14 +209,14 @@ export function StaffView() {
           />
           <StatCard
             icon={UserCheck}
-            iconClassName="bg-emerald-100 text-emerald-700"
+            iconClassName="bg-success-100 text-success-700"
             label="Active Staff"
             value={activeQuery.data?.total}
           />
           <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm transition-shadow hover:shadow-md">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium text-on-surface-variant">By Department</h3>
-              <div className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <div className="flex size-10 items-center justify-center rounded-full bg-info-50 text-info-600">
                 <Briefcase aria-hidden className="size-5" />
               </div>
             </div>

@@ -59,14 +59,12 @@ const BUILDING_TYPE_OPTIONS: { value: BuildingType; label: string }[] = [
   { value: "mixed", label: "Mixed" },
 ]
 
-/** Matches the exact Stitch "Type" pill treatment per value — Girls and Boys
- * map onto theme tokens already wired in globals.css; Mixed uses Stitch's
- * `primary-fixed-dim` / `on-primary-fixed-variant` pair verbatim (that pair
- * isn't in this project's token set, so it's inlined as a literal color). */
+/** Matches the Stitch "Type" pill treatment per value — all map onto theme
+ * tokens in globals.css (Mixed follows the brand color via primary-fixed). */
 const BUILDING_TYPE_BADGE: Record<BuildingType, string> = {
   girls: "bg-secondary-fixed text-on-secondary-fixed",
   boys: "bg-surface-container-high text-on-surface",
-  mixed: "bg-[#c3c0ff] text-[#3323cc]",
+  mixed: "bg-primary-fixed text-on-primary-fixed",
 }
 
 function BuildingTypeBadge({ type }: { type: BuildingType }) {

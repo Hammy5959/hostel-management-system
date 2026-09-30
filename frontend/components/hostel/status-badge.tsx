@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils"
 export type Tone = "success" | "warning" | "danger" | "info" | "neutral" | "violet"
 
 const TONE_CLASSES: Record<Tone, string> = {
-  success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  warning: "bg-amber-50 text-amber-700 border border-amber-200",
+  success: "bg-success-50 text-success-700 border border-success-200",
+  warning: "bg-warning-50 text-warning-700 border border-warning-200",
   danger: "bg-error-container text-on-error-container border border-error-container",
-  info: "bg-blue-50 text-blue-700 border border-blue-200",
+  info: "bg-info-50 text-info-700 border border-info-200",
   neutral: "bg-surface-container-high text-on-surface-variant border border-outline-variant",
   violet: "bg-primary-fixed text-on-primary-fixed border border-primary-fixed",
 }
@@ -71,10 +71,10 @@ export function StatusBadge({
         aria-hidden
         className={cn(
           "size-1.5 shrink-0 rounded-full",
-          tone === "success" && "bg-emerald-500",
-          tone === "warning" && "bg-amber-500",
+          tone === "success" && "bg-success-500",
+          tone === "warning" && "bg-warning-500",
           tone === "danger" && "bg-destructive",
-          tone === "info" && "bg-blue-500",
+          tone === "info" && "bg-info-500",
           tone === "neutral" && "bg-outline",
           tone === "violet" && "bg-primary",
         )}

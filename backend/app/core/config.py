@@ -10,6 +10,9 @@ from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+DEFAULT_APP_NAME = "Hostel Management System"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,7 +22,10 @@ class Settings(BaseSettings):
     )
 
     # --- App -----------------------------------------------------------------
-    app_name: str = "Hostel Management System API"
+    # Env: APP_NAME (optional). Shown in the OTP banner and API docs title —
+    # keep it in sync with the frontend's NEXT_PUBLIC_APP_NAME. When unset,
+    # the OTP banner uses the Settings hostel name (see auth.service).
+    app_name: str | None = None
     environment: str = "development"
     debug: bool = True
     api_v1_prefix: str = "/api/v1"

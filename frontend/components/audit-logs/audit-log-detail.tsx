@@ -62,7 +62,7 @@ export function AuditLogDetail({ log }: { log: AuditLogItem }) {
                   )}
                   {hasOld && hasNew && <ArrowRight aria-hidden className="size-3.5 text-on-surface-variant" />}
                   {hasNew && (
-                    <span className="font-mono text-xs font-medium text-emerald-700">
+                    <span className="font-mono text-xs font-medium text-success-700">
                       {formatDiffValue(newValues[key])}
                     </span>
                   )}

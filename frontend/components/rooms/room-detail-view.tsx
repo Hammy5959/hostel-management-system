@@ -73,16 +73,16 @@ function BedStatusPill({ status }: { status: BedStatus }) {
   }
   if (status === "available") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600/20 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-        <span className="size-2 rounded-full bg-emerald-500" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-success-600/20 bg-success-100 px-3 py-1 text-xs font-semibold text-success-800">
+        <span className="size-2 rounded-full bg-success-500" />
         Vacant
       </span>
     );
   }
   if (status === "cleaning") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-600/20 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-        <span className="size-2 animate-pulse rounded-full bg-amber-500" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-warning-600/20 bg-warning-100 px-3 py-1 text-xs font-semibold text-warning-800">
+        <span className="size-2 animate-pulse rounded-full bg-warning-500" />
         Cleaning in Progress
       </span>
     );
@@ -197,8 +197,8 @@ function OccupiedBedCard({
                       bed.rent_status?.status === "overdue"
                         ? "text-destructive"
                         : bed.rent_status?.status === "pending"
-                          ? "text-amber-600"
-                          : "text-emerald-600",
+                          ? "text-warning-600"
+                          : "text-success-600",
                     )}
                   >
                     {bed.rent_status?.label ?? "—"}
@@ -250,11 +250,11 @@ function VacantBedCard({
   onEdit: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-emerald-600/30">
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-600/5 to-transparent" />
-      <div className="flex items-center justify-between border-b border-emerald-600/10 bg-emerald-50/50 p-6">
+    <div className="relative overflow-hidden rounded-xl border border-success-600/30">
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-success-600/5 to-transparent" />
+      <div className="flex items-center justify-between border-b border-success-600/10 bg-success-50/50 p-6">
         <div className="flex items-center gap-3">
-          <BedDouble aria-hidden className="size-7 text-emerald-600" />
+          <BedDouble aria-hidden className="size-7 text-success-600" />
           <h3 className="text-xl leading-7 font-semibold text-on-surface">
             Bed {bed.bed_number}
           </h3>
@@ -266,7 +266,7 @@ function VacantBedCard({
       </div>
 
       <div className="flex min-h-55 flex-col items-center justify-center p-8 text-center">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-success-100 text-success-600">
           <UserPlus aria-hidden className="size-8" />
         </div>
         <h4 className="mb-2 text-xl leading-7 font-semibold text-on-surface">
@@ -302,11 +302,11 @@ function CleaningBedCard({
   onEdit: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-amber-600/30">
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-amber-600/5 to-transparent" />
-      <div className="flex items-center justify-between border-b border-amber-600/10 bg-amber-50/50 p-6">
+    <div className="relative overflow-hidden rounded-xl border border-warning-600/30">
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-warning-600/5 to-transparent" />
+      <div className="flex items-center justify-between border-b border-warning-600/10 bg-warning-50/50 p-6">
         <div className="flex items-center gap-3">
-          <BedDouble aria-hidden className="size-7 text-amber-600" />
+          <BedDouble aria-hidden className="size-7 text-warning-600" />
           <h3 className="text-xl leading-7 font-semibold text-on-surface">
             Bed {bed.bed_number}
           </h3>
@@ -318,7 +318,7 @@ function CleaningBedCard({
       </div>
 
       <div className="flex min-h-55 flex-col items-center justify-center p-8 text-center">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-warning-100 text-warning-600">
           <Sparkles aria-hidden className="size-8" />
         </div>
         <h4 className="mb-2 text-xl leading-7 font-semibold text-on-surface">
@@ -582,17 +582,17 @@ export function RoomDetailView({ roomId }: { roomId: string }) {
         />
         <SummaryCard
           icon={CheckCircle2}
-          chipClassName="bg-emerald-50 text-emerald-600"
+          chipClassName="bg-success-50 text-success-600"
           label="Vacant"
           value={summary.vacant_beds}
-          valueClassName="text-emerald-600"
+          valueClassName="text-success-600"
         />
         <SummaryCard
           icon={Sparkles}
-          chipClassName="bg-amber-50 text-amber-600"
+          chipClassName="bg-warning-50 text-warning-600"
           label="Cleaning"
           value={summary.cleaning_beds}
-          valueClassName="text-amber-600"
+          valueClassName="text-warning-600"
         />
       </div>
 

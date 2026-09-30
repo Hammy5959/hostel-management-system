@@ -9,9 +9,21 @@ from app.api.deps import get_db
 from app.core.dependencies import get_current_user
 from app.core.permissions import require_permission
 from app.hostel_settings import service
-from app.hostel_settings.schemas import HostelSettingsOut, HostelSettingsUpdate
+from app.hostel_settings.schemas import HostelPublicBrandingOut, HostelSettingsOut, HostelSettingsUpdate
 
 router = APIRouter(prefix="/hostel-settings", tags=["hostel-settings"])
+
+
+@router.get("/branding", response_model=HostelPublicBrandingOut, summary="Get public hostel branding")
+def get_branding(db: Client = Depends(get_db)) -> HostelPublicBrandingOut:
+    # Public (no auth): the login/OTP pages render the hostel name, logo and
+    # brand color before anyone is signed in. Returns ONLY those fields.
+    current = service.get_current(db)
+    return HostelPublicBrandingOut(
+        hostel_name=current.hostel_name,
+        logo_url=current.logo_url,
+        primary_color=current.primary_color,
+    )
 
 
 @router.get("/current", response_model=HostelSettingsOut, summary="Get hostel settings")

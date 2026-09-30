@@ -288,19 +288,19 @@ export function ResidentsView() {
               />
               <StatCard
                 icon={UserCheck}
-                iconClassName="bg-emerald-50 text-emerald-600"
+                iconClassName="bg-success-50 text-success-600"
                 label="Active"
                 value={summary.active}
               />
               <StatCard
                 icon={CalendarDays}
-                iconClassName="bg-blue-50 text-blue-600"
+                iconClassName="bg-info-50 text-info-600"
                 label="On Leave"
                 value={summary.on_leave}
               />
               <StatCard
                 icon={ClipboardList}
-                iconClassName="bg-amber-50 text-amber-600"
+                iconClassName="bg-warning-50 text-warning-600"
                 label="Applicants"
                 value={summary.applicant}
               />

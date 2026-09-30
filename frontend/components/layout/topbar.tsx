@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Menu, UserRound } from "lucide-react";
+import { Building2, LogOut, Menu, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,15 +17,16 @@ import {
 } from "@/lib/auth";
 import { useHostelBranding } from "@/lib/hostel-settings";
 import type { BrandingCookieValue } from "@/lib/branding-cookie";
+import { resolveAppName, resolveLogoUrl } from "@/lib/branding";
 import { formatRoleName, initials } from "@/components/users/user-badges";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 interface TopbarProps {
   onMenuClick: () => void;
   /** Brand logo/link target. Default reproduces today's staff behavior. */
   homeHref?: string;
-  /** Brand text next to the logo. Default (undefined) reads the live hostel
-   * name from GET /hostel-settings/current, falling back to "SHMS Admin"
-   * while it loads/on error. Portal passes "Resident Portal" to override
+  /** Brand text next to the logo. Default (undefined) resolves env →
+   * Settings hostel name → "SHMS" (lib/branding.ts). Portal passes "Resident Portal" to override
    * this entirely — an explicit override also suppresses the hostel logo
    * image, since it's a distinct page-context label, not the institution
    * brand. */
@@ -131,13 +132,13 @@ export function Topbar({
   // the live value has legitimately resolved to "no logo" (null).
   const effectiveBranding = branding ?? initialBranding;
   const effectiveBrand =
-    brandLabel ?? effectiveBranding?.hostel_name ?? "SHMS Admin";
+    brandLabel ?? resolveAppName(effectiveBranding?.hostel_name);
   const effectiveLogo = brandLabel
     ? null
-    : (effectiveBranding?.logo_url ?? null);
+    : resolveLogoUrl(effectiveBranding?.logo_url);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-white px-4 md:px-6">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container-lowest px-4 md:px-6">
       {/* Left: menu + brand */}
       <div className="flex items-center gap-3">
         <Button
@@ -150,13 +151,20 @@ export function Topbar({
           <Menu aria-hidden className="size-5" />
         </Button>
         <Link href={homeHref} className="flex items-center gap-3">
-          {effectiveLogo && (
+          {effectiveLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={effectiveLogo}
               alt=""
               className="size-8 rounded-md object-contain"
             />
+          ) : (
+            // Default icon when neither env nor Settings has a logo (matches
+            // the sidebar). Not for an explicit brandLabel (portal), which
+            // intentionally shows no institution logo.
+            !brandLabel && (
+              <Building2 aria-hidden className="size-8 text-primary" strokeWidth={1.75} />
+            )
           )}
           <span className="text-xl font-bold text-primary">
             {effectiveBrand}
@@ -215,6 +223,8 @@ export function Topbar({
                   )}
                 </div>
               </div>
+              <div className="-mx-1 my-1 h-px bg-border" />
+              <ThemeToggle />
               <div className="-mx-1 my-1 h-px bg-border" />
               <button
                 type="button"

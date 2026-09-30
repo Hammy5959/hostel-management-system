@@ -66,7 +66,7 @@ export function CheckoutResidentDialog({
         </DialogHeader>
 
         {hasDues && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="flex items-start gap-2 rounded-lg border border-warning-200 bg-warning-50 p-3 text-sm text-warning-800">
             <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0" />
             <p>
               This resident has outstanding dues ({allocation!.payment_status!.label}). You can still check them out —

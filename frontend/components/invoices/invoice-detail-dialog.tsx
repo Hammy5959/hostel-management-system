@@ -38,9 +38,9 @@ const METHOD_LABEL: Record<string, string> = {
 // same as the card it was opened from.
 const STATUS_BADGE_TONE: Record<InvoiceStatus, string> = {
   draft: "border-outline-variant bg-surface-variant text-on-surface-variant",
-  issued: "border-blue-200 bg-blue-100 text-blue-800",
-  partially_paid: "border-amber-200 bg-amber-100 text-amber-800",
-  paid: "border-emerald-200 bg-emerald-100 text-emerald-800",
+  issued: "border-info-200 bg-info-100 text-info-800",
+  partially_paid: "border-warning-200 bg-warning-100 text-warning-800",
+  paid: "border-success-200 bg-success-100 text-success-800",
   overdue: "border-error/30 bg-error-container text-error",
   cancelled: "border-error/30 bg-error-container text-error",
 };
@@ -220,7 +220,7 @@ export function InvoiceDetailDialog({
                   </div>
                 )}
                 {showBalanceDue && (
-                  <div className={cn("flex justify-between text-amber-700", showTotalRow && "mt-1")}>
+                  <div className={cn("flex justify-between text-warning-700", showTotalRow && "mt-1")}>
                     <span>Balance due</span>
                     <span>{formatCurrency(invoice.balance)}</span>
                   </div>

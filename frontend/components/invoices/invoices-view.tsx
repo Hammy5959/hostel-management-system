@@ -57,18 +57,18 @@ const STATUS_LABEL: Record<InvoiceStatus, string> = {
 
 const STATUS_BADGE_TONE: Record<InvoiceStatus, string> = {
   draft: "border-outline-variant bg-surface-variant text-on-surface-variant",
-  issued: "border-blue-200 bg-blue-100 text-blue-800",
-  partially_paid: "border-amber-200 bg-amber-100 text-amber-800",
-  paid: "border-emerald-200 bg-emerald-100 text-emerald-800",
+  issued: "border-info-200 bg-info-100 text-info-800",
+  partially_paid: "border-warning-200 bg-warning-100 text-warning-800",
+  paid: "border-success-200 bg-success-100 text-success-800",
   overdue: "border-error/30 bg-error-container text-error",
   cancelled: "border-error/30 bg-error-container text-error",
 };
 
 const STATUS_STRIPE: Record<InvoiceStatus, string> = {
   draft: "bg-outline-variant",
-  issued: "bg-blue-500",
-  partially_paid: "bg-amber-500",
-  paid: "bg-emerald-500",
+  issued: "bg-info-500",
+  partially_paid: "bg-warning-500",
+  paid: "bg-success-500",
   overdue: "bg-error",
   cancelled: "bg-error",
 };
@@ -202,7 +202,7 @@ function InvoiceCard({
           {formatCurrency(invoice.total_amount)}
         </span>
         {status === "partially_paid" && (
-          <div className="mt-1 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+          <div className="mt-1 inline-block rounded bg-warning-100 px-2 py-0.5 text-xs font-semibold text-warning-800">
             Balance Due: {formatCurrency(invoice.balance)}
           </div>
         )}
@@ -401,7 +401,7 @@ export function InvoicesView() {
             />
             <StatCard
               icon={CheckCircle2}
-              chipClassName="bg-emerald-100 text-emerald-700"
+              chipClassName="bg-success-100 text-success-700"
               label="Paid"
               value={summary.paid}
             />

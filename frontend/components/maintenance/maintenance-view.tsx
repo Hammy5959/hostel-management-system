@@ -517,20 +517,20 @@ export function MaintenanceView() {
         {canViewComplaints && (
           <StatCard
             icon={ClipboardList}
-            iconClassName="bg-amber-50 text-amber-600"
+            iconClassName="bg-warning-50 text-warning-600"
             label="Open Complaints"
             value={openComplaintsStatQuery.data?.total}
           />
         )}
         <StatCard
           icon={Wrench}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-50 text-info-600"
           label="Active Tickets"
           value={canViewTickets ? activeTicketsCount : 0}
         />
         <StatCard
           icon={CheckCircle2}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-50 text-success-600"
           label="Resolved Today"
           value={canViewTickets ? resolvedTodayCount : 0}
         />

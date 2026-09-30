@@ -130,7 +130,7 @@ export function MessView() {
           {canViewMeals && (
             <StatCard
               icon={UtensilsCrossed}
-              iconClassName="bg-emerald-50 text-emerald-600"
+              iconClassName="bg-success-50 text-success-600"
               label="Meals Served Today"
               value={mealsServedToday}
               hint="Across breakfast, lunch & dinner"
@@ -139,7 +139,7 @@ export function MessView() {
           {canViewMeals && (
             <StatCard
               icon={Users}
-              iconClassName="bg-blue-50 text-blue-600"
+              iconClassName="bg-info-50 text-info-600"
               label="Total Residents"
               value={totalResidents}
               hint="Eligible for meals"

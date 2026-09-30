@@ -69,6 +69,78 @@
   --color-inverse-on-surface: var(--inverse-on-surface);
   --color-inverse-primary: var(--inverse-primary);
 
+  /* ── Status tones (semantic) ─────────────────────────────────────
+   * Use these instead of raw Tailwind palette colors (emerald/amber/red/
+   * blue/gray) so status badges, stat cards and bars adapt to dark mode:
+   * success = paid/active, warning = pending, danger = overdue/rejected,
+   * info = informational, neutral = cancelled/waived. Shades mirror the
+   * Tailwind scale; `-solid`/`-solid-hover` are for filled buttons with
+   * white text (they stay saturated in dark mode). */
+  --color-success-50: var(--success-50);
+  --color-success-100: var(--success-100);
+  --color-success-200: var(--success-200);
+  --color-success-300: var(--success-300);
+  --color-success-400: var(--success-400);
+  --color-success-500: var(--success-500);
+  --color-success-600: var(--success-600);
+  --color-success-700: var(--success-700);
+  --color-success-800: var(--success-800);
+  --color-success-900: var(--success-900);
+  --color-success-solid: var(--success-solid);
+  --color-success-solid-hover: var(--success-solid-hover);
+
+  --color-warning-50: var(--warning-50);
+  --color-warning-100: var(--warning-100);
+  --color-warning-200: var(--warning-200);
+  --color-warning-300: var(--warning-300);
+  --color-warning-400: var(--warning-400);
+  --color-warning-500: var(--warning-500);
+  --color-warning-600: var(--warning-600);
+  --color-warning-700: var(--warning-700);
+  --color-warning-800: var(--warning-800);
+  --color-warning-900: var(--warning-900);
+  --color-warning-solid: var(--warning-solid);
+  --color-warning-solid-hover: var(--warning-solid-hover);
+
+  --color-danger-50: var(--danger-50);
+  --color-danger-100: var(--danger-100);
+  --color-danger-200: var(--danger-200);
+  --color-danger-300: var(--danger-300);
+  --color-danger-400: var(--danger-400);
+  --color-danger-500: var(--danger-500);
+  --color-danger-600: var(--danger-600);
+  --color-danger-700: var(--danger-700);
+  --color-danger-800: var(--danger-800);
+  --color-danger-900: var(--danger-900);
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-solid-hover: var(--danger-solid-hover);
+
+  --color-info-50: var(--info-50);
+  --color-info-100: var(--info-100);
+  --color-info-200: var(--info-200);
+  --color-info-300: var(--info-300);
+  --color-info-400: var(--info-400);
+  --color-info-500: var(--info-500);
+  --color-info-600: var(--info-600);
+  --color-info-700: var(--info-700);
+  --color-info-800: var(--info-800);
+  --color-info-900: var(--info-900);
+  --color-info-solid: var(--info-solid);
+  --color-info-solid-hover: var(--info-solid-hover);
+
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-solid: var(--neutral-solid);
+  --color-neutral-solid-hover: var(--neutral-solid-hover);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -87,8 +159,13 @@
   --card-foreground: #111c2d;
   --popover: #ffffff;
   --popover-foreground: #111c2d;
-  --primary: #4f46e5;
-  --primary-foreground: #ffffff;
+  /* ── Brand ──────────────────────────────────────────────────────
+   * Defaults; overridden on <html> with the resolved brand color
+   * (env → Settings → default — app/layout.tsx, lib/branding.ts). Every
+   * primary token derives from these — see the "Brand-derived" blocks. */
+  --brand: #4f46e5;
+  --brand-foreground: #ffffff;
+
   --secondary: #505f76;
   --secondary-foreground: #ffffff;
   --muted: #f0f3ff;
@@ -99,7 +176,6 @@
   --destructive-foreground: #ffffff;
   --border: #c7c4d8;
   --input: #c7c4d8;
-  --ring: #4f46e5;
 
   /* ── Indigo Institutional surfaces ───────────────────────────── */
   --surface-container-lowest: #ffffff;
@@ -111,10 +187,6 @@
   --on-surface: #111c2d;
   --outline: #777587;
   --outline-variant: #c7c4d8;
-  --primary-container: #4f46e5;
-  --on-primary-container: #dad7ff;
-  --primary-fixed: #e2dfff;
-  --on-primary-fixed: #0f0069;
   --secondary-container: #d0e1fb;
   --on-secondary-container: #54647a;
   --secondary-fixed: #d3e4fe;
@@ -124,24 +196,105 @@
   --success: #059669;
   --success-bg: #d1fae5;
 
+  --success-50: oklch(97.9% 0.021 166.113);
+  --success-100: oklch(95% 0.052 163.051);
+  --success-200: oklch(90.5% 0.093 164.15);
+  --success-300: oklch(84.5% 0.143 164.978);
+  --success-400: oklch(76.5% 0.177 163.223);
+  --success-500: oklch(69.6% 0.17 162.48);
+  --success-600: oklch(59.6% 0.145 163.225);
+  --success-700: oklch(50.8% 0.118 165.612);
+  --success-800: oklch(43.2% 0.095 166.913);
+  --success-900: oklch(37.8% 0.077 168.94);
+  --success-solid: oklch(59.6% 0.145 163.225);
+  --success-solid-hover: oklch(50.8% 0.118 165.612);
+
+  --warning-50: oklch(98.7% 0.022 95.277);
+  --warning-100: oklch(96.2% 0.059 95.617);
+  --warning-200: oklch(92.4% 0.12 95.746);
+  --warning-300: oklch(87.9% 0.169 91.605);
+  --warning-400: oklch(82.8% 0.189 84.429);
+  --warning-500: oklch(76.9% 0.188 70.08);
+  --warning-600: oklch(66.6% 0.179 58.318);
+  --warning-700: oklch(55.5% 0.163 48.998);
+  --warning-800: oklch(47.3% 0.137 46.201);
+  --warning-900: oklch(41.4% 0.112 45.904);
+  --warning-solid: oklch(66.6% 0.179 58.318);
+  --warning-solid-hover: oklch(55.5% 0.163 48.998);
+
+  --danger-50: oklch(97.1% 0.013 17.38);
+  --danger-100: oklch(93.6% 0.032 17.717);
+  --danger-200: oklch(88.5% 0.062 18.334);
+  --danger-300: oklch(80.8% 0.114 19.571);
+  --danger-400: oklch(70.4% 0.191 22.216);
+  --danger-500: oklch(63.7% 0.237 25.331);
+  --danger-600: oklch(57.7% 0.245 27.325);
+  --danger-700: oklch(50.5% 0.213 27.518);
+  --danger-800: oklch(44.4% 0.177 26.899);
+  --danger-900: oklch(39.6% 0.141 25.723);
+  --danger-solid: oklch(57.7% 0.245 27.325);
+  --danger-solid-hover: oklch(50.5% 0.213 27.518);
+
+  --info-50: oklch(97% 0.014 254.604);
+  --info-100: oklch(93.2% 0.032 255.585);
+  --info-200: oklch(88.2% 0.059 254.128);
+  --info-300: oklch(80.9% 0.105 251.813);
+  --info-400: oklch(70.7% 0.165 254.624);
+  --info-500: oklch(62.3% 0.214 259.815);
+  --info-600: oklch(54.6% 0.245 262.881);
+  --info-700: oklch(48.8% 0.243 264.376);
+  --info-800: oklch(42.4% 0.199 265.638);
+  --info-900: oklch(37.9% 0.146 265.522);
+  --info-solid: oklch(54.6% 0.245 262.881);
+  --info-solid-hover: oklch(48.8% 0.243 264.376);
+
+  --neutral-50: oklch(98.5% 0.002 247.839);
+  --neutral-100: oklch(96.7% 0.003 264.542);
+  --neutral-200: oklch(92.8% 0.006 264.531);
+  --neutral-300: oklch(87.2% 0.01 258.338);
+  --neutral-400: oklch(70.7% 0.022 261.325);
+  --neutral-500: oklch(55.1% 0.027 264.364);
+  --neutral-600: oklch(44.6% 0.03 256.802);
+  --neutral-700: oklch(37.3% 0.034 259.733);
+  --neutral-800: oklch(27.8% 0.033 256.848);
+  --neutral-900: oklch(21% 0.034 264.665);
+  --neutral-solid: oklch(44.6% 0.03 256.802);
+  --neutral-solid-hover: oklch(37.3% 0.034 259.733);
+
   --inverse-surface: #263143;
   --inverse-on-surface: #ecf1ff;
-  --inverse-primary: #c3c0ff;
 
-  --chart-1: #4f46e5;
-  --chart-2: #6366f1;
   --chart-3: #93c5fd;
   --chart-4: #d0e1fb;
   --chart-5: #111c2d;
 
   --sidebar: #f0f3ff;
   --sidebar-foreground: #111c2d;
-  --sidebar-primary: #4f46e5;
-  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #dee8ff;
   --sidebar-accent-foreground: #111c2d;
   --sidebar-border: #c7c4d8;
-  --sidebar-ring: #4f46e5;
+}
+
+/* ── Brand-derived tokens ─────────────────────────────────────────
+ * Declared on :root AND on any [data-brand-scope] element: custom
+ * properties resolve var() where they are declared, so re-declaring them
+ * lets an element with its own --brand (the Settings color preview) show
+ * the full light/dark palette for that color. */
+:root,
+[data-brand-scope] {
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --ring: var(--brand);
+  --primary-container: var(--brand);
+  --on-primary-container: color-mix(in oklab, var(--brand-foreground) 85%, var(--brand));
+  --primary-fixed: color-mix(in oklab, var(--brand) 16%, white);
+  --on-primary-fixed: color-mix(in oklab, var(--brand) 45%, black);
+  --inverse-primary: color-mix(in oklab, var(--brand) 40%, white);
+  --chart-1: var(--brand);
+  --chart-2: color-mix(in oklab, var(--brand) 80%, white);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-ring: var(--brand);
 }
 
 .dark {
@@ -151,8 +304,6 @@
   --card-foreground: #ecf1ff;
   --popover: #1a2233;
   --popover-foreground: #ecf1ff;
-  --primary: #c3c0ff;
-  --primary-foreground: #0f0069;
   --secondary: #505f76;
   --secondary-foreground: #ffffff;
   --muted: #263143;
@@ -163,7 +314,6 @@
   --destructive-foreground: #690005;
   --border: #3a4357;
   --input: #3a4357;
-  --ring: #c3c0ff;
 
   --surface-container-lowest: #1a2233;
   --surface-container-low: #232c3e;
@@ -174,10 +324,6 @@
   --on-surface: #ecf1ff;
   --outline: #8a93a8;
   --outline-variant: #3a4357;
-  --primary-container: #3525cd;
-  --on-primary-container: #dad7ff;
-  --primary-fixed: #e2dfff;
-  --on-primary-fixed: #0f0069;
   --secondary-container: #38485d;
   --on-secondary-container: #b7c8e1;
   --secondary-fixed: #b7c8e1;
@@ -187,24 +333,100 @@
   --success: #34d399;
   --success-bg: #053b2a;
 
+  --success-50: color-mix(in oklab, oklch(69.6% 0.17 162.48) 12%, transparent);
+  --success-100: color-mix(in oklab, oklch(69.6% 0.17 162.48) 20%, transparent);
+  --success-200: color-mix(in oklab, oklch(69.6% 0.17 162.48) 32%, transparent);
+  --success-300: color-mix(in oklab, oklch(69.6% 0.17 162.48) 45%, transparent);
+  --success-400: oklch(76.5% 0.177 163.223);
+  --success-500: oklch(69.6% 0.17 162.48);
+  --success-600: oklch(76.5% 0.177 163.223);
+  --success-700: oklch(84.5% 0.143 164.978);
+  --success-800: oklch(90.5% 0.093 164.15);
+  --success-900: oklch(95% 0.052 163.051);
+  --success-solid: oklch(59.6% 0.145 163.225);
+  --success-solid-hover: oklch(69.6% 0.17 162.48);
+
+  --warning-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 12%, transparent);
+  --warning-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 20%, transparent);
+  --warning-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 32%, transparent);
+  --warning-300: color-mix(in oklab, oklch(76.9% 0.188 70.08) 45%, transparent);
+  --warning-400: oklch(82.8% 0.189 84.429);
+  --warning-500: oklch(76.9% 0.188 70.08);
+  --warning-600: oklch(82.8% 0.189 84.429);
+  --warning-700: oklch(87.9% 0.169 91.605);
+  --warning-800: oklch(92.4% 0.12 95.746);
+  --warning-900: oklch(96.2% 0.059 95.617);
+  --warning-solid: oklch(66.6% 0.179 58.318);
+  --warning-solid-hover: oklch(76.9% 0.188 70.08);
+
+  --danger-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 12%, transparent);
+  --danger-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 20%, transparent);
+  --danger-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 32%, transparent);
+  --danger-300: color-mix(in oklab, oklch(63.7% 0.237 25.331) 45%, transparent);
+  --danger-400: oklch(70.4% 0.191 22.216);
+  --danger-500: oklch(63.7% 0.237 25.331);
+  --danger-600: oklch(70.4% 0.191 22.216);
+  --danger-700: oklch(80.8% 0.114 19.571);
+  --danger-800: oklch(88.5% 0.062 18.334);
+  --danger-900: oklch(93.6% 0.032 17.717);
+  --danger-solid: oklch(57.7% 0.245 27.325);
+  --danger-solid-hover: oklch(63.7% 0.237 25.331);
+
+  --info-50: color-mix(in oklab, oklch(62.3% 0.214 259.815) 12%, transparent);
+  --info-100: color-mix(in oklab, oklch(62.3% 0.214 259.815) 20%, transparent);
+  --info-200: color-mix(in oklab, oklch(62.3% 0.214 259.815) 32%, transparent);
+  --info-300: color-mix(in oklab, oklch(62.3% 0.214 259.815) 45%, transparent);
+  --info-400: oklch(70.7% 0.165 254.624);
+  --info-500: oklch(62.3% 0.214 259.815);
+  --info-600: oklch(70.7% 0.165 254.624);
+  --info-700: oklch(80.9% 0.105 251.813);
+  --info-800: oklch(88.2% 0.059 254.128);
+  --info-900: oklch(93.2% 0.032 255.585);
+  --info-solid: oklch(54.6% 0.245 262.881);
+  --info-solid-hover: oklch(62.3% 0.214 259.815);
+
+  --neutral-50: color-mix(in oklab, oklch(55.1% 0.027 264.364) 12%, transparent);
+  --neutral-100: color-mix(in oklab, oklch(55.1% 0.027 264.364) 20%, transparent);
+  --neutral-200: color-mix(in oklab, oklch(55.1% 0.027 264.364) 32%, transparent);
+  --neutral-300: color-mix(in oklab, oklch(55.1% 0.027 264.364) 45%, transparent);
+  --neutral-400: oklch(70.7% 0.022 261.325);
+  --neutral-500: oklch(55.1% 0.027 264.364);
+  --neutral-600: oklch(70.7% 0.022 261.325);
+  --neutral-700: oklch(87.2% 0.01 258.338);
+  --neutral-800: oklch(92.8% 0.006 264.531);
+  --neutral-900: oklch(96.7% 0.003 264.542);
+  --neutral-solid: oklch(44.6% 0.03 256.802);
+  --neutral-solid-hover: oklch(55.1% 0.027 264.364);
+
   --inverse-surface: #e7eeff;
   --inverse-on-surface: #111c2d;
-  --inverse-primary: #4f46e5;
 
-  --chart-1: #c3c0ff;
-  --chart-2: #93c5fd;
   --chart-3: #64748b;
   --chart-4: #38485d;
   --chart-5: #ecf1ff;
 
   --sidebar: #1a2233;
   --sidebar-foreground: #ecf1ff;
-  --sidebar-primary: #c3c0ff;
-  --sidebar-primary-foreground: #0f0069;
   --sidebar-accent: #263143;
   --sidebar-accent-foreground: #ecf1ff;
   --sidebar-border: #3a4357;
-  --sidebar-ring: #c3c0ff;
+}
+.dark,
+.dark [data-brand-scope] {
+  /* Light tint of the brand so it reads on dark surfaces. */
+  --primary: color-mix(in oklab, var(--brand) 40%, white);
+  --primary-foreground: color-mix(in oklab, var(--brand) 45%, black);
+  --ring: var(--primary);
+  --primary-container: color-mix(in oklab, var(--brand) 75%, black);
+  --on-primary-container: color-mix(in oklab, var(--brand) 16%, white);
+  --primary-fixed: color-mix(in oklab, var(--brand) 16%, white);
+  --on-primary-fixed: color-mix(in oklab, var(--brand) 45%, black);
+  --inverse-primary: var(--brand);
+  --chart-1: var(--primary);
+  --chart-2: #93c5fd;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-ring: var(--primary);
 }
 
 @layer base {

@@ -116,3 +116,14 @@ def test_new_fields_round_trip():
     assert out.logo_url == "https://example.com/logo.png"
     assert out.timezone == "Asia/Karachi"
     assert out.currency == "PKR"
+
+
+def test_primary_color_is_validated_and_lowercased():
+    import pytest
+    from pydantic import ValidationError
+
+    assert HostelSettingsUpdate(primary_color="#0F766E").primary_color == "#0f766e"
+    assert HostelSettingsUpdate(primary_color=None).primary_color is None
+    for bad in ("0f766e", "#0f76", "#0f766eff", "teal", "#gggggg"):
+        with pytest.raises(ValidationError):
+            HostelSettingsUpdate(primary_color=bad)

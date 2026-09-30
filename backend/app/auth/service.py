@@ -8,7 +8,7 @@ from app.audit.service import record_audit
 from app.auth.otp import generate_otp, get_otp_sender, get_otp_store
 from app.auth.schemas import TokenResponse, UserOut
 from app.common.names import full_name
-from app.core.config import get_settings
+from app.core.config import DEFAULT_APP_NAME, get_settings
 from app.core.exceptions import BadRequestError, ForbiddenError, UnauthorizedError
 from app.core.passwords import verify_password
 from app.core.permissions import get_role_name, get_user_permissions
@@ -19,6 +19,18 @@ from app.users.crud import AUTHENTICABLE_STATUSES, BLOCKED_STATUSES, get_user_by
 
 _store = get_otp_store()
 _sender = get_otp_sender()
+
+
+def _display_app_name(db: Client) -> str:
+    """App name for OTP delivery: APP_NAME env first, then the Settings
+    hostel name, then the default — same priority as the frontend."""
+    configured = get_settings().app_name
+    if configured:
+        return configured
+    try:
+        return get_hostel_settings(db).hostel_name
+    except Exception:  # cosmetic only — never block a login over the banner
+        return DEFAULT_APP_NAME
 
 
 def normalize_email(email: str) -> str:
@@ -78,7 +90,7 @@ def request_otp(
 
     otp = "123456"
     _store.set(normalized, otp, settings.otp_expiration_seconds)
-    _sender.send(normalized, otp, settings.otp_expiration_seconds)
+    _sender.send(normalized, otp, settings.otp_expiration_seconds, app_name=_display_app_name(db))
 
     return {"message": "OTP sent", "expires_in_seconds": settings.otp_expiration_seconds}
 

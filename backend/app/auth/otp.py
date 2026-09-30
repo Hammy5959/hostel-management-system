@@ -85,18 +85,18 @@ class OTPSender(ABC):
     EmailSender/SMSSender later — the auth contract stays identical."""
 
     @abstractmethod
-    def send(self, email: str, otp: str, expires_in_seconds: int) -> None:
+    def send(self, email: str, otp: str, expires_in_seconds: int, *, app_name: str) -> None:
         raise NotImplementedError
 
 
 class TerminalSender(OTPSender):
     """Development-only delivery: prints a banner to the terminal."""
 
-    def send(self, email: str, otp: str, expires_in_seconds: int) -> None:
+    def send(self, email: str, otp: str, expires_in_seconds: int, *, app_name: str) -> None:
         minutes = max(1, expires_in_seconds // 60)
         banner = (
             "========================================\n"
-            "HOSTEL MANAGEMENT SYSTEM OTP\n"
+            f"{app_name.upper()} OTP\n"
             f"Email: {email}\n"
             f"OTP: {otp}\n"
             f"Expires: {minutes} minutes\n"

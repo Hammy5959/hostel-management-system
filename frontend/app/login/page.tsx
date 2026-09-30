@@ -2,22 +2,35 @@ import type { Metadata } from "next";
 import { Building2, Lock } from "lucide-react";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { resolveAppName, resolveLogoUrl } from "@/lib/branding";
+import { getPublicBranding } from "@/lib/public-branding";
 
 export const metadata: Metadata = {
   title: "Sign in",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // env → Settings → default (lib/branding.ts); pre-login, so Settings comes
+  // from the public branding endpoint.
+  const publicBranding = await getPublicBranding();
+  const appName = resolveAppName(publicBranding?.hostel_name);
+  const logoUrl = resolveLogoUrl(publicBranding?.logo_url);
+
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-[480px]">
         {/* Brand header (outside card) */}
         <div className="mb-8 flex flex-col items-center justify-center">
           <div className="mb-2 flex items-center gap-2 text-primary">
-            <Building2 aria-hidden className="size-12" strokeWidth={1.5} />
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="size-12 rounded-md object-contain" />
+            ) : (
+              <Building2 aria-hidden className="size-12" strokeWidth={1.5} />
+            )}
           </div>
           <h1 className="text-[32px] font-semibold leading-10 tracking-tight text-on-surface">
-            SHMS Admin
+            {appName}
           </h1>
           <p className="mt-1 text-base text-on-surface-variant">
             Student Hostel Management Portal
@@ -60,7 +73,7 @@ export default function LoginPage() {
         <div className="mt-8 flex items-center justify-center gap-2 text-on-surface-variant opacity-80">
           <Lock aria-hidden className="size-4" />
           <span className="text-xs font-semibold tracking-wide">
-            Secured by SHMS Enterprise
+            Secured by {appName}
           </span>
         </div>
       </div>

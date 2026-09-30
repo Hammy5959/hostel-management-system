@@ -340,7 +340,7 @@ function GatePassCard({
             type="button"
             variant="outline"
             size="sm"
-            className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+            className="flex-1 border-danger-200 text-danger-600 hover:bg-danger-50"
             disabled={acting}
             onClick={(e) => {
               e.stopPropagation()
@@ -727,19 +727,19 @@ export function GatePassesView() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={Clock}
-            iconClassName="bg-amber-50 text-amber-600"
+            iconClassName="bg-warning-50 text-warning-600"
             label="Pending"
             value={pendingStatQuery.data?.total}
           />
           <StatCard
             icon={CheckCircle2}
-            iconClassName="bg-blue-50 text-blue-600"
+            iconClassName="bg-info-50 text-info-600"
             label="Approved"
             value={approvedStatQuery.data?.total}
           />
           <StatCard
             icon={DoorOpen}
-            iconClassName="bg-emerald-50 text-emerald-600"
+            iconClassName="bg-success-50 text-success-600"
             label="Currently Out"
             value={outStatQuery.data?.total}
           />

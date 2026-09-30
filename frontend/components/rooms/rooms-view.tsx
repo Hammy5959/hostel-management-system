@@ -46,9 +46,9 @@ import {
 } from "@/components/rooms/room-form-dialog";
 
 const ROOM_STRIP_COLOR: Record<RoomStatus, string> = {
-  active: "bg-emerald-500",
+  active: "bg-success-500",
   inactive: "bg-outline",
-  maintenance: "bg-amber-500",
+  maintenance: "bg-warning-500",
 };
 
 const BUILDING_TYPE_LABEL: Record<BuildingType, string> = {
@@ -98,7 +98,7 @@ function OccupancyLines({ room }: { room: Room }) {
       <p
         className={cn(
           "text-sm font-bold",
-          fullyOccupied ? "text-[#3525cd]" : "text-emerald-600",
+          fullyOccupied ? "text-primary" : "text-success-600",
         )}
       >
         {fullyOccupied
@@ -109,7 +109,7 @@ function OccupancyLines({ room }: { room: Room }) {
         <div
           className={cn(
             "h-2 rounded-full",
-            fullyOccupied ? "bg-[#3525cd]" : "bg-emerald-500",
+            fullyOccupied ? "bg-primary" : "bg-success-500",
           )}
           style={{
             width: `${Math.min(100, (room.occupied_beds / room.total_beds) * 100)}%`,
@@ -175,7 +175,7 @@ function RoomCard({ room, onOpen }: { room: Room; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest text-left transition-shadow hover:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.05)]"
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest text-left transition-shadow hover:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.05)]"
     >
       <div
         className={cn(
@@ -223,7 +223,7 @@ function RoomListRow({ room, onOpen }: { room: Room; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center justify-between gap-4 border-b border-outline-variant px-5 py-4 text-left transition-colors last:border-0 hover:bg-surface-container-low/60"
+      className="flex w-full items-center justify-between gap-4 border-b border-outline-variant px-5 py-4 text-left transition-colors hover:cursor-pointer last:border-0 hover:bg-surface-container-low/60"
     >
       <div className="flex items-center gap-3">
         <div
@@ -382,19 +382,19 @@ export function RoomsView() {
               />
               <StatCard
                 icon={CheckCircle2}
-                iconClassName="bg-emerald-50 text-emerald-600"
+                iconClassName="bg-success-50 text-success-600"
                 label="Occupied"
                 value={summary.occupied_rooms}
               />
               <StatCard
                 icon={Users}
-                iconClassName="bg-blue-50 text-blue-600"
+                iconClassName="bg-info-50 text-info-600"
                 label="Available"
                 value={summary.available_rooms}
               />
               <StatCard
                 icon={Building2}
-                iconClassName="bg-amber-50 text-amber-600"
+                iconClassName="bg-warning-50 text-warning-600"
                 label="Full"
                 value={summary.full_rooms}
               />

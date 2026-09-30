@@ -115,13 +115,13 @@ export function OccupancyTab() {
         />
         <StatCard
           icon={Wrench}
-          iconClassName="bg-amber-50 text-amber-700"
+          iconClassName="bg-warning-50 text-warning-700"
           label="Maintenance"
           value={report ? report.maintenance.toLocaleString() : undefined}
         />
         <StatCard
           icon={Sparkles}
-          iconClassName="bg-amber-50 text-amber-700"
+          iconClassName="bg-warning-50 text-warning-700"
           label="Cleaning"
           value={report ? report.cleaning.toLocaleString() : undefined}
         />

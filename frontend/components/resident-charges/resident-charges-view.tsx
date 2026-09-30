@@ -40,12 +40,12 @@ import {
 import { ResidentChargeDetailDialog } from "@/components/resident-charges/resident-charge-detail-dialog";
 
 const STATUS_TONE: Record<ResidentChargeStatus, string> = {
-  pending: "border-amber-200 bg-amber-100 text-amber-800",
-  invoiced: "border-blue-200 bg-blue-100 text-blue-800",
-  paid: "border-emerald-200 bg-emerald-100 text-emerald-800",
-  partially_paid: "border-yellow-200 bg-yellow-100 text-yellow-800",
-  waived: "border-gray-200 bg-gray-100 text-gray-600",
-  cancelled: "border-gray-200 bg-gray-100 text-gray-600",
+  pending: "border-warning-200 bg-warning-100 text-warning-800",
+  invoiced: "border-info-200 bg-info-100 text-info-800",
+  paid: "border-success-200 bg-success-100 text-success-800",
+  partially_paid: "border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-200",
+  waived: "border-neutral-200 bg-neutral-100 text-neutral-600",
+  cancelled: "border-neutral-200 bg-neutral-100 text-neutral-600",
   overdue: "border-error/30 bg-error-container text-on-error-container",
 };
 
@@ -305,19 +305,19 @@ export function ResidentChargesView() {
             />
             <StatCard
               icon={Clock}
-              chipClassName="bg-amber-100 text-amber-700"
+              chipClassName="bg-warning-100 text-warning-700"
               label="Pending"
               value={summary.pending}
             />
             <StatCard
               icon={Send}
-              chipClassName="bg-blue-100 text-blue-700"
+              chipClassName="bg-info-100 text-info-700"
               label="Invoiced"
               value={summary.invoiced}
             />
             <StatCard
               icon={CheckCircle2}
-              chipClassName="bg-emerald-100 text-emerald-700"
+              chipClassName="bg-success-100 text-success-700"
               label="Paid"
               value={summary.paid}
             />

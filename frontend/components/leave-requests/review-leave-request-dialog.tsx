@@ -85,7 +85,7 @@ export function ReviewLeaveRequestDialog({
           <Button
             type="button"
             variant={isApprove ? "default" : "destructive"}
-            className={isApprove ? "bg-emerald-600 text-white hover:bg-emerald-700" : undefined}
+            className={isApprove ? "bg-success-solid text-white hover:bg-success-solid-hover" : undefined}
             disabled={loading}
             onClick={() => onConfirm(notes)}
           >

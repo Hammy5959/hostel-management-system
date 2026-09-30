@@ -1,8 +1,8 @@
-import { useSyncExternalStore } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import { getHostelSettings } from "@/lib/api"
-import { getStoredBranding, subscribeUser } from "@/lib/auth"
+import { getStoredBranding, setStoredBranding, subscribeUser } from "@/lib/auth"
 import type { HostelBranding } from "@/lib/types"
 
 /** Shared "fetch once, use everywhere" hostel branding/locale data —
@@ -34,6 +34,23 @@ export function useHostelSettings(options: { enabled?: boolean } = {}) {
 export function useHostelBranding(options: { enabled?: boolean } = {}): HostelBranding | null {
   const cached = useSyncExternalStore(subscribeUser, getStoredBranding, () => null)
   const { data } = useHostelSettings(options)
+
+  // Write the live values back into the synchronous cache when they differ —
+  // formatCurrency (lib/utils.ts) reads currency from it, so a currency
+  // changed by another admin reaches this user without a re-login.
+  useEffect(() => {
+    if (!data) return
+    const current = getStoredBranding()
+    if (
+      current?.hostel_name !== data.hostel_name ||
+      current?.logo_url !== data.logo_url ||
+      current?.timezone !== data.timezone ||
+      current?.currency !== data.currency
+    ) {
+      setStoredBranding({ hostel_name: data.hostel_name, logo_url: data.logo_url, timezone: data.timezone, currency: data.currency })
+    }
+  }, [data])
+
   if (data) {
     return { hostel_name: data.hostel_name, logo_url: data.logo_url, timezone: data.timezone, currency: data.currency }
   }

@@ -420,11 +420,11 @@ export function FloorsView() {
                         </p>
                         <div className="mb-1 flex items-end justify-between">
                           <span className="text-sm text-on-surface">{floor.occupied_beds} Occupied</span>
-                          <span className="text-sm font-bold text-[#3525cd]">{floor.available_beds} Available</span>
+                          <span className="text-sm font-bold text-primary">{floor.available_beds} Available</span>
                         </div>
                         <div className="h-2.5 w-full rounded-full bg-surface-container-high">
                           <div
-                            className="h-2.5 rounded-full bg-[#3525cd]"
+                            className="h-2.5 rounded-full bg-primary"
                             style={{
                               width: `${floor.total_beds ? Math.min(100, (floor.occupied_beds / floor.total_beds) * 100) : 0}%`,
                             }}
@@ -439,7 +439,7 @@ export function FloorsView() {
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-9 rounded-lg px-4 text-sm font-medium text-[#3525cd] hover:bg-[#3525cd]/10 hover:text-[#3525cd]"
+                        className="h-9 rounded-lg px-4 text-sm font-medium text-primary hover:bg-primary/10 hover:text-primary"
                         onClick={() => openEdit(floor)}
                       >
                         Edit

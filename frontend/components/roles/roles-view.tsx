@@ -202,7 +202,7 @@ export function RolesView() {
           />
           <StatCard
             icon={UserCog}
-            iconClassName="bg-emerald-100 text-emerald-700"
+            iconClassName="bg-success-100 text-success-700"
             label="Custom Roles"
             value={statsQuery.data ? customRoleCount : undefined}
           />

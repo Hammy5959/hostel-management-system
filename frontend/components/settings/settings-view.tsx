@@ -6,7 +6,7 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Building2, Globe2, Image as ImageIcon, MapPin, Pencil, Trash2, X } from "lucide-react"
+import { Building2, Globe2, Image as ImageIcon, MapPin, Palette, Pencil, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,10 +23,13 @@ import {
 import { PageHeader } from "@/components/hostel/page-header"
 import { ErrorState } from "@/components/hostel/error-state"
 import { PhotoPicker } from "@/components/residents/photo-picker"
+import { BrandColorPicker, BrandPreview } from "@/components/settings/brand-color-picker"
 
 import { usePermissions, markPermissionDenied } from "@/lib/permissions"
 import { setStoredBranding } from "@/lib/auth"
 import { useHostelSettings } from "@/lib/hostel-settings"
+import { brandCssVars, DEFAULT_BRAND_COLOR, ENV_APP_NAME, ENV_BRAND_COLOR, ENV_LOGO_URL, resolveBrandColor } from "@/lib/branding"
+import { refreshBrandingCache } from "@/lib/branding-actions"
 import { ApiError, updateHostelSettings } from "@/lib/api"
 import type { HostelSettings, HostelSettingsUpdateInput } from "@/lib/types"
 
@@ -96,6 +99,8 @@ const settingsSchema = z.object({
   country: optionalText(),
   timezone: optionalText(),
   currency: optionalText(3),
+  // "" = default brand color.
+  primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Enter a 6-digit hex color, e.g. #0f766e").optional().or(z.literal("")),
 })
 
 type SettingsFormValues = z.infer<typeof settingsSchema>
@@ -114,7 +119,19 @@ function defaultsFromSettings(settings: HostelSettings): SettingsFormValues {
     country: settings.country ?? "",
     timezone: settings.timezone ?? "",
     currency: settings.currency ?? "",
+    primary_color: settings.primary_color ?? "",
   }
+}
+
+/** Shown when env (NEXT_PUBLIC_APP_NAME / NEXT_PUBLIC_LOGO_URL /
+ * NEXT_PUBLIC_BRAND_COLOR) overrides the Settings value — env has priority
+ * (lib/branding.ts), so without this an edit here would appear to do nothing. */
+function EnvOverrideNote({ what }: { what: "name" | "logo" | "color" }) {
+  return (
+    <p className="mt-1.5 text-xs text-on-surface-variant">
+      The app {what} is currently set by the deployment (env), so this {what} is only used if that is removed.
+    </p>
+  )
 }
 
 export function SettingsView() {
@@ -166,6 +183,9 @@ export function SettingsView() {
       if ((values.country || null) !== settings.country) patch.country = values.country || null
       if ((values.timezone || null) !== settings.timezone) patch.timezone = values.timezone || null
       if ((values.currency || null) !== settings.currency) patch.currency = values.currency || null
+      if ((values.primary_color?.toLowerCase() || null) !== settings.primary_color) {
+        patch.primary_color = values.primary_color?.toLowerCase() || null
+      }
 
       if (Object.keys(patch).length > 0) {
         const updated = await updateHostelSettings(patch)
@@ -179,6 +199,18 @@ export function SettingsView() {
           timezone: updated.timezone,
           currency: updated.currency,
         })
+        if ("hostel_name" in patch || "logo_url" in patch || "primary_color" in patch) {
+          // Server-rendered branding (login page, tab title, brand color on
+          // first paint) is cached — expire it so every user's next load
+          // gets the new values. Cosmetic: never fail the save over it.
+          refreshBrandingCache().catch(() => {})
+        }
+        if ("primary_color" in patch) {
+          // Apply to this screen right away (the server-set <html> style only
+          // updates on the next full render). Env color still wins.
+          const vars = brandCssVars(resolveBrandColor(updated.primary_color))
+          for (const [name, value] of Object.entries(vars)) document.documentElement.style.setProperty(name, value)
+        }
         toast.success("Hostel settings updated.")
       }
       setEditing(false)
@@ -207,6 +239,7 @@ export function SettingsView() {
   }
 
   const logoUrl = watch("logo_url")
+  const primaryColor = watch("primary_color") ?? ""
 
   return (
     <div className="space-y-6">
@@ -246,9 +279,13 @@ export function SettingsView() {
                 </FieldLabel>
                 <Input id="settings-hostel-name" {...register("hostel_name")} aria-invalid={!!errors.hostel_name} />
                 <FieldError errors={[errors.hostel_name]} />
+                {ENV_APP_NAME && <EnvOverrideNote what="name" />}
               </Field>
             ) : (
-              <InfoRow label="Hostel Name" value={settings.hostel_name} />
+              <div>
+                <InfoRow label="Hostel Name" value={settings.hostel_name} />
+                {ENV_APP_NAME && <EnvOverrideNote what="name" />}
+              </div>
             )}
 
             {editing && canManage ? (
@@ -284,7 +321,12 @@ export function SettingsView() {
             <ImageIcon aria-hidden className="size-5 text-primary" />
             Branding
           </h3>
-          <p className="mb-6 text-sm text-on-surface-variant">Shown in the navigation sidebar and topbar.</p>
+          <p className="mb-6 text-sm text-on-surface-variant">Logo shown in the navigation sidebar and topbar.</p>
+          {ENV_LOGO_URL && (
+            <div className="-mt-4 mb-6">
+              <EnvOverrideNote what="logo" />
+            </div>
+          )}
           {editing && canManage ? (
             <div className="flex items-center gap-3">
               <PhotoPicker
@@ -315,6 +357,45 @@ export function SettingsView() {
           ) : (
             <p className="text-sm text-on-surface-variant italic">No logo uploaded.</p>
           )}
+
+          <div className="mt-6 border-t border-outline-variant pt-6">
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-on-surface">
+              <Palette aria-hidden className="size-4 text-primary" />
+              Primary Color
+            </h4>
+            <p className="mb-4 text-sm text-on-surface-variant">
+              Used for buttons, links, the active menu item, and charts — in both light and dark mode.
+            </p>
+            {ENV_BRAND_COLOR && (
+              <div className="-mt-2 mb-4">
+                <EnvOverrideNote what="color" />
+              </div>
+            )}
+            {editing && canManage ? (
+              <>
+                <BrandColorPicker
+                  value={primaryColor}
+                  onChange={(next) => setValue("primary_color", next, { shouldDirty: true, shouldValidate: true })}
+                />
+                <FieldError errors={[errors.primary_color]} />
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden
+                    className="size-8 rounded-full border border-outline-variant"
+                    style={{ backgroundColor: settings.primary_color ?? DEFAULT_BRAND_COLOR }}
+                  />
+                  <span className="font-mono text-sm text-on-surface uppercase">
+                    {settings.primary_color ?? DEFAULT_BRAND_COLOR}
+                  </span>
+                  {!settings.primary_color && <span className="text-sm text-on-surface-variant">(default)</span>}
+                </div>
+                <BrandPreview color={settings.primary_color ?? DEFAULT_BRAND_COLOR} />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6">

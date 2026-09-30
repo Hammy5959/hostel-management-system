@@ -345,7 +345,7 @@ export function AttendanceView() {
               />
               <StatCard
                 icon={UserCheck}
-                iconClassName="bg-emerald-50 text-emerald-600"
+                iconClassName="bg-success-50 text-success-600"
                 label="Present Today"
                 value={reportQuery.data?.present}
                 hint={
@@ -356,14 +356,14 @@ export function AttendanceView() {
               />
               <StatCard
                 icon={CalendarDays}
-                iconClassName="bg-blue-50 text-blue-600"
+                iconClassName="bg-info-50 text-info-600"
                 label="On Leave"
                 value={reportQuery.data?.excused}
                 hint="Approved leaves"
               />
               <StatCard
                 icon={UserRoundX}
-                iconClassName="bg-red-50 text-red-600"
+                iconClassName="bg-danger-50 text-danger-600"
                 label="Absent"
                 value={reportQuery.data?.absent}
                 hint="Requires review"

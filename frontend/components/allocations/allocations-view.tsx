@@ -93,9 +93,9 @@ function initials(firstName: string, lastName: string | null): string {
 type PillTone = "success" | "info" | "warning" | "danger" | "neutral";
 
 const PILL_TONE: Record<PillTone, string> = {
-  success: "bg-emerald-50 text-emerald-700",
-  info: "bg-blue-50 text-blue-700",
-  warning: "bg-amber-50 text-amber-700",
+  success: "bg-success-50 text-success-700",
+  info: "bg-info-50 text-info-700",
+  warning: "bg-warning-50 text-warning-700",
   danger: "bg-error-container text-on-error-container",
   neutral: "bg-surface-container-highest text-on-surface-variant",
 };
@@ -426,13 +426,13 @@ export function AllocationsView() {
             />
             <StatCard
               icon={CheckCircle2}
-              chipClassName="bg-emerald-50 text-emerald-600"
+              chipClassName="bg-success-50 text-success-600"
               label="Occupied Beds"
               value={summary.occupied_beds}
             />
             <StatCard
               icon={Users}
-              chipClassName="bg-blue-50 text-blue-600"
+              chipClassName="bg-info-50 text-info-600"
               label="Available Beds"
               value={summary.available_beds}
             />

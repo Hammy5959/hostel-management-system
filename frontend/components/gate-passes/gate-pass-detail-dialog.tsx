@@ -239,7 +239,7 @@ export function GatePassDetailDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-red-200 text-red-600 hover:bg-red-50"
+                className="border-danger-200 text-danger-600 hover:bg-danger-50"
                 onClick={onReject}
                 disabled={acting}
               >

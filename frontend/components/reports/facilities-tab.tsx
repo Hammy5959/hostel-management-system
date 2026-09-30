@@ -71,7 +71,7 @@ export function FacilitiesTab({ dateFrom, dateTo }: { dateFrom: string; dateTo: 
           />
           <StatCard
             icon={AlertTriangle}
-            iconClassName="bg-amber-50 text-amber-700"
+            iconClassName="bg-warning-50 text-warning-700"
             label="Low Stock"
             value={inventory ? inventory.low_stock_items.toLocaleString() : undefined}
           />

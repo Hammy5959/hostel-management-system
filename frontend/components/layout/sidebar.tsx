@@ -13,6 +13,7 @@ import { clearToken } from "@/lib/auth"
 import { usePermissions } from "@/lib/permissions"
 import { useHostelBranding } from "@/lib/hostel-settings"
 import type { BrandingCookieValue } from "@/lib/branding-cookie"
+import { resolveAppName, resolveLogoUrl } from "@/lib/branding"
 
 interface SidebarProps {
   navigation: NavEntry[]
@@ -39,6 +40,9 @@ export function Sidebar({
   const branding = useHostelBranding()
   // Whole-object precedence — see topbar.tsx for why not a per-field `??`.
   const effectiveBranding = branding ?? initialBranding
+  // env → Settings → default (lib/branding.ts).
+  const appName = resolveAppName(effectiveBranding?.hostel_name)
+  const logoUrl = resolveLogoUrl(effectiveBranding?.logo_url)
   const visibleNavigation = filterNavigation(navigation, has, hasAny)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
 
@@ -88,10 +92,10 @@ export function Sidebar({
           )}
         >
           <div className="flex size-10 shrink-0 items-center justify-center rounded bg-surface-container-lowest p-1.5 shadow-sm ring-1 ring-outline-variant">
-            {effectiveBranding?.logo_url ? (
+            {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={effectiveBranding.logo_url}
+                src={logoUrl}
                 alt=""
                 className="size-full rounded object-contain"
               />
@@ -107,7 +111,7 @@ export function Sidebar({
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-lg font-semibold leading-6 text-on-surface">
-                {effectiveBranding?.hostel_name ?? "Main Campus"}
+                {appName}
               </p>
 
               <p className="truncate text-xs font-semibold tracking-wide text-on-surface-variant">
@@ -119,7 +123,7 @@ export function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+      <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {visibleNavigation.map((entry) => {
           if (entry.type === "link") {
             const { label, href, icon: Icon } = entry.data

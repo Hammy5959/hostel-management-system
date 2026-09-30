@@ -398,13 +398,13 @@ export function AssetsView() {
         <StatCard icon={Package} iconClassName="bg-primary/10 text-primary" label="Total Assets" value={canView ? totalStatQuery.data?.total : 0} />
         <StatCard
           icon={CheckCircle2}
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-success-50 text-success-600"
           label="Available"
           value={canView ? availableStatQuery.data?.total : 0}
         />
         <StatCard
           icon={UserCog}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-info-50 text-info-600"
           label="Assigned"
           value={canView ? assignedStatQuery.data?.total : 0}
         />

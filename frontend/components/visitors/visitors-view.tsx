@@ -658,13 +658,13 @@ export function VisitorsView() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             icon={LogIn}
-            iconClassName="bg-emerald-50 text-emerald-600"
+            iconClassName="bg-success-50 text-success-600"
             label="Currently In"
             value={currentlyInQuery.data?.total}
           />
           <StatCard
             icon={CalendarClock}
-            iconClassName="bg-blue-50 text-blue-600"
+            iconClassName="bg-info-50 text-info-600"
             label="Expected Today"
             value={expectedTodayQuery.data?.total}
           />
