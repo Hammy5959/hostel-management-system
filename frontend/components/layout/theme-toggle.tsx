@@ -32,7 +32,7 @@ export function ThemeToggle() {
               aria-checked={active}
               onClick={() => setTheme(value)}
               className={cn(
-                "flex items-center justify-center gap-1 rounded px-1.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                "flex items-center justify-center gap-1 rounded px-1.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:cursor-pointer",
                 active
                   ? "bg-popover text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",

@@ -256,7 +256,7 @@ export function Sidebar({
           title={collapsed ? "Sign out" : undefined}
           onClick={handleSignOut}
           className={cn(
-            "flex w-full items-center rounded-r-full py-3 font-medium text-on-surface-variant transition-all duration-150 hover:bg-surface-container-high hover:text-destructive active:scale-[0.98]",
+            "flex w-full items-center rounded-r-full py-3 font-medium text-on-surface-variant transition-all duration-150 hover:bg-surface-container-high hover:text-destructive active:scale-[0.98] hover:cursor-pointer",
             collapsed ? "justify-center" : "gap-3 pl-4 pr-4",
           )}
         >
